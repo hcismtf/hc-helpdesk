@@ -11,7 +11,10 @@ $routes->post('/ticket/store', 'Ticket::store'); // untuk proses simpan ke DB
 // kalau mau lihat list tiket (opsional)
 $routes->get('/ticket', 'Ticket::index');
 
+$routes->get('/login', 'Auth::login'); // tampilkan halaman login
+$routes->post('/login', 'Auth::attemptLogin'); // proses submit form login
+
+
 // contoh untuk users kalau masih dipakai
 $routes->get('/users', 'User::index');
-
 

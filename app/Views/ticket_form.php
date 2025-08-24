@@ -9,8 +9,17 @@
 <body>
 
   <div class="container py-4">
-    <h3 class="fw-bold">HC Helpdesk</h3>
-    <p class="text-muted">Get support and find answers to common question</p>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h3 class="fw-bold">HC Helpdesk</h3>
+            <p class="text-muted">Get support and find answers to common question</p>
+        </div>
+        <div>
+            <a href="<?= base_url('login') ?>" class="admin-login-btn">
+                Admin Login
+            </a>
+        </div>
+    </div>
 
     <!-- Toggle Navigation -->
     <div class="nav-toggle">
