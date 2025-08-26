@@ -30,34 +30,41 @@
     <!-- Ticket Form -->
     <div id="ticket-section">
       <div class="card">
-        <h5 class="mb-4">Submit Support Ticket</h5>
+        <h5 class="mb-4"><strong>Submit Support Ticket</strong></h5>
         <form action="<?= base_url('ticket/store') ?>" method="post" enctype="multipart/form-data">
           <div class="row mb-3">
             <div class="col-md-6">
+              <label for="emp_name">Nama</label>
               <input type="text" name="emp_name" class="form-control" placeholder="Nama" required>
             </div>
             <div class="col-md-6">
+              <label for="emp_id">NIP</label>
               <input type="text" name="emp_id" class="form-control" placeholder="Nomor Induk Pegawai" required>
             </div>
           </div>
           <div class="mb-3">
+            <label for="email">Email MTF</label>
             <input type="email" name="email" class="form-control" placeholder="Email MTF" required>
           </div>
           <div class="mb-3">
+            <label for="wa_no">No. Handphone / Whatsapp</label>
             <input type="text" name="wa_no" class="form-control" placeholder="No. Handphone / Whatsapp" required>
           </div>
           <div class="mb-3">
+            <label for="req_type">Tipe Pengajuan</label>
             <select name="req_type" class="form-select" required>
               <option value="">Tipe Pengajuan</option>
-              <option value="akses">Permintaan Akses</option>
-              <option value="bug">Laporan Bug</option>
-              <option value="lainnya">Lainnya</option>
+              <option value="Permintaan Akses">Permintaan Akses</option>
+              <option value="Laporan Bug">Laporan Bug</option>
+              <option value="Lainnya">Lainnya</option>
             </select>
           </div>
           <div class="mb-3">
+            <label for="subject">Subject</label>
             <input type="text" name="subject" class="form-control" placeholder="Subject" required>
           </div>
           <div class="mb-3">
+            <label for="message">Message</label>
             <textarea name="message" class="form-control" rows="4" placeholder="Message"></textarea>
           </div>
           <div class="mb-3">

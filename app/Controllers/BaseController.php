@@ -8,6 +8,7 @@ use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
+use Config\Superadmin;
 
 /**
  * Class BaseController
@@ -21,6 +22,8 @@ use Psr\Log\LoggerInterface;
  */
 abstract class BaseController extends Controller
 {
+    protected $superadmin;
+    
     /**
      * Instance of the main Request object.
      *
@@ -50,6 +53,7 @@ abstract class BaseController extends Controller
     {
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
+        $this->superadmin = new Superadmin();
 
         // Preload any models, libraries, etc, here.
 

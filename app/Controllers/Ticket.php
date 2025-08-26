@@ -8,6 +8,14 @@ use CodeIgniter\Controller;
 
 class Ticket extends Controller
 {
+
+    private function generateUUIDv4()
+    {
+        $data = random_bytes(16);
+        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40); // set version to 0100
+        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80); // set bits 6-7 to 10
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
     public function create()
     {
         // menampilkan form submit tiket
@@ -19,9 +27,21 @@ class Ticket extends Controller
         $ticketModel = new TicketModel();
         $ticketAttModel = new TicketAttModel();
 
+        // generate emp_id random UUID
+        $emp_id = $this->generateUUIDv4();
+
+        // ambil NIP asli dari form
+        $nip_asli = $this->request->getPost('emp_id');
+
+        // enkripsi NIP menggunakan encrypter bawaan CI4
+        $encrypter = \Config\Services::encrypter();
+        $nip_encrypted = bin2hex($encrypter->encrypt($nip_asli));
+        
+
         // ambil data dari form
         $data = [
-            'emp_id'        => $this->request->getPost('emp_id'),
+            'emp_id'        => $emp_id,
+            'nip_encrypted' => $nip_encrypted,
             'emp_name'      => $this->request->getPost('emp_name'),
             'email'         => $this->request->getPost('email'),
             'wa_no'         => $this->request->getPost('wa_no'),
