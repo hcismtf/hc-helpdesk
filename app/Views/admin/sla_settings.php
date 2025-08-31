@@ -2,7 +2,7 @@
     <table style="width:100%; border-collapse:collapse; margin:28px 0 18px 0;">
         <thead>
             <tr style="background:#fff;">
-                <th style="padding:12px 8px; font-weight:600; text-align:center;">Request Types</th>
+                
                 <th style="padding:12px 8px; font-weight:600; text-align:center;">Priority Level</th>
                 <th style="padding:12px 8px; font-weight:600; text-align:center;">Response Time (Hour)</th>
                 <th style="padding:12px 8px; font-weight:600; text-align:center;">Resolution Time (Hour)</th>
@@ -13,7 +13,7 @@
             <?php if (!empty($slas)): ?>
                 <?php foreach ($slas as $sla): ?>
                     <tr style="background:#fff; border-bottom:1px solid #eee;">
-                        <td style="padding:12px 8px; text-align:center;"><?= esc($sla['request_type_name']) ?></td>
+                        
                         <td style="padding:12px 8px; text-align:center;"><?= esc($sla['priority']) ?></td>
                         <td style="padding:12px 8px; text-align:center;"><?= esc($sla['response_time']) ?></td>
                         <td style="padding:12px 8px; text-align:center;"><?= esc($sla['resolution_time']) ?></td>

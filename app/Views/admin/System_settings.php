@@ -407,22 +407,57 @@
                                 <label for="role-name" style="font-weight:500;">Role Name <span style="color:#FF474A">*</span></label>
                                 <input id="role-name" type="text" placeholder="Input Title Here" class="faq-input">
 
-                                <label for="role-permission-1" style="font-weight:500;">Permission</label>
-                                <select id="role-permission-1" class="faq-input">
-                                    <option value="">Select Menu</option>
-                                    <!-- Tambahkan opsi menu di sini -->
-                                </select>
-                                <div style="display:flex; align-items:center; gap:12px;">
-                                    <select id="role-permission-2" class="faq-input" style="flex:1;">
+                                <label style="font-weight:500;">Permission</label>
+                                <div id="permission-container">
+                                    <select name="permissions[]" class="faq-input" style="margin-bottom:8px;">
                                         <option value="">Select Menu</option>
-                                        <!-- Tambahkan opsi menu di sini -->
+                                        <option value="Tickets">Tickets</option>
+                                        <option value="System settings">System settings</option>
                                     </select>
-                                    <span style="color:#888; font-size:15px;">Add Permission</span>
                                 </div>
+                                <button type="button" id="add-permission-btn" style="background:#eee; color:#222; border:none; border-radius:22px; padding:6px 18px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">
+                                    + Add Permission
+                                </button>
                                 <div style="width:100%; display:flex; justify-content:flex-end;">
                                     <button type="submit" class="btn-submit-faq">Submit</button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                    <!-- Modal Edit User Role -->
+                    <div id="userRoleEditModal" class="faq-modal-bg" style="display:none;">
+                        <div class="faq-modal" style="max-width:600px;">
+                            <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                                <div style="font-size:20px; font-weight:600;">Edit User Role</div>
+                                <span onclick="closeUserRoleEditModal()" style="font-size:28px; font-weight:700; cursor:pointer;">&times;</span>
+                            </div>
+                            <form id="user-role-edit-form" style="display:flex; flex-direction:column; gap:14px; width:100%; padding-top:10px;">
+                                <input type="hidden" id="edit-role-id">
+                                <label for="edit-role-name" style="font-weight:500;">Role Name <span style="color:#FF474A">*</span></label>
+                                <input id="edit-role-name" type="text" class="faq-input">
+                                <label style="font-weight:500;">Permission</label>
+                                <div id="edit-permission-container"></div>
+                                <button type="button" id="add-edit-permission-btn" style="background:#eee; color:#222; border:none; border-radius:22px; padding:6px 18px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">
+                                    + Add Permission
+                                </button>
+                                <div style="width:100%; display:flex; justify-content:flex-end;">
+                                    <button type="submit" class="btn-submit-faq">Update</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- Modal Delete User Role -->
+                    <div id="userRoleDeleteModal" class="faq-modal-bg" style="display:none;">
+                        <div class="faq-modal" style="max-width:400px; align-items:center;">
+                            <div style="font-size:20px; font-weight:600; margin-bottom:12px;">Hapus User Role?</div>
+                            <div style="font-size:15px; color:#444; margin-bottom:18px; text-align:center;">
+                                Apakah Anda yakin ingin menghapus User Role ini?<br>Data yang dihapus tidak dapat dikembalikan.
+                            </div>
+                            <input type="hidden" id="delete-role-id">
+                            <div style="display:flex; gap:12px; justify-content:center; width:100%;">
+                                <button onclick="closeUserRoleDeleteModal()" style="background:#bbb; color:#fff; border:none; border-radius:12px; padding:8px 24px; font-size:15px; font-weight:600; cursor:pointer;">Batal</button>
+                                <button onclick="confirmDeleteUserRole()" style="background:#7A161C; color:#fff; border:none; border-radius:12px; padding:8px 24px; font-size:15px; font-weight:600; cursor:pointer;">Hapus</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -535,17 +570,7 @@
                             <span onclick="closeSlaModal()" style="font-size:28px; font-weight:700; cursor:pointer;">&times;</span>
                         </div>
                         <form id="sla-form" style="display:flex; flex-direction:column; gap:10px; width:100%; padding-top:10px;">
-                            <label for="sla-request-type" style="font-weight:500;">Request Type Name <span style="color:#FF474A">*</span></label>
-                            <select id="sla-request-type" class="faq-input" required>
-                                <option value="">Select Request Type</option>
-                                <?php foreach ($requestTypes as $type): ?>
-                                    <option value="<?= $type['id'] ?>"
-                                        <?php if (in_array($type['id'], $usedRequestTypeIds)) echo 'disabled'; ?>>
-                                        <?= htmlspecialchars($type['name']) ?>
-                                        <?php if (in_array($type['id'], $usedRequestTypeIds)) echo ' '; ?>
-                                    </option>
-                                <?php endforeach ?>
-                            </select>
+                            
                             <label for="sla-priority" style="font-weight:500;">Priority Level <span style="color:#FF474A">*</span></label>
                             <select id="sla-priority" class="faq-input" required>
                                 <option value="">Select Priority</option>
@@ -627,6 +652,272 @@
             </div>
         </div>
         <script>
+            function validateRoleForm(formId, nameId, permissionContainerId, submitBtnSelector) {
+                var name = document.getElementById(nameId).value.trim();
+                var selects = document.querySelectorAll('#' + permissionContainerId + ' select');
+                var permissions = [];
+                selects.forEach(function(sel) {
+                    if (sel.value) permissions.push(sel.value);
+                });
+
+                // Regex hanya huruf dan spasi
+                var nameValid = /^[A-Za-z ]+$/.test(name);
+
+                // Enable/disable submit button
+                var submitBtn = document.querySelector(submitBtnSelector);
+                if (!name || !nameValid || permissions.length === 0) {
+                    submitBtn.disabled = true;
+                } else {
+                    submitBtn.disabled = false;
+                }
+            }
+
+            // Event listener untuk Add User Role
+            document.getElementById('role-name').addEventListener('input', function() {
+                validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
+            });
+            document.getElementById('permission-container').addEventListener('change', function() {
+                validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
+            });
+            document.getElementById('add-permission-btn').addEventListener('click', function() {
+                setTimeout(function() {
+                    validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
+                }, 100);
+            });
+
+            // Event listener untuk Edit User Role
+            document.getElementById('edit-role-name').addEventListener('input', function() {
+                validateRoleForm('user-role-edit-form', 'edit-role-name', 'edit-permission-container', '#user-role-edit-form .btn-submit-faq');
+            });
+            document.getElementById('edit-permission-container').addEventListener('change', function() {
+                validateRoleForm('user-role-edit-form', 'edit-role-name', 'edit-permission-container', '#user-role-edit-form .btn-submit-faq');
+            });
+            document.getElementById('add-edit-permission-btn').addEventListener('click', function() {
+                setTimeout(function() {
+                    validateRoleForm('user-role-edit-form', 'edit-role-name', 'edit-permission-container', '#user-role-edit-form .btn-submit-faq');
+                }, 100);
+            });
+
+            // Validasi sebelum submit (Add)
+            document.getElementById('user-role-form').onsubmit = function(e) {
+                e.preventDefault();
+                var name = document.getElementById('role-name').value.trim();
+                var selects = document.querySelectorAll('#permission-container select');
+                var permissions = [];
+                selects.forEach(function(sel) {
+                    if (sel.value) permissions.push(sel.value);
+                });
+                var nameValid = /^[A-Za-z ]+$/.test(name);
+
+                if (!name || permissions.length === 0) {
+                    showGlobalWarning('Role name dan minimal satu permission wajib diisi!', null, null);
+                    return;
+                }
+                if (!nameValid) {
+                    showGlobalInvalid('Role Name hanya boleh huruf dan spasi!');
+                    return;
+                }
+
+                fetch('<?= base_url('admin/add_user_role') ?>', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'name=' + encodeURIComponent(name)
+                        + '&permissions[]=' + permissions.map(encodeURIComponent).join('&permissions[]=')
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        document.getElementById('role-name').value = '';
+                        document.querySelectorAll('#permission-container select').forEach(function(sel, idx){
+                            if(idx === 0) sel.value = '';
+                            else sel.remove();
+                        });
+                        closeUserRoleModal();
+                        showGlobalSuccess('User Role berhasil ditambahkan!');
+                        loadRoleList();
+                    }
+                });
+            };
+
+            // Validasi sebelum submit (Edit)
+            document.getElementById('user-role-edit-form').onsubmit = function(e) {
+                e.preventDefault();
+                var id = document.getElementById('edit-role-id').value;
+                var name = document.getElementById('edit-role-name').value.trim();
+                var selects = document.querySelectorAll('#edit-permission-container select');
+                var permissions = [];
+                selects.forEach(function(sel) {
+                    if (sel.value) permissions.push(sel.value);
+                });
+                var nameValid = /^[A-Za-z ]+$/.test(name);
+
+                if (!name || permissions.length === 0) {
+                    showGlobalWarning('Role name dan minimal satu permission wajib diisi!', null, null);
+                    return;
+                }
+                if (!nameValid) {
+                    showGlobalInvalid('Role Name hanya boleh huruf dan spasi!');
+                    return;
+                }
+
+                fetch('<?= base_url('admin/edit_user_role') ?>', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'id=' + encodeURIComponent(id)
+                        + '&name=' + encodeURIComponent(name)
+                        + '&permissions[]=' + permissions.map(encodeURIComponent).join('&permissions[]=')
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        closeUserRoleEditModal();
+                        showGlobalSuccess('User Role berhasil diupdate!');
+                        loadRoleList();
+                    }
+                });
+            };
+
+            // Inisialisasi validasi awal
+            validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
+            validateRoleForm('user-role-edit-form', 'edit-role-name', 'edit-permission-container', '#user-role-edit-form .btn-submit-faq');
+            // Open Edit Modal
+            function openRoleEditModal(id, name, menu_access) {
+                document.getElementById('edit-role-id').value = id;
+                document.getElementById('edit-role-name').value = name;
+                var container = document.getElementById('edit-permission-container');
+                container.innerHTML = '';
+                var permissions = menu_access.split(',');
+                permissions.forEach(function(p) {
+                    var select = document.createElement('select');
+                    select.name = "permissions[]";
+                    select.className = "faq-input";
+                    select.style.marginBottom = "8px";
+                    select.innerHTML = `
+                        <option value="">Select Menu</option>
+                        <option value="Tickets" ${p.trim() === "Tickets" ? "selected" : ""}>Tickets</option>
+                        <option value="System settings" ${p.trim() === "System settings" ? "selected" : ""}>System settings</option>
+                    `;
+                    container.appendChild(select);
+                });
+                document.getElementById('userRoleEditModal').style.display = 'flex';
+            }
+            document.getElementById('add-edit-permission-btn').onclick = function() {
+                var container = document.getElementById('edit-permission-container');
+                var select = document.createElement('select');
+                select.name = "permissions[]";
+                select.className = "faq-input";
+                select.style.marginBottom = "8px";
+                select.innerHTML = `
+                    <option value="">Select Menu</option>
+                    <option value="Tickets">Tickets</option>
+                    <option value="System settings">System settings</option>
+                `;
+                container.appendChild(select);
+            };
+            function closeUserRoleEditModal() {
+                document.getElementById('userRoleEditModal').style.display = 'none';
+            }
+            document.getElementById('user-role-edit-form').onsubmit = function(e) {
+                e.preventDefault();
+                var id = document.getElementById('edit-role-id').value;
+                var name = document.getElementById('edit-role-name').value;
+                var selects = document.querySelectorAll('#edit-permission-container select');
+                var permissions = [];
+                selects.forEach(function(sel) {
+                    if (sel.value) permissions.push(sel.value);
+                });
+                if (!name || permissions.length === 0) {
+                    showGlobalWarning('Role name dan minimal satu permission wajib diisi!', null, null);
+                    return;
+                }
+                fetch('<?= base_url('admin/edit_user_role') ?>', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'id=' + encodeURIComponent(id)
+                        + '&name=' + encodeURIComponent(name)
+                        + '&permissions[]=' + permissions.map(encodeURIComponent).join('&permissions[]=')
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        closeUserRoleEditModal();
+                        showGlobalSuccess('User Role berhasil diupdate!');
+                        loadRoleList();
+                    }
+                });
+            };
+
+            // Open Delete Modal
+            function openRoleDeleteModal(id) {
+                document.getElementById('delete-role-id').value = id;
+                document.getElementById('userRoleDeleteModal').style.display = 'flex';
+            }
+            function closeUserRoleDeleteModal() {
+                document.getElementById('userRoleDeleteModal').style.display = 'none';
+            }
+            function confirmDeleteUserRole() {
+                var id = document.getElementById('delete-role-id').value;
+                fetch('<?= base_url('admin/delete_user_role') ?>', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'id=' + encodeURIComponent(id)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        closeUserRoleDeleteModal();
+                        showGlobalSuccess('User Role berhasil dihapus!');
+                        loadRoleList();
+                    }
+                });
+            }
+            document.getElementById('user-role-form').onsubmit = function(e) {
+                e.preventDefault();
+                var name = document.getElementById('role-name').value;
+                var selects = document.querySelectorAll('#permission-container select');
+                var permissions = [];
+                selects.forEach(function(sel) {
+                    if (sel.value) permissions.push(sel.value);
+                });
+
+                if (!name || permissions.length === 0) {
+                    showGlobalWarning('Role name dan minimal satu permission wajib diisi!', null, null);
+                    return;
+                }
+
+                fetch('<?= base_url('admin/add_user_role') ?>', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'name=' + encodeURIComponent(name)
+                        + '&permissions[]=' + permissions.map(encodeURIComponent).join('&permissions[]=')
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        document.getElementById('role-name').value = '';
+                        document.querySelectorAll('#permission-container select').forEach(function(sel, idx){
+                            if(idx === 0) sel.value = '';
+                            else sel.remove();
+                        });
+                        closeUserRoleModal();
+                        showGlobalSuccess('User Role berhasil ditambahkan!');
+                        loadRoleList();
+                    }
+                });
+            };
+            document.getElementById('add-permission-btn').onclick = function() {
+                var container = document.getElementById('permission-container');
+                var select = document.createElement('select');
+                select.name = "permissions[]";
+                select.className = "faq-input";
+                select.style.marginBottom = "8px";
+                select.innerHTML = `
+                    <option value="">Select Menu</option>
+                    <option value="Tickets">Tickets</option>
+                    <option value="System settings">System settings</option>
+                `;
+                container.appendChild(select);
+            };
             function openSlaEditModal(id, priority, response, resolution) {
                 document.getElementById('edit-sla-id').value = id;
                 document.getElementById('edit-sla-priority').value = priority;
@@ -706,12 +997,11 @@
             document.getElementById('sla-form').onsubmit = function(e) {
                 e.preventDefault();
 
-                var requestTypeId = document.getElementById('sla-request-type').value;
                 var priority = document.getElementById('sla-priority').value;
                 var response = document.getElementById('sla-response').value;
                 var resolution = document.getElementById('sla-resolution').value;
 
-                if (!requestTypeId || !priority || !response || !resolution) {
+                if (!priority || !response || !resolution) {
                     showGlobalWarning('Semua field wajib diisi!', null, null);
                     return;
                 }
@@ -719,22 +1009,19 @@
                 fetch('<?= base_url('admin/add_sla') ?>', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: 'request_type_id=' + encodeURIComponent(requestTypeId)
-                        + '&priority=' + encodeURIComponent(priority)
+                    body: 'priority=' + encodeURIComponent(priority)
                         + '&response_time=' + encodeURIComponent(response)
                         + '&resolution_time=' + encodeURIComponent(resolution)
                 })
                 .then(res => res.json())
                 .then(data => {
                     if(data.success) {
-                        document.getElementById('sla-request-type').value = '';
                         document.getElementById('sla-priority').value = '';
                         document.getElementById('sla-response').value = '';
                         document.getElementById('sla-resolution').value = '';
                         closeSlaModal();
                         showGlobalSuccess('SLA berhasil ditambahkan!');
                         loadSlaList();
-                        updateSlaRequestTypeDropdown();
                     }
                 });
             };
@@ -970,24 +1257,7 @@
                     }
                 });
             }
-            function updateSlaRequestTypeDropdown() {
-                fetch('<?= base_url('admin/get_used_request_types') ?>')
-                .then(res => res.json())
-                .then(data => {
-                    const used = data.used || [];
-                    const dropdown = document.getElementById('sla-request-type');
-                    Array.from(dropdown.options).forEach(opt => {
-                        if (opt.value === "") return;
-                        if (used.includes(opt.value)) {
-                            opt.disabled = true;
-                            opt.textContent = opt.textContent.replace(/ \( \)$/, '') + ' ';
-                        } else {
-                            opt.disabled = false;
-                            opt.textContent = opt.textContent.replace(/ \(\)$/, '');
-                        }
-                    });
-                });
-            }
+           
         </script>
         <script src="<?= base_url('assets/js/global_success.js') ?>"></script>
         <script src="<?= base_url('assets/js/global_warning.js') ?>"></script>

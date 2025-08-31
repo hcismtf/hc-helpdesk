@@ -79,12 +79,9 @@
     
 
     <!-- FAQ Section -->
+         <h2 style="text-align:center; font-weight:600; margin-bottom:32px;">Frequently Asked Question</h2>
     <div id="faq-section" class="card d-none">
-      <h5 class="mb-3">FAQ & Help</h5>
-      <p>🔹 <strong>Bagaimana cara reset password?</strong><br>
-      Hubungi HC Support melalui ticket atau email.</p>
-      <p>🔹 <strong>Bagaimana jika aplikasi error?</strong><br>
-      Silakan buat tiket baru dengan kategori Bug.</p>
+        <?php include(APPPATH . 'Views/list_faq.php'); ?>
     </div>
 
     <svg width="414" height="100" viewBox="0 0 414 100" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:block; margin:50px auto; width:413px; height:100px;">

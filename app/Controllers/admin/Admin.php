@@ -231,6 +231,51 @@ class Admin extends BaseController
         return $this->response->setJSON(['success' => true]);
     }
     
+    public function add_user_role()
+    {
+        $name = $this->request->getPost('name');
+        $permissions = $this->request->getPost('permissions'); // array
+        $created_by = session('username') ?? 'admin';
+        $created_date = date('Y-m-d H:i:s');
+
+        // Simpan permission sebagai string (misal: "Tickets,System settings")
+        $menu_access = is_array($permissions) ? implode(',', $permissions) : '';
+
+        $roleModel = new \App\Models\RoleModel();
+        $roleModel->insert([
+            'name' => $name,
+            'menu_access' => $menu_access,
+            'created_by' => $created_by,
+            'created_date' => $created_date
+        ]);
+
+        return $this->response->setJSON(['success' => true]);
+    }
+    public function edit_user_role()
+    {
+        $id = $this->request->getPost('id');
+        $name = $this->request->getPost('name');
+        $permissions = $this->request->getPost('permissions');
+        $modified_by = session('username') ?? 'admin';
+        $modified_date = date('Y-m-d H:i:s');
+        $menu_access = is_array($permissions) ? implode(',', $permissions) : '';
+        $roleModel = new \App\Models\RoleModel();
+        $roleModel->update($id, [
+            'name' => $name,
+            'menu_access' => $menu_access,
+            'modified_by' => $modified_by,
+            'modified_date' => $modified_date
+        ]);
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    public function delete_user_role()
+    {
+        $id = $this->request->getPost('id');
+        $roleModel = new \App\Models\RoleModel();
+        $roleModel->delete($id);
+        return $this->response->setJSON(['success' => true]);
+    }    
     public function get_user_role_list()
     {
         $roleModel = new \App\Models\RoleModel();
@@ -364,7 +409,7 @@ class Admin extends BaseController
     }
     public function add_sla()
     {
-        $request_type_id = $this->request->getPost('request_type_id');
+        // $request_type_id = $this->request->getPost('request_type_id');
         $priority = $this->request->getPost('priority');
         $response_time = $this->request->getPost('response_time');
         $resolution_time = $this->request->getPost('resolution_time');
@@ -373,7 +418,7 @@ class Admin extends BaseController
 
         $slaModel = new \App\Models\SlaModel();
         $slaModel->insert([
-            'request_type_id' => $request_type_id,
+            // 'request_type_id' => $request_type_id,
             'priority' => $priority,
             'response_time' => $response_time,
             'resolution_time' => $resolution_time,
@@ -384,21 +429,16 @@ class Admin extends BaseController
     }
     public function get_sla_list()
     {
-        $db = \Config\Database::connect();
-        $builder = $db->table('sla_configuration');
-        $builder->select('sla_configuration.*, request_type.name as request_type_name');
-        $builder->join('request_type', 'request_type.id = sla_configuration.request_type_id', 'left');
-        $perPage = $this->request->getGet('per_page') ?? 10;
         $page = $this->request->getGet('page') ?? 1;
-
-        $total = $builder->countAllResults(false);
-        $slas = $builder->orderBy('sla_configuration.id', 'desc')->get($perPage, ($page-1)*$perPage)->getResultArray();
-        $totalPages = ceil($total / $perPage);
+        $perPage = $this->request->getGet('per_page') ?? 10;
+        $slaModel = new \App\Models\SlaModel();
+        $slas = $slaModel->paginate($perPage, 'default', $page);
+        $totalPages = $slaModel->pager->getPageCount();
 
         return view('admin/sla_settings', [
             'slas' => $slas,
-            'perPage' => $perPage,
             'page' => $page,
+            'perPage' => $perPage,
             'totalPages' => $totalPages
         ]);
     }
@@ -429,10 +469,10 @@ class Admin extends BaseController
         $slaModel->delete($id);
         return $this->response->setJSON(['success' => true]);
     }
-    public function get_used_request_types()
-    {
-        $slaModel = new \App\Models\SlaModel();
-        $usedRequestTypeIds = array_column($slaModel->findAll(), 'request_type_id');
-        return $this->response->setJSON(['used' => $usedRequestTypeIds]);
-    }
+    // public function get_used_request_types()
+    // {
+    //     $slaModel = new \App\Models\SlaModel();
+    //     $usedRequestTypeIds = array_column($slaModel->findAll(), 'request_type_id');
+    //     return $this->response->setJSON(['used' => $usedRequestTypeIds]);
+    // }
 }

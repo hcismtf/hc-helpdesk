@@ -20,9 +20,12 @@ class Ticket extends Controller
     {
         $requestTypeModel = new \App\Models\RequestTypeModel();
         $requestTypes = $requestTypeModel->where('status', 'Active')->orderBy('name', 'asc')->findAll();
+        $faqModel = new \App\Models\FaqModel();
+        $faqs = $faqModel->orderBy('id', 'desc')->findAll();
 
         return view('ticket_form', [
-            'requestTypes' => $requestTypes
+            'requestTypes' => $requestTypes,
+            'faqs' => $faqs
         ]);
     }
 
@@ -80,5 +83,11 @@ class Ticket extends Controller
 
         return view('ticket_success');
 
+    }
+    public function faq()
+    {
+        $faqModel = new \App\Models\FaqModel();
+        $faqs = $faqModel->orderBy('id', 'desc')->findAll();
+        return view('list_faq', ['faqs' => $faqs]);
     }
 }

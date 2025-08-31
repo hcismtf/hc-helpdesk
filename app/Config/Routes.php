@@ -7,8 +7,10 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Ticket::create'); 
 $routes->post('/ticket/store', 'Ticket::store'); 
+$routes->get('faq', 'Ticket::faq');
 
 $routes->get('/ticket', 'Ticket::index');
+$routes->get('ticket/faq', 'Ticket::faq');
 
 $routes->get('/login', 'Auth::login');
 $routes->post('/login', 'Auth::attemptLogin'); 
@@ -37,6 +39,9 @@ $routes->post('admin/edit_faq', 'admin\Admin::edit_faq');
 
 // User Roles
 $routes->get('admin/get_user_role_list', 'admin\Admin::get_user_role_list');
+$routes->post('admin/add_user_role', 'admin\Admin::add_user_role');
+$routes->post('admin/edit_user_role', 'admin\Admin::edit_user_role');
+$routes->post('admin/delete_user_role', 'admin\Admin::delete_user_role');
 
 // Request Types
 $routes->get('admin/get_request_type_list', 'admin\Admin::get_request_type_list');
