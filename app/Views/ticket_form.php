@@ -53,10 +53,12 @@
           <div class="mb-3">
             <label for="req_type">Tipe Pengajuan</label>
             <select name="req_type" class="form-select" required>
-              <option value="">Tipe Pengajuan</option>
-              <option value="Permintaan Akses">Permintaan Akses</option>
-              <option value="Laporan Bug">Laporan Bug</option>
-              <option value="Lainnya">Lainnya</option>
+                <option value="">Tipe Pengajuan</option>
+                <?php if (!empty($requestTypes)): ?>
+                    <?php foreach ($requestTypes as $type): ?>
+                        <option value="<?= esc($type['name']) ?>"><?= esc($type['name']) ?></option>
+                    <?php endforeach ?>
+                <?php endif ?>
             </select>
           </div>
           <div class="mb-3">

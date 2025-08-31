@@ -3,6 +3,7 @@
 namespace App\Controllers\admin;
 
 use App\Controllers\BaseController;
+use App\Models\RequestTypeModel;
 
 class Admin extends BaseController
 {
@@ -81,11 +82,357 @@ class Admin extends BaseController
         }
         return redirect()->to('/admin/login');
     }
-    
 
+    public function Ticket_dashboard()
+    {
+        $model = new \App\Models\TicketModel();
+        $perPage = $this->request->getGet('per_page') ?? 10;
+        $page = $this->request->getGet('page') ?? 1;
+        
+        $ticketsRaw = $model->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
+
+        $encrypter = \Config\Services::encrypter();
+        $tickets = [];
+        foreach ($ticketsRaw as $ticket) {
+            $nip_decrypted = '';
+            if (!empty($ticket['nip_encrypted'])) {
+                try {
+                    $nip_decrypted = $encrypter->decrypt(hex2bin($ticket['nip_encrypted']));
+                } catch (\Exception $e) {
+                    $nip_decrypted = '[Invalid]';
+                }
+            }
+            $ticket['emp_nip'] = $nip_decrypted;
+            $tickets[] = $ticket;
+        }
+
+        $pager = $model->pager;
+
+        return view('admin/Ticket_dashboard', [
+            'tickets' => $tickets,
+            'pager' => $pager,
+            'perPage' => $perPage,
+            'active' => 'tickets',
+        ]);
+    }
+    public function Ticket_detail($id)
+    {
+        $model = new \App\Models\TicketModel();
+        $ticket = $model->find($id);
+
+        // Decrypt NIP jika perlu
+        $encrypter = \Config\Services::encrypter();
+        if (!empty($ticket['nip_encrypted'])) {
+            try {
+                $ticket['emp_nip'] = $encrypter->decrypt(hex2bin($ticket['nip_encrypted']));
+            } catch (\Exception $e) {
+                $ticket['emp_nip'] = '[Invalid]';
+            }
+        }
+
+        return view('admin/Ticket_detail', [
+            'ticket' => $ticket,
+        ]);
+    }
+
+    public function Ticket_update_status($id)
+    {
+        $status = $this->request->getPost('status');
+        $priority = $this->request->getPost('priority');
+
+        $ticketModel = new \App\Models\TicketModel();
+
+        // Update status dan priority
+        $ticketModel->update($id, [
+            'ticket_status' => $status,
+            'ticket_priority' => $priority,
+            'modified_date' => date('Y-m-d H:i:s')
+        ]);
+
+        return redirect()->to('admin/Ticket_detail/' . $id);
+    }
+
+    public function system_settings()
+    {
+        $faqModel = new \App\Models\FaqModel();
+        $faqs = $faqModel->orderBy('id', 'desc')->findAll(10); // Ambil 10 FAQ terbaru
+        // Ganti 'Superadmin' dan '[user name]' dengan data session jika ingin dinamis
+        $requestTypeModel = new RequestTypeModel();
+        $requestTypes = $requestTypeModel->findAll();
+        $slaModel = new \App\Models\SlaModel();
+        $usedRequestTypeIds = array_column($slaModel->findAll(), 'request_type_id');
+        $editFaq = null;
+        $editId = $this->request->getGet('edit_faq_id');
+        if ($editId) {
+            $editFaq = $faqModel->find($editId);
+        }
+        $data = [
+            'username' => session('username') ?? '[user name]',
+            'role' => session('role') ?? 'Superadmin',
+            'faqs' => $faqs,
+            'editFaq' => $editFaq
+        ];
+        return view('admin/System_settings', ['requestTypes' => $requestTypes, 'usedRequestTypeIds' => $usedRequestTypeIds], $data);
+    }
+    public function add_faq()
+    {
+        $question = $this->request->getPost('question');
+        $answer = $this->request->getPost('answer');
+        $created_by = session('username') ?? 'admin';
+
+        $faqModel = new \App\Models\FaqModel();
+        $faqModel->insert([
+            'question' => $question,
+            'answer' => $answer,
+            'created_by' => $created_by,
+            'created_date' => date('Y-m-d H:i:s')
+        ]);
+        return $this->response->setJSON(['success' => true]);
+    }
+    public function edit_faq()
+    {
+        $id = $this->request->getPost('id');
+        $question = $this->request->getPost('question');
+        $answer = $this->request->getPost('answer');
+        $modified_by = session('username') ?? 'admin';
+        $modified_date = date('Y-m-d H:i:s');
+
+        $faqModel = new \App\Models\FaqModel();
+        $faqModel->update($id, [
+            'question' => $question,
+            'answer' => $answer,
+            'modified_by' => $modified_by,
+            'modified_date' => $modified_date
+        ]);
+        return $this->response->setJSON(['success' => true]);
+    }
+    public function get_faq_list()
+    {
+        $faqModel = new \App\Models\FaqModel();
+        $perPage = $this->request->getGet('per_page') ?? 10;
+        $page = $this->request->getGet('page') ?? 1;
+
+        $total = $faqModel->countAll();
+        $faqs = $faqModel->orderBy('id', 'desc')->findAll($perPage, ($page-1)*$perPage);
+        $totalPages = ceil($total / $perPage);
+
+        return view('admin/faq_list', [
+            'faqs' => $faqs,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'perPage' => $perPage
+        ]);
+    }
+    public function delete_faq()
+    {
+        $id = $this->request->getPost('id');
+        $faqModel = new \App\Models\FaqModel();
+        $faqModel->delete($id);
+        return $this->response->setJSON(['success' => true]);
+    }
+    
+    public function get_user_role_list()
+    {
+        $roleModel = new \App\Models\RoleModel();
+        $perPage = $this->request->getGet('per_page') ?? 10;
+        $page = $this->request->getGet('page') ?? 1;
+
+        $total = $roleModel->countAll();
+        $roles = $roleModel->orderBy('id', 'desc')->findAll($perPage, ($page-1)*$perPage);
+        $totalPages = ceil($total / $perPage);
+
+        $roleDetailModel = new \App\Models\RoleDetailModel();
+        foreach ($roles as &$role) {
+            $details = $roleDetailModel->where('role_id', $role['id'])->findAll();
+            $role['users'] = $details;
+        }
+
+        return view('admin/user_role_list', [
+            'roles' => $roles,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'perPage' => $perPage
+        ]);
+    }
+    public function get_request_type_list()
+    {
+        $requestTypeModel = new RequestTypeModel;
+        $perPage = $this->request->getGet('per_page') ?? 10;
+        $page = $this->request->getGet('page') ?? 1;
+
+        $total = $requestTypeModel->countAll();
+        $types = $requestTypeModel->orderBy('id', 'desc')->findAll($perPage, ($page-1)*$perPage);
+        $totalPages = ceil($total / $perPage);
+
+        return view('admin/request_type', [
+            'types' => $types,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'perPage' => $perPage
+        ]);
+    }
+    public function get_request_type_detail($id)
+    {
+        $model = new RequestTypeModel();
+        $type = $model->find($id);
+        if ($type) {
+            return $this->response->setJSON(['success' => true, 'data' => $type]);
+        }
+        return $this->response->setJSON(['success' => false]);
+    }
+
+ 
+    public function add_request_type()
+    {
+        $name = $this->request->getPost('name');
+        $description = $this->request->getPost('description');
+        $status = $this->request->getPost('status');
+        $created_by = session('username') ?? 'admin';
+
+        $requestTypeModel = new RequestTypeModel;
+        $requestTypeModel->insert([
+            'name' => $name,
+            'description' => $description,
+            'status' => $status, // enum: 'Active' atau 'In Active'
+            'created_by' => $created_by,
+            'created_date' => date('Y-m-d H:i:s'),
+            'modified_by' => $created_by,
+            'modified_date' => date('Y-m-d H:i:s')
+        ]);
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    public function delete_request_type()
+    {
+        $id = $this->request->getPost('id');
+        $slaModel = new \App\Models\SlaModel();
+
+        // Cek apakah request type sudah dipakai di SLA
+        $used = $slaModel->where('request_type_id', $id)->countAllResults();
+        if ($used > 0) {
+            return $this->response->setJSON([
+                'success' => false,
+                'invalid' => true,
+                'message' => 'Request Type sudah dipakai di SLA dan tidak bisa dihapus.'
+            ]);
+        }
+
+        $requestTypeModel = new RequestTypeModel();
+        $requestTypeModel->delete($id);
+        return $this->response->setJSON(['success' => true]);
+    }
     public function logout()
     {
         session()->destroy();
         return redirect()->to('/admin/login');
+    }
+    public function edit_request_type()
+    {
+        $id = $this->request->getPost('id');
+        $name = $this->request->getPost('name');
+        $description = $this->request->getPost('description');
+        $status = $this->request->getPost('status');
+        $modified_by = session('username') ?? 'admin';
+        $modified_date = date('Y-m-d H:i:s');
+
+        $model = new RequestTypeModel();
+        $model->update($id, [
+            'name' => $name,
+            'description' => $description,
+            'status' => $status,
+            'modified_by' => $modified_by,
+            'modified_date' => $modified_date
+        ]);
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    public function update_request_type()
+    {
+        $id = $this->request->getPost('id');
+        $name = $this->request->getPost('name');
+        $description = $this->request->getPost('description');
+        $status = $this->request->getPost('status');
+
+        $requestTypeModel = new RequestTypeModel();
+        $requestTypeModel->update($id, [
+            'name' => $name,
+            'description' => $description,
+            'status' => $status
+        ]);
+        // Redirect ke frame Request Type di System_settings
+        return redirect()->to(base_url('admin/System_settings?tab=request-type'));
+    }
+    public function add_sla()
+    {
+        $request_type_id = $this->request->getPost('request_type_id');
+        $priority = $this->request->getPost('priority');
+        $response_time = $this->request->getPost('response_time');
+        $resolution_time = $this->request->getPost('resolution_time');
+        $created_by = session('username') ?? 'admin';
+        $created_date = date('Y-m-d H:i:s');
+
+        $slaModel = new \App\Models\SlaModel();
+        $slaModel->insert([
+            'request_type_id' => $request_type_id,
+            'priority' => $priority,
+            'response_time' => $response_time,
+            'resolution_time' => $resolution_time,
+            'created_by' => $created_by,
+            'created_date' => $created_date
+        ]);
+        return $this->response->setJSON(['success' => true]);
+    }
+    public function get_sla_list()
+    {
+        $db = \Config\Database::connect();
+        $builder = $db->table('sla_configuration');
+        $builder->select('sla_configuration.*, request_type.name as request_type_name');
+        $builder->join('request_type', 'request_type.id = sla_configuration.request_type_id', 'left');
+        $perPage = $this->request->getGet('per_page') ?? 10;
+        $page = $this->request->getGet('page') ?? 1;
+
+        $total = $builder->countAllResults(false);
+        $slas = $builder->orderBy('sla_configuration.id', 'desc')->get($perPage, ($page-1)*$perPage)->getResultArray();
+        $totalPages = ceil($total / $perPage);
+
+        return view('admin/sla_settings', [
+            'slas' => $slas,
+            'perPage' => $perPage,
+            'page' => $page,
+            'totalPages' => $totalPages
+        ]);
+    }
+    public function edit_sla()
+    {
+        $id = $this->request->getPost('id');
+        $priority = $this->request->getPost('priority');
+        $response_time = $this->request->getPost('response_time');
+        $resolution_time = $this->request->getPost('resolution_time');
+        $modified_by = session('username') ?? 'admin';
+        $modified_date = date('Y-m-d H:i:s');
+
+        $slaModel = new \App\Models\SlaModel();
+        $slaModel->update($id, [
+            'priority' => $priority,
+            'response_time' => $response_time,
+            'resolution_time' => $resolution_time,
+            'modified_by' => $modified_by,
+            'modified_date' => $modified_date
+        ]);
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    public function delete_sla()
+    {
+        $id = $this->request->getPost('id');
+        $slaModel = new \App\Models\SlaModel();
+        $slaModel->delete($id);
+        return $this->response->setJSON(['success' => true]);
+    }
+    public function get_used_request_types()
+    {
+        $slaModel = new \App\Models\SlaModel();
+        $usedRequestTypeIds = array_column($slaModel->findAll(), 'request_type_id');
+        return $this->response->setJSON(['used' => $usedRequestTypeIds]);
     }
 }

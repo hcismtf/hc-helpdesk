@@ -18,8 +18,12 @@ class Ticket extends Controller
     }
     public function create()
     {
-        // menampilkan form submit tiket
-        return view('ticket_form');
+        $requestTypeModel = new \App\Models\RequestTypeModel();
+        $requestTypes = $requestTypeModel->where('status', 'Active')->orderBy('name', 'asc')->findAll();
+
+        return view('ticket_form', [
+            'requestTypes' => $requestTypes
+        ]);
     }
 
     public function store()
@@ -40,6 +44,7 @@ class Ticket extends Controller
 
         // ambil data dari form
         $data = [
+            
             'emp_id'        => $emp_id,
             'nip_encrypted' => $nip_encrypted,
             'emp_name'      => $this->request->getPost('emp_name'),
@@ -49,13 +54,14 @@ class Ticket extends Controller
             'subject'       => $this->request->getPost('subject'),
             'message'       => $this->request->getPost('message'),
             'ticket_status' => 'open',
-            'ticket_priority' => 'normal',
+            'ticket_priority' => 'low',
             'created_by'    => $this->request->getPost('emp_name'),
             'created_date'  => date('Y-m-d H:i:s'),
         ];
 
         // insert ke tiket_trx
         $ticketId = $ticketModel->insert($data);
+        
 
         // kalau ada file upload
         $file = $this->request->getFile('attachment');

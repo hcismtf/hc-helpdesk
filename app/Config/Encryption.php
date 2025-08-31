@@ -21,7 +21,7 @@ class Encryption extends BaseConfig
      * You need to ensure it is long enough for the cipher and mode you plan to use.
      * See the user guide for more info.
      */
-    public string $key = 'Tun4$F1n@nc32025@#!-';
+    public string $key = 'mySuperSecretStarterKey1234567890abcdef';
 
     /**
      * --------------------------------------------------------------------------

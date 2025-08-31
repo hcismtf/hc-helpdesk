@@ -1,0 +1,286 @@
+/* --- Global --- */
+body {
+    margin: 0;
+    background: #f5f6fa;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* --- Sidebar & Main Content --- */
+.main-content {
+    margin-left: 70px;
+    transition: margin-left 0.2s;
+    padding: 30px 40px;
+}
+
+
+/* --- Stats Row --- */
+.stats-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+.stat-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    padding: 24px 32px;
+    min-width: 180px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-top: 3px solid #eee;
+    margin-bottom: 16px;
+}
+.stat-card.open { border-top: 3px solid #ffe600; }
+.stat-card.inprogress { border-top: 3px solid #444; }
+.stat-card.done { border-top: 3px solid #22c55e; }
+.stat-card.total { border-top: 3px solid #bbb; }
+.stat-title { font-size: 18px; color: #444; margin-bottom: 8px; }
+.stat-value { font-size: 38px; font-weight: bold; color: #111; }
+
+/* --- Analytics --- */
+.analytics-box {
+    position: absolute;
+    right: 40px;
+    top: 30px;
+    text-align: right;
+}
+.analytics-title { font-weight: bold; }
+.analytics-list { font-size: 13px; color: #444; margin-top: 8px; }
+
+/* --- Tickets Box --- */
+.tickets-box {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    padding: 24px;
+    margin-top: 24px;
+    overflow-x: auto;
+}
+.tickets-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* --- Table --- */
+.tickets-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+.tickets-table th, .tickets-table td {
+    padding: 14px 12px;
+    text-align: left;
+    font-size: 15px;
+    white-space: nowrap;
+}
+.tickets-table th {
+    color: #444;
+    font-size: 15px;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+}
+.tickets-table td {
+    border-bottom: 1px solid #f3f3f3;
+}
+.btn-open {
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 18px;
+    padding: 4px 22px;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* --- Search Box --- */
+.search-box {
+    display: flex;
+    align-items: center;
+    background: #f5f6fa;
+    border-radius: 18px;
+    padding: 6px 16px;
+    width: 260px;
+    min-width: 120px;
+}
+.search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 15px;
+    width: 100%;
+}
+.search-box .search-icon {
+    font-size: 18px;
+    color: #888;
+}
+
+/* --- Pagination --- */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.pagination li a,
+.pagination li span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s ease;
+}
+.pagination li a:hover {
+    background: #f0f0f0;
+}
+.pagination li.active span,
+.pagination li.active a {
+    background: #4F46E5;
+    color: #fff;
+    font-weight: 600;
+}
+.pagination li.disabled span {
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+/* --- Modal --- */
+#filterModal.modal {
+    display: none;
+    position: fixed;
+    left: 0; top: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.08);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+}
+#filterModal .modal-content {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.13);
+    width: 480px;
+    max-width: calc(100vw - 20px);
+    padding: 32px 10px 32px 10px;
+    position: relative;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+}
+#filterModal .close {
+    position: absolute;
+    right: 18px; top: 18px;
+    font-size: 22px;
+    cursor: pointer;
+}
+#filterModal label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 15px;
+    font-weight: 500;
+}
+#filterModal .form-row {
+    margin-bottom: 22px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+#filterModal select,
+#filterModal input[type="date"] {
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 24px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    background: #fff;
+    outline: none;
+    box-sizing: border-box;
+}
+#filterModal .dates-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 22px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+#filterModal .date-col {
+    flex: 1;
+}
+#filterModal .btn-row {
+    margin-top: 18px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+#filterModal .btn-blue {
+    background: #234be7;
+    color: #fff;
+    border: none;
+    padding: 10px 32px;
+    border-radius: 24px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+#filterModal .btn-blue:hover {
+    background: #1a37b8;
+}
+
+/* --- Modal Responsive --- */
+@media (max-width: 600px) {
+    #filterModal .modal-content {
+        width: 98vw;
+        max-width: 98vw;
+        padding: 18px 5px 18px 5px;
+    }
+    #filterModal .dates-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* --- Table Responsive --- */
+@media (max-width: 900px) {
+    .tickets-table {
+        min-width: 500px;
+        font-size: 13px;
+    }
+    .tickets-box {
+        padding: 12px 2px;
+    }
+    .tickets-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+
+/* --- Table Scroll on Small Devices --- */
+@media (max-width: 700px) {
+    .tickets-table {
+        min-width: 400px;
+        font-size: 12px;
+    }
+    .tickets-box {
+        padding: 8px 0;
+    }
+    .main-content {
+        padding: 8px 2px;
+    }
+}

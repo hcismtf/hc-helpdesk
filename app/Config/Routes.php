@@ -5,22 +5,48 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Ticket::create');   // langsung ke form submit tiket
-$routes->post('/ticket/store', 'Ticket::store'); // untuk proses simpan ke DB
+$routes->get('/', 'Ticket::create'); 
+$routes->post('/ticket/store', 'Ticket::store'); 
 
-// kalau mau lihat list tiket (opsional)
 $routes->get('/ticket', 'Ticket::index');
 
-$routes->get('/login', 'Auth::login'); // tampilkan halaman login
-$routes->post('/login', 'Auth::attemptLogin'); // proses submit form login
+$routes->get('/login', 'Auth::login');
+$routes->post('/login', 'Auth::attemptLogin'); 
 
 $routes->get('admin/login', 'admin\Admin::login');
 $routes->post('admin/authenticate', 'admin\Admin::authenticate');
 $routes->get('admin/dashboard', 'admin\Admin::dashboard');
 $routes->get('admin/logout', 'admin\Admin::logout');
 
+// dboard
 $routes->get('admin/dashboard', 'admin\Admin::dashboard');
+$routes->get('admin/Ticket_dashboard', 'admin\Admin::Ticket_dashboard');
 
-// contoh untuk users kalau masih dipakai
-$routes->get('/users', 'User::index');
+// tickets_db
+$routes->get('admin/Ticket_detail/(:num)', 'admin\Admin::Ticket_detail/$1');
+$routes->post('admin/Ticket_update_status/(:num)', 'admin\Admin::Ticket_update_status/$1');
 
+//system settings
+$routes->get('admin/system_settings', 'admin\Admin::system_settings');
+
+//faq
+$routes->post('admin/add_faq', 'admin\Admin::add_faq');
+$routes->get('admin/get_faq_list', 'admin\Admin::get_faq_list');
+$routes->post('admin/delete_faq', 'admin\Admin::delete_faq');
+$routes->post('admin/edit_faq', 'admin\Admin::edit_faq');
+
+// User Roles
+$routes->get('admin/get_user_role_list', 'admin\Admin::get_user_role_list');
+
+// Request Types
+$routes->get('admin/get_request_type_list', 'admin\Admin::get_request_type_list');
+$routes->post('admin/add_request_type', 'admin\Admin::add_request_type');
+$routes->post('admin/edit_request_type', 'admin\Admin::edit_request_type');
+$routes->post('admin/delete_request_type', 'admin\Admin::delete_request_type');
+
+// SLA Settings
+$routes->post('admin/add_sla', 'admin\Admin::add_sla');
+$routes->get('admin/get_sla_list', 'admin\Admin::get_sla_list');
+$routes->post('admin/edit_sla', 'admin\Admin::edit_sla');
+$routes->post('admin/delete_sla', 'admin\Admin::delete_sla');
+$routes->get('admin/get_used_request_types', 'admin\Admin::get_used_request_types');
