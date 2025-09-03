@@ -34,18 +34,22 @@
         <div class="stats-row">
             <div class="stat-card open">
                 <div class="stat-title">Open</div>
+                <div class="stat-underline"></div>
                 <div class="stat-value"><?= $openCount ?></div>
             </div>
             <div class="stat-card inprogress">
                 <div class="stat-title">In Progress</div>
+                <div class="stat-underline"></div>
                 <div class="stat-value"><?= $inProgressCount ?></div>
             </div>
             <div class="stat-card done">
                 <div class="stat-title">Done</div>
+                <div class="stat-underline"></div>
                 <div class="stat-value"><?= $doneCount ?></div>
             </div>
             <div class="stat-card total">
                 <div class="stat-title">Total</div>
+                <div class="stat-underline"></div>
                 <div class="stat-value"><?= $totalCount ?></div>
             </div>
         </div>
@@ -115,31 +119,40 @@
                     </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($openTickets as $ticket): 
-                    if ($ticket['ticket_status'] !== 'open') continue; // hanya tampilkan status open
-                    $created = new DateTime($ticket['created_date']);
-                    $due = clone $created;
-                    $due->modify('+1 day');
-                    $now = new DateTime();
-                    $interval = $now < $due ? $now->diff($due) : false;
-                ?>
-                    <tr>
-                        <td><?= esc($ticket['emp_name']) ?></td>
-                        <td><?= esc($ticket['req_type']) ?></td>
-                        <td><?= esc($created->format('d/m/Y H:i:s')) ?></td>
-                        <td><?= esc($due->format('d/m/Y H:i:s')) ?></td>
-                        <td>
+                <?php foreach ($openTickets as $ticket): ?>
+                <tr>
+                    <td><?= esc($ticket['emp_name']) ?></td>
+                    <td><?= esc($ticket['req_type']) ?></td>
+                    <td><?= esc($ticket['created_date']) ?></td>
+                    <td>
+                        <?php if (!empty($ticket['due_date'])): ?>
+                            <?= esc(date('d/m/Y H:i:s', strtotime($ticket['due_date']))) ?>
+                        <?php else: ?>
+                            <span style="color:#888;">-</span>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if (!empty($ticket['due_date'])): 
+                            $now = new DateTime();
+                            $due = new DateTime($ticket['due_date']);
+                            $interval = $now < $due ? $now->diff($due) : false;
+                        ?>
                             <?php if ($interval): ?>
                                 <?= $interval->d ?> Day <?= str_pad($interval->h,2,'0',STR_PAD_LEFT) ?>H <?= str_pad($interval->i,2,'0',STR_PAD_LEFT) ?>M <?= str_pad($interval->s,2,'0',STR_PAD_LEFT) ?>S
                             <?php else: ?>
                                 0 Day 00H 00M 00S
                             <?php endif; ?>
-                        </td>
-                        <td>
+                        <?php else: ?>
+                            <span style="color:#888;">-</span>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <a href="<?= base_url('admin/Ticket_detail/' . $ticket['id']) ?>">
                             <button class="btn-open">Open</button>
-                        </td>
-                    </tr>
-                <?php endforeach ?>
+                        </a>
+                    </td>
+                </tr>
+            <?php endforeach ?>
                 </tbody>
             </table>
             <!-- Pagination -->

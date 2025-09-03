@@ -1,3 +1,6 @@
+<?php
+$isSuperadmin = (strtolower(session('role') ?? '') === 'superadmin');
+?>
 <div class="sidebar" id="sidebar">
     <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">
         <span id="toggle-icon">&#9776;</span>
@@ -15,9 +18,13 @@
             <span>⚙️</span>
             <span class="nav-label">Settings</span>
         </a>
-        <a href="#" title="Ideas">
-            <span>💡</span>
-            <span class="nav-label">Ideas</span>
+        <a href="<?= base_url('admin/user_mgt') ?>" class="<?= $active=='user_mgt'?'active':'' ?>" title="User Management">
+            <span>👤</span>
+            <span class="nav-label">User Management</span>
+        </a>
+        <a href="<?= base_url('admin/report_user') ?>" class="<?= $active=='reports'?'active':'' ?>" title="Reports">
+            <span>📝</span>
+            <span class="nav-label">Reports</span>
         </a>
     </div>
     <div class="bottom-btn">

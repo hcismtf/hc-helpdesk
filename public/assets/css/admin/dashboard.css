@@ -32,12 +32,17 @@ body {
     border-top: 3px solid #eee;
     margin-bottom: 16px;
 }
-.stat-card.open { border-top: 3px solid #ffe600; }
-.stat-card.inprogress { border-top: 3px solid #444; }
-.stat-card.done { border-top: 3px solid #22c55e; }
-.stat-card.total { border-top: 3px solid #bbb; }
-.stat-title { font-size: 18px; color: #444; margin-bottom: 8px; }
-.stat-value { font-size: 38px; font-weight: bold; color: #111; }
+.stat-underline {
+    width: 100%;
+    opacity: 0.6;
+    height: 3px;
+    border-radius: 2px;
+    margin: 12px 0 18px 0;
+}
+.stat-card.open .stat-underline { background: #FCD116; }
+.stat-card.inprogress .stat-underline { background: #283252; }
+.stat-card.done .stat-underline { background: #16FC53; }
+.stat-card.total .stat-underline { background: #000; }
 
 /* --- Analytics --- */
 .analytics-box {

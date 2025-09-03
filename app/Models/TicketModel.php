@@ -8,6 +8,6 @@ class TicketModel extends Model
     protected $primaryKey = 'id';
     protected $allowedFields = [
         'emp_id', 'nip_encrypted', 'emp_name', 'email', 'wa_no', 'req_type', 'subject', 'message',
-        'ticket_status', 'ticket_priority', 'created_by', 'created_date'
+        'ticket_status', 'ticket_priority', 'created_by', 'created_date','due_date','first_response_at','finish_date'
     ];
 }

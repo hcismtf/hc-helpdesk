@@ -4,11 +4,20 @@ namespace App\Controllers\admin;
 
 use App\Controllers\BaseController;
 use App\Models\RequestTypeModel;
+use App\Models\PermissionsModel;
+use App\Models\TiketTransactionsModel;
 
 class Admin extends BaseController
 {
+    public function __construct()
+    {
+        date_default_timezone_set('Asia/Jakarta');
+    }
     public function login()
     {
+        if (session('isLoggedIn')) {
+            return redirect()->to('/admin/dashboard');
+        }
         return view('admin/login');
     }
 
@@ -17,15 +26,53 @@ class Admin extends BaseController
         $username = $this->request->getPost('username');
         $password = $this->request->getPost('password');
 
-        // Cek superadmin pakai password_plain (sementara)
+        // Superadmin login (config)
+        $superadminConfig = new \Config\Superadmin();
         if (
-            $username === $this->superadmin->username &&
-            $password === $this->superadmin->password_plain
+            $username === $superadminConfig->username &&
+            $password === $superadminConfig->password_plain
         ) {
             session()->set([
                 'isLoggedIn' => true,
                 'role' => 'superadmin',
-                'username' => $username
+                'username' => $username,
+                'user_permissions' => ['dashboard', 'tickets', 'user_management', 'system_settings'] // full access
+            ]);
+            return redirect()->to('/admin/dashboard');
+        }
+
+        // User login dari database
+        $userModel = new \App\Models\UserModel();
+        $user = $userModel
+            ->where('email', $username)
+            ->orWhere('name', $username)
+            ->first();
+
+        if ($user && password_verify($password, $user['password'])) {
+            // Ambil permission dari role
+            $roleDetailModel = new \App\Models\RoleDetailModel();
+            $rolePermissionsModel = new \App\Models\RolePermissionsModel();
+            $permissionsModel = new PermissionsModel();
+
+            $roleDetail = $roleDetailModel->where('user_id', $user['id'])->first();
+            $roleId = $roleDetail['role_id'] ?? null;
+
+            $rolePerms = $rolePermissionsModel->where('role_id', $roleId)->findAll();
+            $userPermissions = [];
+            foreach ($rolePerms as $rp) {
+                $perm = $permissionsModel->find($rp['permission_id']);
+                if ($perm) $userPermissions[] = $perm['code'];
+            }
+
+            $userModel->update($user['id'], [
+                'last_login_time' => date('Y-m-d H:i:s')
+            ]);
+            session()->set([
+                'isLoggedIn' => true,
+                'role' => 'user',
+                'username' => $user['name'],
+                'user_id' => $user['id'],
+                'user_permissions' => $userPermissions
             ]);
             return redirect()->to('/admin/dashboard');
         }
@@ -36,51 +83,77 @@ class Admin extends BaseController
 
     public function dashboard()
     {
-        if (session('isLoggedIn') && session('role') === 'superadmin') {
-            $ticketModel = new \App\Models\TicketModel();
-
-            // Ambil filter dari GET
-            $type = $this->request->getGet('type');
-            $start = $this->request->getGet('start');
-            $end = $this->request->getGet('end');
-            $perPage = $this->request->getGet('per_page') ?? 10;
-            $page = $this->request->getGet('page') ?? 1;
-
-            // Query builder
-            $builder = $ticketModel->where('ticket_status', 'open');
-            if ($type) $builder->where('req_type', $type);
-            if ($start) $builder->where('created_date >=', $start . ' 00:00:00');
-            if ($end) $builder->where('created_date <=', $end . ' 23:59:59');
-
-            // Pagination
-            $openTickets = $builder->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
-            $pager = $ticketModel->pager;
-
-            // Statistik status
-            $openCount = $ticketModel->where('ticket_status', 'open')->countAllResults();
-            $inProgressCount = $ticketModel->where('ticket_status', 'in_progress')->countAllResults();
-            $doneCount = $ticketModel->where('ticket_status', 'closed')->countAllResults();
-            $totalCount = $ticketModel->countAllResults();
-
-            // Untuk dropdown type
-            $types = $ticketModel->select('req_type')->distinct()->findAll();
-
-            return view('admin/dashboard', [
-                'openCount' => $openCount,
-                'inProgressCount' => $inProgressCount,
-                'doneCount' => $doneCount,
-                'totalCount' => $totalCount,
-                'openTickets' => $openTickets,
-                'pager' => $pager,
-                'types' => $types,
-                'perPage' => $perPage,
-                'page' => $page,
-                'type' => $type,
-                'start' => $start,
-                'end' => $end,
-            ]);
+        // Cek sudah login
+        if (!session('isLoggedIn')) {
+            return redirect()->to('/admin/login');
         }
-        return redirect()->to('/admin/login');
+
+        $ticketModel = new \App\Models\TicketModel();
+        $slaModel = new \App\Models\SlaModel();
+
+        // Ambil filter dari GET
+        $type = $this->request->getGet('type');
+        $start = $this->request->getGet('start');
+        $end = $this->request->getGet('end');
+        $perPage = $this->request->getGet('per_page') ?? 10;
+        $page = $this->request->getGet('page') ?? 1;
+
+        // Query builder: ambil semua tiket yang status-nya bukan closed
+        $builder = $ticketModel->where('ticket_status !=', 'closed');
+        if ($type) $builder->where('req_type', $type);
+        if ($start) $builder->where('created_date >=', $start . ' 00:00:00');
+        if ($end) $builder->where('created_date <=', $end . ' 23:59:59');
+
+        // Pagination
+        $openTickets = $builder->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
+        $pager = $ticketModel->pager;
+
+        // Statistik status
+        $openCount = $ticketModel->where('ticket_status', 'open')->countAllResults();
+        $inProgressCount = $ticketModel->where('ticket_status', 'in_progress')->countAllResults();
+        $doneCount = $ticketModel->where('ticket_status', 'closed')->countAllResults();
+        $totalCount = $ticketModel->countAllResults();
+
+        // Ambil semua SLA untuk mapping (by priority & request_type jika ada)
+        $slaList = $slaModel->findAll();
+        $slaMap = [];
+        foreach ($slaList as $sla) {
+            $slaMap[$sla['priority']] = $sla;
+        }
+
+        // Inject SLA ke tiket
+        foreach ($openTickets as &$ticket) {
+            $priority = $ticket['ticket_priority'];
+            $sla = $slaMap[$priority] ?? null;
+            if ($sla) {
+                $ticket['sla_response_time'] = $sla['response_time'];
+                $ticket['sla_resolution_time'] = $sla['resolution_time'];
+            } else {
+                $ticket['sla_response_time'] = 24;
+                $ticket['sla_resolution_time'] = 24;
+            }
+        }
+        unset($ticket);
+
+        // Untuk dropdown type
+        $types = $ticketModel->select('req_type')->distinct()->findAll();
+
+        return view('admin/dashboard', [
+            'openCount' => $openCount,
+            'inProgressCount' => $inProgressCount,
+            'doneCount' => $doneCount,
+            'totalCount' => $totalCount,
+            'openTickets' => $openTickets,
+            'pager' => $pager,
+            'types' => $types,
+            'perPage' => $perPage,
+            'page' => $page,
+            'type' => $type,
+            'start' => $start,
+            'end' => $end,
+            'username' => session('username'),
+            'role' => session('role')
+        ]);
     }
 
     public function Ticket_dashboard()
@@ -119,6 +192,8 @@ class Admin extends BaseController
     {
         $model = new \App\Models\TicketModel();
         $ticket = $model->find($id);
+        $userModel = new \App\Models\UserModel();
+        $users = $userModel->where('status', 'active')->findAll();
 
         // Decrypt NIP jika perlu
         $encrypter = \Config\Services::encrypter();
@@ -130,49 +205,84 @@ class Admin extends BaseController
             }
         }
 
+        // Ambil reply terakhir dari tiket_transactions untuk assigned_to
+        $trxModel = new TiketTransactionsModel();
+        $lastTrx = $trxModel->where('tiket_trx_id', $id)->orderBy('created_at', 'desc')->first();
+
+        $assignedName = '-';
+        if (!empty($lastTrx['assigned_to'])) {
+            foreach ($users as $u) {
+                if ($u['id'] == $lastTrx['assigned_to']) {
+                    $assignedName = $u['name'];
+                    break;
+                }
+            }
+        }
+
+        // Ambil semua replies
+        $repliesRaw = $trxModel->where('tiket_trx_id', $id)->orderBy('created_at', 'asc')->findAll();
+        $replies = [];
+        foreach ($repliesRaw as $r) {
+            $author = '';
+            foreach ($users as $u) {
+                if ($u['id'] == $r['user_id']) {
+                    $author = $u['name'];
+                    break;
+                }
+            }
+            $replies[] = [
+                'author'     => $author ?: 'User',
+                'created_at' => $r['created_at'],
+                'text'       => $r['reply']
+            ];
+        }
+
         return view('admin/Ticket_detail', [
-            'ticket' => $ticket,
+            'ticket'       => $ticket,
+            'users'        => $users,
+            'replies'      => $replies,
+            'assignedName' => $assignedName // <-- dari tiket_transactions terakhir
         ]);
     }
-
-    public function Ticket_update_status($id)
-    {
-        $status = $this->request->getPost('status');
-        $priority = $this->request->getPost('priority');
-
-        $ticketModel = new \App\Models\TicketModel();
-
-        // Update status dan priority
-        $ticketModel->update($id, [
-            'ticket_status' => $status,
-            'ticket_priority' => $priority,
-            'modified_date' => date('Y-m-d H:i:s')
-        ]);
-
-        return redirect()->to('admin/Ticket_detail/' . $id);
-    }
-
     public function system_settings()
     {
         $faqModel = new \App\Models\FaqModel();
-        $faqs = $faqModel->orderBy('id', 'desc')->findAll(10); // Ambil 10 FAQ terbaru
-        // Ganti 'Superadmin' dan '[user name]' dengan data session jika ingin dinamis
+        $faqs = $faqModel->orderBy('id', 'desc')->findAll(10);
+
         $requestTypeModel = new RequestTypeModel();
         $requestTypes = $requestTypeModel->findAll();
+
         $slaModel = new \App\Models\SlaModel();
         $usedRequestTypeIds = array_column($slaModel->findAll(), 'request_type_id');
+
+        $permissionsModel = new PermissionsModel();
+        $permissions = $permissionsModel->orderBy('name', 'asc')->findAll();
+
+        // Tambahkan variabel page dan totalPages jika view butuh
+        $page = $this->request->getGet('page') ?? 1;
+        $perPage = $this->request->getGet('per_page') ?? 10;
+        $total = $faqModel->countAll();
+        $totalPages = ceil($total / $perPage);
+
         $editFaq = null;
         $editId = $this->request->getGet('edit_faq_id');
         if ($editId) {
             $editFaq = $faqModel->find($editId);
         }
+
         $data = [
             'username' => session('username') ?? '[user name]',
             'role' => session('role') ?? 'Superadmin',
             'faqs' => $faqs,
-            'editFaq' => $editFaq
+            'editFaq' => $editFaq,
+            'permissions' => $permissions,
+            'requestTypes' => $requestTypes,
+            'usedRequestTypeIds' => $usedRequestTypeIds,
+            'page' => $page,
+            'perPage' => $perPage,
+            'totalPages' => $totalPages
         ];
-        return view('admin/System_settings', ['requestTypes' => $requestTypes, 'usedRequestTypeIds' => $usedRequestTypeIds], $data);
+        return view('admin/System_settings', $data);
     }
     public function add_faq()
     {
@@ -234,20 +344,33 @@ class Admin extends BaseController
     public function add_user_role()
     {
         $name = $this->request->getPost('name');
-        $permissions = $this->request->getPost('permissions'); // array
+        $permissions = $this->request->getPost('permissions'); // array of permission_id
         $created_by = session('username') ?? 'admin';
         $created_date = date('Y-m-d H:i:s');
 
-        // Simpan permission sebagai string (misal: "Tickets,System settings")
-        $menu_access = is_array($permissions) ? implode(',', $permissions) : '';
-
         $roleModel = new \App\Models\RoleModel();
-        $roleModel->insert([
+        $rolePermissionsModel = new \App\Models\RolePermissionsModel();
+        $encrypter = \Config\Services::encrypter();
+
+        // Simpan role dulu
+        $roleId = $roleModel->insert([
             'name' => $name,
-            'menu_access' => $menu_access,
             'created_by' => $created_by,
             'created_date' => $created_date
         ]);
+
+        // Simpan ke role_permissions (bisa banyak permission)
+        if (is_array($permissions)) {
+            foreach ($permissions as $permissionId) {
+                if ($permissionId) {
+                    // Simpan ID asli (integer), BUKAN hasil enkripsi!
+                    $rolePermissionsModel->insert([
+                        'role_id' => $roleId,
+                        'permission_id' => $permissionId
+                    ]);
+                }
+            }
+        }
 
         return $this->response->setJSON(['success' => true]);
     }
@@ -255,17 +378,33 @@ class Admin extends BaseController
     {
         $id = $this->request->getPost('id');
         $name = $this->request->getPost('name');
-        $permissions = $this->request->getPost('permissions');
-        $modified_by = session('username') ?? 'admin';
-        $modified_date = date('Y-m-d H:i:s');
-        $menu_access = is_array($permissions) ? implode(',', $permissions) : '';
+        $permissions = $this->request->getPost('permissions'); // array of permission_id
+
         $roleModel = new \App\Models\RoleModel();
+        $rolePermissionsModel = new \App\Models\RolePermissionsModel();
+
+        // Update nama role
         $roleModel->update($id, [
             'name' => $name,
-            'menu_access' => $menu_access,
-            'modified_by' => $modified_by,
-            'modified_date' => $modified_date
+            'modified_by' => session('username'),
+            'modified_date' => date('Y-m-d H:i:s')
         ]);
+
+        // Hapus semua permission lama
+        $rolePermissionsModel->where('role_id', $id)->delete();
+
+        // Insert permission baru
+        if (is_array($permissions)) {
+            foreach ($permissions as $permissionId) {
+                if ($permissionId) {
+                    $rolePermissionsModel->insert([
+                        'role_id' => $id,
+                        'permission_id' => $permissionId
+                    ]);
+                }
+            }
+        }
+
         return $this->response->setJSON(['success' => true]);
     }
 
@@ -273,8 +412,15 @@ class Admin extends BaseController
     {
         $id = $this->request->getPost('id');
         $roleModel = new \App\Models\RoleModel();
-        $roleModel->delete($id);
-        return $this->response->setJSON(['success' => true]);
+        $rolePermissionsModel = new \App\Models\RolePermissionsModel();
+
+        // Hapus relasi permissions dulu
+        $rolePermissionsModel->where('role_id', $id)->delete();
+
+        // Hapus role
+        $deleted = $roleModel->delete($id);
+
+        return $this->response->setJSON(['success' => (bool)$deleted]);
     }    
     public function get_user_role_list()
     {
@@ -287,9 +433,21 @@ class Admin extends BaseController
         $totalPages = ceil($total / $perPage);
 
         $roleDetailModel = new \App\Models\RoleDetailModel();
+        $rolePermissionsModel = new \App\Models\RolePermissionsModel();
+        $permissionsModel = new PermissionsModel();
+
         foreach ($roles as &$role) {
             $details = $roleDetailModel->where('role_id', $role['id'])->findAll();
             $role['users'] = $details;
+
+            // Ambil permission untuk role ini
+            $rolePerms = $rolePermissionsModel->where('role_id', $role['id'])->findAll();
+            $permNames = [];
+            foreach ($rolePerms as $rp) {
+                $perm = $permissionsModel->find($rp['permission_id']);
+                if ($perm) $permNames[] = $perm['name'];
+            }
+            $role['menu_access'] = implode(', ', $permNames);
         }
 
         return view('admin/user_role_list', [
@@ -475,4 +633,286 @@ class Admin extends BaseController
     //     $usedRequestTypeIds = array_column($slaModel->findAll(), 'request_type_id');
     //     return $this->response->setJSON(['used' => $usedRequestTypeIds]);
     // }
+
+    public function user_mgt()
+    {
+        $roleModel = new \App\Models\RoleModel();
+        $roles = $roleModel->findAll();
+
+        $userModel = new \App\Models\UserModel();
+        // JOIN ke role_detail dan role untuk dapat nama role
+        $users = $userModel
+            ->select('users.*, role.name as role_name')
+            ->join('role_detail', 'role_detail.user_id = users.id', 'left')
+            ->join('role', 'role.id = role_detail.role_id', 'left')
+            ->findAll();
+        
+        $permissionsModel = new PermissionsModel();
+        $permissions = $permissionsModel->orderBy('id', 'desc')->findAll();
+        return view('admin/user_mgt', [
+            'active' => 'user_mgt',
+            'roles' => $roles,
+            'users' => $users,
+            'permissions' => $permissions
+        ]);
+    }
+    public function add_user()
+    {
+        $userModel = new \App\Models\UserModel();
+        $roleDetailModel = new \App\Models\RoleDetailModel();
+
+        $userData = [
+            'name'        => $this->request->getPost('name'),
+            'email'       => $this->request->getPost('email'),
+            'password'    => password_hash($this->request->getPost('password'), PASSWORD_DEFAULT),
+            'status'      => $this->request->getPost('status'),
+            'role_id'     => $this->request->getPost('role'), // simpan role_id langsung di tabel users
+            'created_by'  => session('username') ?? 'system',
+            'created_date'=> date('Y-m-d H:i:s'),
+        ];
+
+        $userId = $userModel->insert($userData);
+
+        // Simpan ke role_detail
+        $roleId = $this->request->getPost('role');
+        if ($roleId) {
+            $roleDetailModel->insert([
+                'role_id' => $roleId,
+                'user_id' => $userId,
+                'created_by' => session('username') ?? 'system',
+                'created_date' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        // Ambil data user baru untuk update list di frontend
+        $user = $userModel->find($userId);
+
+        return $this->response->setJSON(['success' => true, 'user' => $user]);
+    }
+    public function delete_user()
+    {
+        $id = $this->request->getPost('id');
+        $userModel = new \App\Models\UserModel();
+        $roleDetailModel = new \App\Models\RoleDetailModel();
+
+        // Hapus role_detail dulu
+        $roleDetailModel->where('user_id', $id)->delete();
+
+        // Hapus user
+        $userModel->delete($id);
+
+        return $this->response->setJSON(['success' => true]);
+    }
+    public function edit_user()
+    {
+        $id = $this->request->getPost('id');
+        $username = $this->request->getPost('username');
+        $name = $this->request->getPost('name');
+        $email = $this->request->getPost('email');
+        $roleId = $this->request->getPost('role');
+        $status = $this->request->getPost('status');
+        $password = $this->request->getPost('password');
+
+        $userModel = new \App\Models\UserModel();
+        $roleDetailModel = new \App\Models\RoleDetailModel();
+
+        $updateData = [
+            'name' => $name,
+            'email' => $email,
+            'status' => $status,
+            'modified_by' => session('username') ?? 'system',
+            'modified_date' => date('Y-m-d H:i:s'),
+        ];
+        if (!empty($password)) {
+            $updateData['password'] = password_hash($password, PASSWORD_DEFAULT);
+        }
+        if (!empty($username)) {
+            $updateData['username'] = $username;
+        }
+
+        $userModel->update($id, $updateData);
+
+        // Update role_detail
+        $roleDetail = $roleDetailModel->where('user_id', $id)->first();
+        if ($roleDetail) {
+            $roleDetailModel->update($roleDetail['id'], [
+                'role_id' => $roleId,
+                'modified_by' => session('username') ?? 'system',
+                'modified_date' => date('Y-m-d H:i:s')
+            ]);
+        } else {
+            $roleDetailModel->insert([
+                'role_id' => $roleId,
+                'user_id' => $id,
+                'created_by' => session('username') ?? 'system',
+                'created_date' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        return $this->response->setJSON(['success' => true]);
+    }
+    public function get_user()
+    {
+        $id = $this->request->getGet('id');
+        $userModel = new \App\Models\UserModel();
+        $roleDetailModel = new \App\Models\RoleDetailModel();
+
+        $user = $userModel->where('id', $id)->first();
+        $roleDetail = $roleDetailModel->where('user_id', $id)->first();
+
+        if ($user) {
+            $user['role_id'] = $roleDetail['role_id'] ?? '';
+            return $this->response->setJSON(['success' => true, 'user' => $user]);
+        } else {
+            return $this->response->setJSON(['success' => false]);
+        }
+    }
+    public function add_permission()
+    {
+        $name = $this->request->getPost('name');
+        $code = $this->request->getPost('code');
+        $model = new PermissionsModel();
+
+        $data = [
+            'name' => $name,
+            'code' => $code,
+            'created_by' => session('username'),
+            'created_date' => date('Y-m-d H:i:s')
+        ];
+        $id = $model->insert($data);
+        if ($id) {
+            $permission = $model->find($id);
+            return $this->response->setJSON(['success' => true, 'permission' => $permission]);
+        } else {
+            return $this->response->setJSON(['success' => false]);
+        }
+    }
+
+    public function get_permission()
+    {
+        $id = $this->request->getGet('id');
+        $model = new PermissionsModel();
+        $permission = $model->find($id);
+        if ($permission) {
+            return $this->response->setJSON(['success' => true, 'permission' => $permission]);
+        } else {
+            return $this->response->setJSON(['success' => false]);
+        }
+    }
+
+    public function edit_permission()
+    {
+        $id = $this->request->getPost('id');
+        $name = $this->request->getPost('name');
+        $code = $this->request->getPost('code');
+        $model = new PermissionsModel();
+
+        $data = [
+            'name' => $name,
+            'code' => $code,
+            'modified_by' => session('username'),
+            'modified_date' => date('Y-m-d H:i:s')
+        ];
+        $model->update($id, $data);
+        $permission = $model->find($id);
+        if ($permission) {
+            return $this->response->setJSON(['success' => true, 'permission' => $permission]);
+        } else {
+            return $this->response->setJSON(['success' => false]);
+        }
+    }
+
+    public function delete_permission()
+    {
+        $id = $this->request->getPost('id');
+        $model = new PermissionsModel();
+        if ($model->delete($id)) {
+            return $this->response->setJSON(['success' => true]);
+        } else {
+            return $this->response->setJSON(['success' => false]);
+        }
+    }
+    public function report_user()
+    {
+        $username = session('username') ?? '';
+        $role = session('role') ?? '';
+
+        // Data dummy
+        $reportTypes = [
+            ['id' => 1, 'name' => 'Monthly'],
+            ['id' => 2, 'name' => 'Incident'],
+            ['id' => 3, 'name' => 'Summary'],
+        ];
+        $reports = [
+            [
+                'type_name' => 'Monthly',
+                'created_date' => '28/08/2025 15:43:23'
+            ],
+            [
+                'type_name' => 'Incident',
+                'created_date' => '27/08/2025 10:12:00'
+            ]
+        ];
+        $page = 1;
+        $perPage = 10;
+        $totalPages = 3;
+
+        // Tambahkan variabel $active
+        return view('admin/report_user', [
+            'username'    => $username,
+            'role'        => $role,
+            'reportTypes' => $reportTypes,
+            'reports'     => $reports,
+            'page'        => $page,
+            'perPage'     => $perPage,
+            'totalPages'  => $totalPages,
+            'active'      => 'reports' // <--- ini penting untuk navbar
+        ]);
+    }
+    public function send_reply($ticketId)
+    {
+        $replyText   = $this->request->getPost('reply');
+        $status      = $this->request->getPost('status');
+        $priority    = $this->request->getPost('priority');
+        $assignedTo  = $this->request->getPost('assigned_to');
+
+        // Jika assigned_to tidak dikirim dari form, ambil dari transaksi terakhir
+        if (empty($assignedTo)) {
+            $trxModel = new TiketTransactionsModel();
+            $lastTrx = $trxModel->where('tiket_trx_id', $ticketId)->orderBy('created_at', 'desc')->first();
+            $assignedTo = !empty($lastTrx['assigned_to']) ? $lastTrx['assigned_to'] : null;
+        }
+
+        $userId   = session('user_id');
+        $role     = session('role');
+        $username = session('username') ?? 'system';
+
+        if ($role === 'superadmin') {
+            $userId = 9999;
+            $username = 'superadmin';
+        }
+
+        $trxModel = new TiketTransactionsModel();
+        $trxModel->insert([
+            'tiket_trx_id' => $ticketId,
+            'user_id'      => $userId,
+            'submitted_by' => $userId,
+            'status'       => $status,
+            'priority'     => $priority,
+            'assigned_to'  => $assignedTo,
+            'reply'        => $replyText,
+            'created_at'   => date('Y-m-d H:i:s')
+        ]);
+
+        $ticketModel = new \App\Models\TicketModel();
+        $ticketModel->update($ticketId, [
+            'ticket_status'   => $status,
+            'ticket_priority' => $priority,
+            'assigned_to'     => $assignedTo,
+            'modified_date'   => date('Y-m-d H:i:s'),
+            'modified_by'     => $username
+        ]);
+
+        return redirect()->to('admin/Ticket_detail/' . $ticketId);
+    }
 }

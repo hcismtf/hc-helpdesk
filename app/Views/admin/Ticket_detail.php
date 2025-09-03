@@ -15,7 +15,7 @@
             <a href="<?= base_url('admin/Ticket_dashboard') ?>" style="color:#234be7;text-decoration:none;">Ticket</a> &gt;
             <span style="color:#222;"><?= esc($ticket['id']) ?></span>
         </div>
-        <button class="btn-back" onclick="window.location.href='<?= base_url('admin/Ticket_dashboard') ?>'">Back to Home</button>
+        <button class="btn-back" onclick="window.location.href='<?= base_url('admin/Ticket_dashboard') ?>'">Back to Tickets</button>
         <div class="ticket-detail-box">
             <div class="header-row">
                 <div>
@@ -31,34 +31,58 @@
                         </span>
                     <?php endif ?>
                 </div>
-                <button class="btn-update-status" onclick="showStatusModal()">Update Status</button>
+
             </div>
-            <div id="statusModal" class="modal-status" style="display:none;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <span style="font-size:20px;font-weight:600;">Update Status</span>
-                        <span class="close-modal" onclick="closeStatusModal()">&times;</span>
+            
+            <!-- Modal Reply Status -->
+            <div id="replyStatusModal" class="modal-user" style="display:none;">
+                <div class="modal-user-content modal-user-frame">
+                    <div class="modal-user-header" style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                        <span class="modal-user-title">Update Status</span>
+                        <span class="modal-user-close" onclick="closeReplyStatusModal()" style="font-size:2rem; cursor:pointer;">&times;</span>
                     </div>
-                    <form action="<?= base_url('admin/Ticket_update_status/' . esc($ticket['id'])) ?>" method="post">
-                        <div class="modal-body">
-                            <label for="status" style="font-weight:600;">Status</label>
-                            <select name="status" id="status" class="modal-select">
+                    <?php
+                    // Cek apakah ticket sudah pernah direply (ada transaksi)
+                    $hasReply = !empty($replies);
+                    ?>
+
+                    <form id="replyStatusForm" method="post" action="<?= base_url('admin/send_reply/' . esc($ticket['id'])) ?>">
+                        <div class="modal-form-group">
+                            <label class="modal-label">Status <span style="color:red">*</span></label>
+                            <select name="status" class="modal-input modal-textbox" required>
                                 <option value="">Select Ticket Status</option>
-                                <option value="open" <?= $ticket['ticket_status']=='open'?'selected':'' ?>>Open</option>
-                                <option value="in_progress" <?= $ticket['ticket_status']=='in_progress'?'selected':'' ?>>In Progress</option>
-                                <option value="closed" <?= $ticket['ticket_status']=='closed'?'selected':'' ?>>Closed</option>
-                            </select>
-                            <label for="priority" style="font-weight:600; margin-top:16px; display:block;">Priority</label>
-                            <select name="priority" id="priority" class="modal-select">
-                                <option value="">Select Ticket Priority</option>
-                                <option value="low" <?= $ticket['ticket_priority']=='low'?'selected':'' ?>>Low</option>
-                                <option value="medium" <?= $ticket['ticket_priority']=='medium'?'selected':'' ?>>Medium</option>
-                                <option value="high" <?= $ticket['ticket_priority']=='high'?'selected':'' ?>>High</option>
-                                <option value="urgent" <?= $ticket['ticket_priority']=='urgent'?'selected':'' ?>>Urgent</option>
+                                <option value="open">Open</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="closed">Closed</option>
                             </select>
                         </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn-modal-submit">Submit Status</button>
+                        <div class="modal-form-group">
+                            <label class="modal-label">Priority <span style="color:red">*</span></label>
+                            <select name="priority" class="modal-input modal-textbox" required>
+                                <option value="">Select Ticket Status</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <?php if (!$hasReply): // hanya tampil jika belum ada reply ?>
+                        <div class="modal-form-group">
+                            <label class="modal-label">Assigned To <span style="color:red">*</span></label>
+                            <select name="assigned_to" class="modal-input modal-textbox" required>
+                                <option value="">Select User</option>
+                                <?php foreach ($users as $user): ?>
+                                    <option value="<?= esc($user['id']) ?>"><?= esc($user['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <?php endif; ?>
+                        <div class="modal-form-group">
+                            <label class="modal-label">Add Reply <span style="color:red">*</span></label>
+                            <textarea name="reply" class="modal-input modal-textbox" style="height:100px;" required placeholder="Text Area"></textarea>
+                        </div>
+                        <div class="modal-user-footer" style="width:100%; display:flex; justify-content:center;">
+                            <button type="submit" class="modal-user-submit">Submit Status</button>
                         </div>
                     </form>
                 </div>
@@ -83,6 +107,7 @@
                     <div class="ticket-info-title">Ticket Information</div>
                     <div class="ticket-info-list">Request type: <?= esc($ticket['req_type'] ?? '') ?></div>
                     <div class="ticket-info-list">Created Date: <?= !empty($ticket['created_date']) ? esc(date('d/m/Y H:i:s', strtotime($ticket['created_date']))) : '' ?></div>
+                    <div class="ticket-info-list">Assigned To: <?= esc($assignedName) ?></div>               
                 </div>
             </div>
             <div class="ticket-section-title">Original Message</div>
@@ -104,11 +129,12 @@
                     <div class="reply-item" style="color:#888;">No replies yet.</div>
                 <?php endif ?>
             </div>
-            <div class="ticket-section-title">Add Reply</div>
+            
+            <!-- <div class="ticket-section-title">Add Reply</div> -->
             <div class="add-reply-box">
                 <form action="#" method="post">
-                    <textarea class="add-reply-textarea" name="reply" placeholder="Text Area"></textarea>
-                    <button type="submit" class="btn-send-reply">Send Reply</button>
+                    <!-- <textarea class="add-reply-textarea" name="reply" placeholder="Text Area"></textarea> -->
+                    <button type="button" class="btn-send-reply" onclick="showReplyStatusModal()">Send Reply</button>
                 </form>
             </div>
         </div>
@@ -125,6 +151,19 @@
     function escCloseModal(e) {
         if (e.key === "Escape") {
             closeStatusModal();
+        }
+    }
+    function showReplyStatusModal() {
+        document.getElementById('replyStatusModal').style.display = 'flex';
+        document.addEventListener('keydown', escCloseReplyModal);
+    }
+    function closeReplyStatusModal() {
+        document.getElementById('replyStatusModal').style.display = 'none';
+        document.removeEventListener('keydown', escCloseReplyModal);
+    }
+    function escCloseReplyModal(e) {
+        if (e.key === "Escape") {
+            closeReplyStatusModal();
         }
     }
     </script>

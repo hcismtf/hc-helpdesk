@@ -34,6 +34,7 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        'permission' => \App\Filters\PermissionFilter::class,
     ];
 
     /**
@@ -75,7 +76,38 @@ class Filters extends BaseFilters
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
+            'permission' => ['except' => [
+                'admin/login',
+                'admin/authenticate',
+                'admin/forbidden',
+                'admin/logout',
+                'admin/get_faq_list',
+                'admin/add_faq',
+                'admin/edit_faq',
+                'admin/delete_faq',
+                'admin/get_user_role_list',
+                'admin/add_user_role',
+                'admin/edit_user_role',
+                'admin/delete_user_role',
+                'admin/get_request_type_list',
+                'admin/add_request_type',
+                'admin/edit_request_type',
+                'admin/delete_request_type',
+                'admin/get_sla_list',
+                'admin/add_sla',
+                'admin/edit_sla',
+                'admin/delete_sla',
+                'admin/add_permission',
+                'admin/edit_permission',
+                'admin/delete_permission',
+                'admin/delete_user',
+                'admin/report_user',
+                'ticket/store',
+                'ticket/create',
+                // Tambahkan endpoint lain yang dipakai AJAX
+            ]],
         ],
+        
         'after' => [
             // 'honeypot',
             // 'secureheaders',

@@ -2,20 +2,16 @@
 namespace App\Models;
 use CodeIgniter\Model;
 
-class UserModel extends Model
+class PermissionsModel extends Model
 {
-    protected $table = 'users';
+    protected $table = 'permissions';
     protected $primaryKey = 'id';
     protected $allowedFields = [
+        'code',
         'name',
-        'email',
-        'password',
-        'status',
         'created_by',
         'created_date',
         'modified_by',
-        'modified_date',
-        'role_id',
-        'last_login_time'
+        'modified_date'
     ];
 }

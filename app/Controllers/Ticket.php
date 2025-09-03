@@ -57,7 +57,8 @@ class Ticket extends Controller
             'subject'       => $this->request->getPost('subject'),
             'message'       => $this->request->getPost('message'),
             'ticket_status' => 'open',
-            'ticket_priority' => 'low',
+            'ticket_priority' => null, // set null
+            'due_date'      => null,   // set null
             'created_by'    => $this->request->getPost('emp_name'),
             'created_date'  => date('Y-m-d H:i:s'),
         ];

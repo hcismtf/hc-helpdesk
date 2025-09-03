@@ -1,6 +1,17 @@
 <?php include(APPPATH . 'Views/components/success_confirm.php'); ?>
 <?php include(APPPATH . 'Views/components/warning_confirm.php'); ?>
 <?php include(APPPATH . 'Views/components/invalid_confirm.php'); ?>
+<?php
+$menuAccessRaw = session('menu_access');
+$menuAccess = [];
+if (is_string($menuAccessRaw) && strlen($menuAccessRaw) > 0) {
+    $menuAccess = array_map('trim', explode(',', $menuAccessRaw));
+}
+function hasMenuAccess($menuName) {
+    global $menuAccess;
+    return in_array($menuName, $menuAccess) || session('role') === 'superadmin';
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -382,6 +393,7 @@
                 </div>
             </div>
         </div>
+        <!-- User Roles -->
         <div id="user-roles-content" style="display:none;">
             <div class="faq-frame">
                 <div class="faq-frame-header">
@@ -410,9 +422,10 @@
                                 <label style="font-weight:500;">Permission</label>
                                 <div id="permission-container">
                                     <select name="permissions[]" class="faq-input" style="margin-bottom:8px;">
-                                        <option value="">Select Menu</option>
-                                        <option value="Tickets">Tickets</option>
-                                        <option value="System settings">System settings</option>
+                                        <option value="">Select Permission</option>
+                                        <?php foreach ($permissions as $perm): ?>
+                                            <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
+                                        <?php endforeach ?>
                                     </select>
                                 </div>
                                 <button type="button" id="add-permission-btn" style="background:#eee; color:#222; border:none; border-radius:22px; padding:6px 18px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">
@@ -781,21 +794,28 @@
             validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
             validateRoleForm('user-role-edit-form', 'edit-role-name', 'edit-permission-container', '#user-role-edit-form .btn-submit-faq');
             // Open Edit Modal
-            function openRoleEditModal(id, name, menu_access) {
+            function openRoleEditModal(id, name, permissionIdsRaw) {
+                var permissionIds = Array.isArray(permissionIdsRaw)
+                    ? permissionIdsRaw
+                    : (typeof permissionIdsRaw === 'string' && permissionIdsRaw.length > 0
+                        ? permissionIdsRaw.split(',').map(function(x){return x.trim();})
+                        : []);
                 document.getElementById('edit-role-id').value = id;
                 document.getElementById('edit-role-name').value = name;
                 var container = document.getElementById('edit-permission-container');
                 container.innerHTML = '';
-                var permissions = menu_access.split(',');
-                permissions.forEach(function(p) {
+                permissionIds.forEach(function(pId) {
                     var select = document.createElement('select');
                     select.name = "permissions[]";
                     select.className = "faq-input";
                     select.style.marginBottom = "8px";
                     select.innerHTML = `
-                        <option value="">Select Menu</option>
-                        <option value="Tickets" ${p.trim() === "Tickets" ? "selected" : ""}>Tickets</option>
-                        <option value="System settings" ${p.trim() === "System settings" ? "selected" : ""}>System settings</option>
+                        <option value="">Select Permission</option>
+                        <?php foreach ($permissions as $perm): ?>
+                            <option value="<?= esc($perm['id']) ?>" ${pId == <?= esc($perm['id']) ?> ? "selected" : ""}>
+                                <?= esc($perm['name']) ?>
+                            </option>
+                        <?php endforeach ?>
                     `;
                     container.appendChild(select);
                 });
@@ -808,9 +828,10 @@
                 select.className = "faq-input";
                 select.style.marginBottom = "8px";
                 select.innerHTML = `
-                    <option value="">Select Menu</option>
-                    <option value="Tickets">Tickets</option>
-                    <option value="System settings">System settings</option>
+                    <option value="">Select Permission</option>
+                    <?php foreach ($permissions as $perm): ?>
+                        <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
+                    <?php endforeach ?>
                 `;
                 container.appendChild(select);
             };
@@ -911,10 +932,12 @@
                 select.name = "permissions[]";
                 select.className = "faq-input";
                 select.style.marginBottom = "8px";
+                // Isi dropdown dari PHP (ambil dari tabel permissions)
                 select.innerHTML = `
-                    <option value="">Select Menu</option>
-                    <option value="Tickets">Tickets</option>
-                    <option value="System settings">System settings</option>
+                    <option value="">Select Permission</option>
+                    <?php foreach ($permissions as $perm): ?>
+                        <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
+                    <?php endforeach ?>
                 `;
                 container.appendChild(select);
             };

@@ -26,7 +26,7 @@ $routes->get('admin/Ticket_dashboard', 'admin\Admin::Ticket_dashboard');
 
 // tickets_db
 $routes->get('admin/Ticket_detail/(:num)', 'admin\Admin::Ticket_detail/$1');
-$routes->post('admin/Ticket_update_status/(:num)', 'admin\Admin::Ticket_update_status/$1');
+$routes->post('admin/send_reply/(:num)', 'admin\Admin::send_reply/$1');
 
 //system settings
 $routes->get('admin/system_settings', 'admin\Admin::system_settings');
@@ -55,3 +55,22 @@ $routes->get('admin/get_sla_list', 'admin\Admin::get_sla_list');
 $routes->post('admin/edit_sla', 'admin\Admin::edit_sla');
 $routes->post('admin/delete_sla', 'admin\Admin::delete_sla');
 $routes->get('admin/get_used_request_types', 'admin\Admin::get_used_request_types');
+
+// User Management
+$routes->get('admin/user_mgt', 'admin\Admin::user_mgt');
+$routes->post('admin/add_user', 'admin\Admin::add_user');
+$routes->post('admin/delete_user', 'admin\Admin::delete_user');
+$routes->post('admin/edit_user', 'admin\Admin::edit_user');
+$routes->get('admin/get_user', 'admin\Admin::get_user');
+
+// user permission
+$routes->post('admin/add_permission', 'admin\Admin::add_permission');
+$routes->get('admin/get_permission', 'admin\Admin::get_permission');
+$routes->post('admin/edit_permission', 'admin\Admin::edit_permission');
+$routes->post('admin/delete_permission', 'admin\Admin::delete_permission');
+
+// report user
+$routes->get('admin/report_user', 'admin\Admin::report_user');
+
+//assets js
+$routes->get('assets/ticket_js', 'Assets::ticket_js');
