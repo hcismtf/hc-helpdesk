@@ -31,28 +31,28 @@
     <div id="ticket-section">
       <div class="card">
         <h5 class="mb-4"><strong>Submit Support Ticket</strong></h5>
-        <form action="<?= base_url('ticket/store') ?>" method="post" enctype="multipart/form-data">
+        <form id="ticketForm" action="<?= base_url('ticket/store') ?>" method="post" enctype="multipart/form-data">
           <div class="row mb-3">
             <div class="col-md-6">
               <label for="emp_name">Nama</label>
-              <input type="text" name="emp_name" class="form-control" placeholder="Nama" required>
+              <input type="text" name="emp_name" id="emp_name" class="form-control" placeholder="Nama" required>
             </div>
             <div class="col-md-6">
               <label for="emp_id">NIP</label>
-              <input type="text" name="emp_id" class="form-control" placeholder="Nomor Induk Pegawai" required>
+              <input type="text" name="emp_id" id="emp_id" class="form-control" placeholder="Nomor Induk Pegawai" required>
             </div>
           </div>
           <div class="mb-3">
             <label for="email">Email MTF</label>
-            <input type="email" name="email" class="form-control" placeholder="Email MTF" required>
+            <input type="email" name="email" id="email" class="form-control" placeholder="Email MTF" required>
           </div>
           <div class="mb-3">
             <label for="wa_no">No. Handphone / Whatsapp</label>
-            <input type="text" name="wa_no" class="form-control" placeholder="No. Handphone / Whatsapp" required>
+            <input type="text" name="wa_no" id="wa_no" class="form-control" placeholder="No. Handphone / Whatsapp" required>
           </div>
           <div class="mb-3">
             <label for="req_type">Tipe Pengajuan</label>
-            <select name="req_type" class="form-select" required>
+            <select name="req_type" id="req_type" class="form-select" required>
                 <option value="">Tipe Pengajuan</option>
                 <?php if (!empty($requestTypes)): ?>
                     <?php foreach ($requestTypes as $type): ?>
@@ -63,20 +63,58 @@
           </div>
           <div class="mb-3">
             <label for="subject">Subject</label>
-            <input type="text" name="subject" class="form-control" placeholder="Subject" required>
+            <input type="text" name="subject" id="subject" class="form-control" placeholder="Subject" required>
           </div>
           <div class="mb-3">
             <label for="message">Message</label>
-            <textarea name="message" class="form-control" rows="4" placeholder="Message"></textarea>
+            <textarea name="message" id="message" class="form-control" rows="4" placeholder="Message"></textarea>
           </div>
           <div class="mb-3">
             <input type="file" name="attachment" class="form-control">
           </div>
-          <button type="submit" class="btn btn-submit">Submit Ticket</button>
+          <button type="button" class="btn btn-submit" id="confirmBtn">Submit Ticket</button>
         </form>
       </div>
     </div>
-    
+    <!-- Modal Konfirmasi Ticket -->
+    <div id="ticketConfirmModal" class="faq-modal-bg" style="display:none;">
+      <div class="faq-modal" style="max-width:400px; align-items:center;">
+        <div style="font-size:20px; font-weight:600; margin-bottom:12px;">Konfirmasi Data Ticket</div>
+        <div style="font-size:15px; color:#444; margin-bottom:18px; text-align:left;">
+          Apakah data yang anda isi telah benar?
+          <ul style="margin-top:10px; margin-bottom:0; padding-left:18px; text-align:left;">
+            <li>Nama: <span id="modalEmpName"></span></li>
+            <li>NIP: <span id="modalEmpId"></span></li>
+            <li>Email MTF: <span id="modalEmail"></span></li>
+            <li>No Handphone: <span id="modalWaNo"></span></li>
+            <li>Tipe Pengajuan: <span id="modalReqType"></span></li>
+            <li>Subject: <span id="modalSubject"></span></li>
+            <li>Message: <span id="modalMessage"></span></li>
+          </ul>
+        </div>
+        <div style="display:flex; gap:12px; justify-content:center; width:100%;">
+          <button type="button" class="btn btn-secondary" id="cancelTicketConfirm">Cek Lagi</button>
+          <button type="button" class="btn btn-success" id="submitTicketConfirm">Ya, data sudah benar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Success Confirm (mirip System_settings) -->
+    <div id="successConfirmModal" class="faq-modal-bg" style="display:none;">
+      <div class="faq-modal" style="max-width:400px; align-items:center;">
+        <div style="font-size:22px; font-weight:700; margin-bottom:10px; color:#22c55e;">
+          <svg width="32" height="32" fill="none" style="vertical-align:middle;margin-right:8px;">
+            <circle cx="16" cy="16" r="16" fill="#22c55e"/>
+            <path d="M10 16l4 4 8-8" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Ticket Berhasil Dikirim!
+        </div>
+        <div style="font-size:15px; color:#444; margin-bottom:18px;">
+          Terima kasih, tiket Anda telah berhasil dikirim.<br>Halaman akan di-refresh...
+        </div>
+      </div>
+    </div>
+
 
     <!-- FAQ Section -->
          <h2 style="text-align:center; font-weight:600; margin-bottom:32px;">Frequently Asked Question</h2>

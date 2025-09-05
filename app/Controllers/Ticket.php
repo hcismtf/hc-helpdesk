@@ -16,6 +16,10 @@ class Ticket extends Controller
         $data[8] = chr((ord($data[8]) & 0x3f) | 0x80); // set bits 6-7 to 10
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
+    public function __construct()
+    {
+        date_default_timezone_set('Asia/Jakarta');
+    }
     public function create()
     {
         $requestTypeModel = new \App\Models\RequestTypeModel();
@@ -34,20 +38,12 @@ class Ticket extends Controller
         $ticketModel = new TicketModel();
         $ticketAttModel = new TicketAttModel();
 
-        // generate emp_id random UUID
         $emp_id = $this->generateUUIDv4();
-
-        // ambil NIP asli dari form
         $nip_asli = $this->request->getPost('emp_id');
-
-        // enkripsi NIP menggunakan encrypter bawaan CI4
         $encrypter = \Config\Services::encrypter();
         $nip_encrypted = bin2hex($encrypter->encrypt($nip_asli));
-        
 
-        // ambil data dari form
         $data = [
-            
             'emp_id'        => $emp_id,
             'nip_encrypted' => $nip_encrypted,
             'emp_name'      => $this->request->getPost('emp_name'),
@@ -57,38 +53,56 @@ class Ticket extends Controller
             'subject'       => $this->request->getPost('subject'),
             'message'       => $this->request->getPost('message'),
             'ticket_status' => 'open',
-            'ticket_priority' => null, // set null
-            'due_date'      => null,   // set null
+            'ticket_priority' => null,
+            'due_date'      => null,
             'created_by'    => $this->request->getPost('emp_name'),
             'created_date'  => date('Y-m-d H:i:s'),
         ];
 
-        // insert ke tiket_trx
         $ticketId = $ticketModel->insert($data);
-        
 
         // kalau ada file upload
         $file = $this->request->getFile('attachment');
         if ($file && $file->isValid() && !$file->hasMoved()) {
+            $maxSize = 1024 * 1024; // 1MB
             $newName = $file->getRandomName();
-            $file->move(WRITEPATH . 'uploads', $newName);
+            // Jika file > 1MB dan tipe gambar, compress
+            if ($file->getSize() > $maxSize && strpos($file->getMimeType(), 'image/') === 0) {
+                $imageType = $file->getMimeType();
+                $srcPath = $file->getTempName();
+                $dstPath = FCPATH . 'uploads/' . $newName;
+
+                // Kompres gambar (JPEG/PNG)
+                if ($imageType === 'image/jpeg') {
+                    $image = imagecreatefromjpeg($srcPath);
+                    imagejpeg($image, $dstPath, 70); // quality 70%
+                    imagedestroy($image);
+                } elseif ($imageType === 'image/png') {
+                    $image = imagecreatefrompng($srcPath);
+                    imagepng($image, $dstPath, 7); // compression level 0-9
+                    imagedestroy($image);
+                } else {
+                    // Jika bukan jpeg/png, tetap move tanpa compress
+                    $file->move(FCPATH . 'uploads', $newName);
+                }
+            } else {
+                // File <= 1MB atau bukan gambar, langsung move
+                $file->move(FCPATH . 'uploads', $newName);
+            }
+
+            // Enkripsi file_name dan file_path
+            $file_name_encrypted = bin2hex($encrypter->encrypt($file->getClientName()));
+            $file_path_encrypted = bin2hex($encrypter->encrypt($newName));
 
             $ticketAttModel->insert([
                 'tiket_trx_id' => $ticketId,
-                'file_name'    => $file->getClientName(),
-                'file_path'    => $newName,
+                'file_name'    => $file_name_encrypted,
+                'file_path'    => $file_path_encrypted,
                 'created_by'   => $this->request->getPost('emp_name'),
                 'created_date' => date('Y-m-d H:i:s'),
             ]);
         }
 
-        return view('ticket_success');
-
-    }
-    public function faq()
-    {
-        $faqModel = new \App\Models\FaqModel();
-        $faqs = $faqModel->orderBy('id', 'desc')->findAll();
-        return view('list_faq', ['faqs' => $faqs]);
+        return view('components/success_confirm');
     }
 }

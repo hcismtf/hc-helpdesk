@@ -277,6 +277,17 @@ function hasMenuAccess($menuName) {
             font-weight: 600;
             cursor: pointer;
         }
+        .permission-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .permission-row select {
+            flex: 1;
+        }
+        .remove-permission-btn {
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -287,8 +298,7 @@ function hasMenuAccess($menuName) {
         <div class="settings-header-row">
             <div></div>
             <div>
-                <div class="settings-welcome">Welcome, [user name]</div>
-                <div class="settings-role">Superadmin</div>
+                <div class="settings-welcome">Welcome, <?= esc(session('username')) ?></div>
             </div>
         </div>
         <div class="settings-tabs" id="settingsTabs">
@@ -421,12 +431,15 @@ function hasMenuAccess($menuName) {
 
                                 <label style="font-weight:500;">Permission</label>
                                 <div id="permission-container">
-                                    <select name="permissions[]" class="faq-input" style="margin-bottom:8px;">
-                                        <option value="">Select Permission</option>
-                                        <?php foreach ($permissions as $perm): ?>
-                                            <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
-                                        <?php endforeach ?>
-                                    </select>
+                                    <div class="permission-row" style="display:flex; align-items:center; gap:8px;">
+                                        <select name="permissions[]" class="faq-input permission-select" style="flex:1; margin-bottom:8px;">
+                                            <option value="">Select Permission</option>
+                                            <?php foreach ($permissions as $perm): ?>
+                                                <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
+                                            <?php endforeach ?>
+                                        </select>
+                                        <button type="button" class="remove-permission-btn" style="display:none; background:#bbb; color:#fff; border:none; border-radius:12px; padding:6px 12px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">-</button>
+                                    </div>
                                 </div>
                                 <button type="button" id="add-permission-btn" style="background:#eee; color:#222; border:none; border-radius:22px; padding:6px 18px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">
                                     + Add Permission
@@ -928,19 +941,66 @@ function hasMenuAccess($menuName) {
             };
             document.getElementById('add-permission-btn').onclick = function() {
                 var container = document.getElementById('permission-container');
-                var select = document.createElement('select');
-                select.name = "permissions[]";
-                select.className = "faq-input";
-                select.style.marginBottom = "8px";
-                // Isi dropdown dari PHP (ambil dari tabel permissions)
-                select.innerHTML = `
-                    <option value="">Select Permission</option>
-                    <?php foreach ($permissions as $perm): ?>
-                        <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
-                    <?php endforeach ?>
+                var div = document.createElement('div');
+                div.className = 'permission-row';
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.gap = '8px';
+                div.innerHTML = `
+                    <select name="permissions[]" class="faq-input permission-select" style="flex:1; margin-bottom:8px;">
+                        <option value="">Select Permission</option>
+                        <?php foreach ($permissions as $perm): ?>
+                            <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
+                        <?php endforeach ?>
+                    </select>
+                    <button type="button" class="remove-permission-btn" style="background:#bbb; color:#fff; border:none; border-radius:12px; padding:6px 12px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">-</button>
                 `;
-                container.appendChild(select);
+                container.appendChild(div);
+                updatePermissionDropdowns();
             };
+            // Remove permission row
+            document.getElementById('permission-container').addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-permission-btn')) {
+                    e.target.parentElement.remove();
+                    updatePermissionDropdowns();
+                }
+            });
+
+            // Disable selected permission in other dropdowns
+            function updatePermissionDropdowns() {
+                var selects = document.querySelectorAll('#permission-container .permission-select');
+                // Show remove button except for first row
+                selects.forEach(function(sel, idx) {
+                    var btn = sel.parentElement.querySelector('.remove-permission-btn');
+                    btn.style.display = (idx === 0) ? 'none' : 'inline-block';
+                });
+                // Get all selected values
+                var selected = [];
+                selects.forEach(function(sel) {
+                    if (sel.value) selected.push(sel.value);
+                });
+                // Disable selected values in other dropdowns
+                selects.forEach(function(sel) {
+                    var options = sel.querySelectorAll('option');
+                    options.forEach(function(opt) {
+                        if (opt.value && selected.includes(opt.value) && opt.value !== sel.value) {
+                            opt.disabled = true;
+                        } else {
+                            opt.disabled = false;
+                        }
+                    });
+                });
+            }
+
+            // Update dropdowns on change
+            document.getElementById('permission-container').addEventListener('change', function(e) {
+                if (e.target.classList.contains('permission-select')) {
+                    updatePermissionDropdowns();
+                }
+            });
+
+            // Inisialisasi saat halaman load
+            updatePermissionDropdowns();
             function openSlaEditModal(id, priority, response, resolution) {
                 document.getElementById('edit-sla-id').value = id;
                 document.getElementById('edit-sla-priority').value = priority;

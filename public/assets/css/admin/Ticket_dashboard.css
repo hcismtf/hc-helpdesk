@@ -121,11 +121,43 @@ body {
         .btn-open:hover {
             background: #1a37b8;
         }
+        .priority-badge {
+            border-radius: 12px;
+            padding: 4px 12px;
+            font-weight: 600;
+            display: inline-block;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+        }
         /* Priority color */
-        .priority-Urgent { color: #e53935; font-weight: 600; }
-        .priority-High { color: #fb8c00; font-weight: 600; }
-        .priority-Medium { color: #fbc02d; font-weight: 600; }
-        .priority-Low { color: #234be7; font-weight: 600; }
+        .priority-Urgent {
+            background: #7A161C;
+            color: #fff;
+            border-radius: 12px;
+            padding: 4px 12px;
+            font-weight: 600;
+        }
+        .priority-High {
+            background: #FF474A;
+            color: #fff;
+            border-radius: 12px;
+            padding: 4px 12px;
+            font-weight: 600;
+        }
+        .priority-Medium {
+            background: #FF474A;
+            color: #fff;
+            border-radius: 12px;
+            padding: 4px 12px;
+            font-weight: 600;
+        }
+        .priority-Low {
+            background: #2940D3;
+            color: #fff;
+            border-radius: 12px;
+            padding: 4px 12px;
+            font-weight: 600;
+        }
         /* Pagination */
         .pagination {
             display: flex;
@@ -175,3 +207,90 @@ body {
         .priority-Low { background: #5466DC; color: #fff; border-radius: 12px; padding: 4px 12px; }
         .priority-Medium { background: #FDDA45; color: #222; border-radius: 12px; padding: 4px 12px; }
         .priority-High, .priority-Urgent { background: #FF474A; color: #fff; border-radius: 12px; padding: 4px 12px; }
+
+        .modal-user {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.18);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-user-content {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+            max-width: 400px;
+            width: 100%;
+            padding: 32px 32px 24px 32px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .modal-user-content label {
+            font-weight: 500;
+            margin-bottom: 6px;
+            display: block;
+            font-size: 15px;
+        }
+        .modal-user-content .filter-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+        .modal-user-content .filter-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-user-content input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 18px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+            background: #f5f6fa;
+            color: #222;
+            margin-bottom: 2px;
+        }
+        .modal-user-content .filter-btn-row {
+            display: flex;
+            gap: 18px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .modal-user-content .btn-filter {
+            background: #234be7;
+            color: #fff;
+            border: none;
+            border-radius: 22px;
+            padding: 10px 32px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .modal-user-content .btn-filter:hover {
+            background: #1a37b8;
+        }
+        .modal-user-content .close-modal {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            font-size: 22px;
+            cursor: pointer;
+            color: #333;
+        }
+        @media (max-width: 500px) {
+            .modal-user-content {
+                max-width: 95vw;
+                padding: 18px 8px 12px 8px;
+            }
+            .modal-user-content .filter-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }

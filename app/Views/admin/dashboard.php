@@ -15,23 +15,27 @@
         <div style="display:flex; justify-content:space-between;">
             <div>
                 <h2>Welcome, <?= esc(session('username')) ?>!</h2>
-                <div>Superadmin</div>
+
             </div>
             <div class="analytics-box">
-                <div class="analytics-title">Analytics</div>
-                <div class="analytics-list">
-                    AVG Response time<br>
-                    AVG Resolution time<br>
-                    SLA Compliance Rate<br>
-                </div>
-                <div class="analytics-list" style="margin-top:6px;">
-                    00 d 02 h 34 m<br>
-                    00 d 02 h 34 m<br>
-                    101%
+                <div class="analytics-title"></div>
+                <div class="analytics-list" style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>AVG Response Time: </span>
+                        <span style="font-weight:600;"><?= esc($avgResponseStr) ?></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>AVG Resolution Time: </span>
+                        <span style="font-weight:600;"><?= esc($avgResolutionStr) ?></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>SLA Compliance Rate</span>
+                        <span style="font-weight:600;"><?= esc($slaRate) ?>%</span>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="stats-row">
+        <div class="stats-row" style="margin-top: 30px;">
             <div class="stat-card open">
                 <div class="stat-title">Open</div>
                 <div class="stat-underline"></div>
@@ -132,20 +136,20 @@
                         <?php endif; ?>
                     </td>
                     <td>
-                        <?php if (!empty($ticket['due_date'])): 
-                            $now = new DateTime();
-                            $due = new DateTime($ticket['due_date']);
-                            $interval = $now < $due ? $now->diff($due) : false;
-                        ?>
-                            <?php if ($interval): ?>
-                                <?= $interval->d ?> Day <?= str_pad($interval->h,2,'0',STR_PAD_LEFT) ?>H <?= str_pad($interval->i,2,'0',STR_PAD_LEFT) ?>M <?= str_pad($interval->s,2,'0',STR_PAD_LEFT) ?>S
-                            <?php else: ?>
-                                0 Day 00H 00M 00S
-                            <?php endif; ?>
+                    <?php if (!empty($ticket['due_date'])): 
+                        $now = new DateTime();
+                        $due = new DateTime($ticket['due_date']);
+                        $interval = $now < $due ? $now->diff($due) : false;
+                    ?>
+                        <?php if ($interval): ?>
+                            <?= $interval->d ?> Day <?= str_pad($interval->h,2,'0',STR_PAD_LEFT) ?>H <?= str_pad($interval->i,2,'0',STR_PAD_LEFT) ?>M <?= str_pad($interval->s,2,'0',STR_PAD_LEFT) ?>S
                         <?php else: ?>
-                            <span style="color:#888;">-</span>
+                            0 Day 00H 00M 00S
                         <?php endif; ?>
-                    </td>
+                    <?php else: ?>
+                        <span style="color:#888;">-</span>
+                    <?php endif; ?>
+                </td>
                     <td>
                         <a href="<?= base_url('admin/Ticket_detail/' . $ticket['id']) ?>">
                             <button class="btn-open">Open</button>

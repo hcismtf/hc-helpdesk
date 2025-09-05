@@ -7,7 +7,6 @@ class SlaModel extends Model
     protected $table = 'sla_configuration';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'request_type_id',
         'priority',
         'response_time',
         'resolution_time',

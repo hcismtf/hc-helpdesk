@@ -70,7 +70,14 @@
                                 ?>
                             </td>
                             <td>
-                                <?= isset($ticket['ticket_priority']) ? esc(ucfirst($ticket['ticket_priority'])) : '-' ?>
+                                <?php
+                                    $priority = isset($ticket['ticket_priority']) ? ucfirst($ticket['ticket_priority']) : '-';
+                                    if ($priority !== '-') {
+                                        echo '<span class="priority-badge priority-' . $priority . '">' . esc($priority) . '</span>';
+                                    } else {
+                                        echo '-';
+                                    }
+                                ?>
                             </td>
                             <td>
                                 <a href="<?= base_url('admin/Ticket_detail/' . esc($ticket['id'])) ?>">
@@ -91,7 +98,49 @@
                 <?= isset($pager) ? $pager->links('tickets', 'default_full') : '' ?>
             </div>
         </div>
-    </div>    
+    </div>
+    <div id="filterModal" class="modal-user" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.2); z-index:999;">
+        <div class="modal-user-content" style="
+            background:#fff; 
+            position:absolute; 
+            top:50%; left:50%; 
+            transform:translate(-50%,-50%);
+            padding:32px; 
+            border-radius:18px; 
+            max-width:420px; 
+            box-shadow:0 2px 16px rgba(0,0,0,0.12);">
+            <span style="position:absolute; top:18px; right:18px; font-size:22px; cursor:pointer;" onclick="closeFilterModal()">&times;</span>
+            <div style="font-size:22px; font-weight:600; margin-bottom:18px;">Filter</div>
+            <form id="filterForm" method="get" action="">
+                <div style="display:flex; gap:16px; margin-bottom:18px;">
+                    <div style="flex:1;">
+                        <label style="font-weight:500;">Priority</label>
+                        <select id="filterPriority" name="priority" style="width:100%; padding:10px; border-radius:18px; border:1px solid #ccc;">
+                            <option value="">All</option>
+                            <option value="urgent" <?= isset($priority) && $priority=='urgent'?'selected':'' ?>>Urgent</option>
+                            <option value="high" <?= isset($priority) && $priority=='high'?'selected':'' ?>>High</option>
+                            <option value="medium" <?= isset($priority) && $priority=='medium'?'selected':'' ?>>Medium</option>
+                            <option value="low" <?= isset($priority) && $priority=='low'?'selected':'' ?>>Low</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex; gap:16px; margin-bottom:18px;">
+                    <div style="flex:1;">
+                        <label style="font-weight:500;">Start Date</label>
+                        <input type="date" id="filterStartDate" name="start" value="<?= esc($start ?? '') ?>" style="width:100%; padding:10px; border-radius:18px; border:1px solid #ccc;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-weight:500;">End Date</label>
+                        <input type="date" id="filterEndDate" name="end" value="<?= esc($end ?? '') ?>" style="width:100%; padding:10px; border-radius:18px; border:1px solid #ccc;">
+                    </div>
+                </div>
+                <div style="display:flex; gap:18px; justify-content:center; margin-top:18px;">
+                    <button type="submit" class="btn-filter">Apply Filter</button>
+                    <button type="button" onclick="resetFilter()" class="btn-filter">Reset Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>   
     <script>
         function searchTicketTable() {
             var input = document.getElementById("searchTicket");
@@ -115,8 +164,35 @@
             window.location = '?' + params.join('&');
         }
         function openFilterModal() {
-            // Implement modal if needed
+            document.getElementById('filterModal').style.display = 'block';
         }
+        function closeFilterModal() {
+            document.getElementById('filterModal').style.display = 'none';
+        }
+        function resetFilter() {
+            document.getElementById('filterForm').reset();
+            document.getElementById('filterStartDate').value = '';
+            document.getElementById('filterEndDate').value = '';
+        }
+
+        // Validasi End Date agar tidak kurang dari Start Date
+        document.addEventListener('DOMContentLoaded', function() {
+            var startDateInput = document.getElementById('filterStartDate');
+            var endDateInput = document.getElementById('filterEndDate');
+            if (startDateInput && endDateInput) {
+                startDateInput.addEventListener('change', function() {
+                    if (endDateInput.value && endDateInput.value < startDateInput.value) {
+                        endDateInput.value = startDateInput.value;
+                    }
+                    endDateInput.setAttribute('min', startDateInput.value);
+                });
+                endDateInput.addEventListener('change', function() {
+                    if (startDateInput.value && endDateInput.value < startDateInput.value) {
+                        endDateInput.value = startDateInput.value;
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

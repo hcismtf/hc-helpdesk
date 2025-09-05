@@ -290,8 +290,7 @@
                 <div class="breadcrumb">Home &gt; User Management</div>
             </div>
             <div class="settings-header-right">
-                <div class="user-welcome">Welcome, [user name]</div>
-                <div class="user-role">Superadmin</div>
+                <div class="settings-welcome">Welcome, <?= esc(session('username')) ?></div>
             </div>
         </div>
         <div class="settings-tabs" id="settingsTabs">

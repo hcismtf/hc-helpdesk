@@ -11,13 +11,20 @@ class PermissionFilter implements FilterInterface
     protected $permissionFileMap = [
         'tickets'         => ['ticket_dashboard', 'ticket_detail', 'get_ticket_list', 'send_reply'],
         'dashboard'       => ['dashboard'],
-        'user_management' => ['user_mgt', 'get_user_list'],
+        'user_management' => [
+            'user_mgt', 'get_user_list',
+            'add_user', 'edit_user', 'delete_user','get_user' 
+        ],
         'system_settings' => [
             'system_settings',
             'faq_list', 'get_faq_list',
             'user_role_list', 'get_user_role_list',
+            'add_user_role', 'edit_user_role', 'delete_user_role', 
             'request_type', 'get_request_type_list',
-            'sla_settings', 'get_sla_list'
+            'add_request_type', 'edit_request_type', 'delete_request_type', 
+            'sla_settings', 'get_sla_list',
+            'add_sla', 'edit_sla', 'delete_sla', 
+            'add_permission', 'edit_permission', 'delete_permission', 
         ],
     ];
 

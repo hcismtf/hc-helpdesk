@@ -6,6 +6,9 @@ use App\Controllers\BaseController;
 use App\Models\RequestTypeModel;
 use App\Models\PermissionsModel;
 use App\Models\TiketTransactionsModel;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use DateTime;
 
 class Admin extends BaseController
 {
@@ -121,22 +124,77 @@ class Admin extends BaseController
             $slaMap[$sla['priority']] = $sla;
         }
 
-        // Inject SLA ke tiket
+        // Inject SLA ke tiket dan hitung due_date jika belum ada
         foreach ($openTickets as &$ticket) {
             $priority = $ticket['ticket_priority'];
             $sla = $slaMap[$priority] ?? null;
             if ($sla) {
                 $ticket['sla_response_time'] = $sla['response_time'];
                 $ticket['sla_resolution_time'] = $sla['resolution_time'];
+                // Hitung due_date jika belum ada
+                if (empty($ticket['due_date'])) {
+                    $created = new DateTime($ticket['created_date']);
+                    $created->modify('+' . $sla['resolution_time'] . ' hours');
+                    $ticket['due_date'] = $created->format('Y-m-d H:i:s');
+                }
             } else {
                 $ticket['sla_response_time'] = 24;
                 $ticket['sla_resolution_time'] = 24;
+                if (empty($ticket['due_date'])) {
+                    $created = new DateTime($ticket['created_date']);
+                    $created->modify('+24 hours');
+                    $ticket['due_date'] = $created->format('Y-m-d H:i:s');
+                }
             }
         }
         unset($ticket);
 
         // Untuk dropdown type
         $types = $ticketModel->select('req_type')->distinct()->findAll();
+
+        // Ambil semua tiket yang sudah closed untuk statistik
+        $closedTickets = $ticketModel->where('ticket_status', 'closed')->findAll();
+
+        $totalResponse = 0;
+        $totalResolution = 0;
+        $slaCompliant = 0;
+        $countClosed = count($closedTickets);
+
+        foreach ($closedTickets as $t) {
+            // Hitung response time (first_response_at - created_date)
+            if (!empty($t['first_response_at']) && !empty($t['created_date'])) {
+                $responseTime = strtotime($t['first_response_at']) - strtotime($t['created_date']);
+                $totalResponse += $responseTime;
+            }
+            // Hitung resolution time (finish_date - created_date)
+            if (!empty($t['finish_date']) && !empty($t['created_date'])) {
+                $resolutionTime = strtotime($t['finish_date']) - strtotime($t['created_date']);
+                $totalResolution += $resolutionTime;
+                // SLA Compliance: finish_date <= due_date
+                if (!empty($t['due_date']) && strtotime($t['finish_date']) <= strtotime($t['due_date'])) {
+                    $slaCompliant++;
+                }
+            }
+        }
+
+        // AVG Response Time
+        $avgResponse = $countClosed ? $totalResponse / $countClosed : 0;
+        // AVG Resolution Time
+        $avgResolution = $countClosed ? $totalResolution / $countClosed : 0;
+        // SLA Compliance Rate
+        $slaRate = $countClosed ? round(($slaCompliant / $countClosed) * 100) : 0;
+
+        // Helper untuk format detik ke d h m
+        function formatDuration($seconds) {
+            $d = floor($seconds / 86400);
+            $h = floor(($seconds % 86400) / 3600);
+            $m = floor(($seconds % 3600) / 60);
+            return sprintf('%02d d %02d h %02d m', $d, $h, $m);
+        }
+
+        $avgResponseStr = formatDuration($avgResponse);
+        $avgResolutionStr = formatDuration($avgResolution);
+
 
         return view('admin/dashboard', [
             'openCount' => $openCount,
@@ -152,7 +210,10 @@ class Admin extends BaseController
             'start' => $start,
             'end' => $end,
             'username' => session('username'),
-            'role' => session('role')
+            'role' => session('role'),
+            'avgResponseStr' => $avgResponseStr,
+            'avgResolutionStr' => $avgResolutionStr,
+            'slaRate' => $slaRate
         ]);
     }
 
@@ -161,8 +222,17 @@ class Admin extends BaseController
         $model = new \App\Models\TicketModel();
         $perPage = $this->request->getGet('per_page') ?? 10;
         $page = $this->request->getGet('page') ?? 1;
-        
-        $ticketsRaw = $model->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
+        $start = $this->request->getGet('start');
+        $end = $this->request->getGet('end');
+
+        // Query builder: filter berdasarkan tanggal created_date & priority
+        $priority = $this->request->getGet('priority');
+        $builder = $model;
+        if ($start) $builder = $builder->where('created_date >=', $start . ' 00:00:00');
+        if ($end) $builder = $builder->where('created_date <=', $end . ' 23:59:59');
+        if ($priority) $builder = $builder->where('ticket_priority', $priority);
+
+        $ticketsRaw = $builder->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
 
         $encrypter = \Config\Services::encrypter();
         $tickets = [];
@@ -186,6 +256,9 @@ class Admin extends BaseController
             'pager' => $pager,
             'perPage' => $perPage,
             'active' => 'tickets',
+            'start' => $start,
+            'end' => $end,
+            'priority' => $priority
         ]);
     }
     public function Ticket_detail($id)
@@ -194,6 +267,10 @@ class Admin extends BaseController
         $ticket = $model->find($id);
         $userModel = new \App\Models\UserModel();
         $users = $userModel->where('status', 'active')->findAll();
+        // Ticket Attachment
+        $attModel = new \App\Models\TicketAttModel();
+        $attachmentsRaw = $attModel->where('tiket_trx_id', $id)->findAll();
+        $attachments = [];
 
         // Decrypt NIP jika perlu
         $encrypter = \Config\Services::encrypter();
@@ -203,6 +280,20 @@ class Admin extends BaseController
             } catch (\Exception $e) {
                 $ticket['emp_nip'] = '[Invalid]';
             }
+        }
+
+        foreach ($attachmentsRaw as $att) {
+            try {
+                $file_name = $encrypter->decrypt(hex2bin($att['file_name']));
+                $file_path = $encrypter->decrypt(hex2bin($att['file_path']));
+            } catch (\Exception $e) {
+                $file_name = '[Invalid]';
+                $file_path = '';
+            }
+            $attachments[] = [
+                'file_name' => $file_name,
+                'file_path' => $file_path
+            ];
         }
 
         // Ambil reply terakhir dari tiket_transactions untuk assigned_to
@@ -236,11 +327,14 @@ class Admin extends BaseController
                 'text'       => $r['reply']
             ];
         }
+        $hasReply = count($replies) > 0;
 
         return view('admin/Ticket_detail', [
             'ticket'       => $ticket,
             'users'        => $users,
             'replies'      => $replies,
+            'attachments'  => $attachments,
+            'hasReply'     => $hasReply,
             'assignedName' => $assignedName // <-- dari tiket_transactions terakhir
         ]);
     }
@@ -508,18 +602,12 @@ class Admin extends BaseController
     public function delete_request_type()
     {
         $id = $this->request->getPost('id');
-        $slaModel = new \App\Models\SlaModel();
+        // $slaModel = new \App\Models\SlaModel();
 
-        // Cek apakah request type sudah dipakai di SLA
-        $used = $slaModel->where('request_type_id', $id)->countAllResults();
-        if ($used > 0) {
-            return $this->response->setJSON([
-                'success' => false,
-                'invalid' => true,
-                'message' => 'Request Type sudah dipakai di SLA dan tidak bisa dihapus.'
-            ]);
-        }
+        // Hapus pengecekan ini jika kolom tidak ada:
+        // $used = $slaModel->where('request_type_id', $id)->countAllResults();
 
+        // Langsung hapus request type
         $requestTypeModel = new RequestTypeModel();
         $requestTypeModel->delete($id);
         return $this->response->setJSON(['success' => true]);
@@ -892,6 +980,32 @@ class Admin extends BaseController
             $username = 'superadmin';
         }
 
+        // Ambil SLA sesuai priority
+        $slaModel = new \App\Models\SlaModel();
+        $sla = $slaModel->where('priority', $priority)->first();
+        $resolutionTime = $sla ? (int)$sla['resolution_time'] : 24; // default 24 jam jika tidak ada
+
+        // Ambil ticket lama
+        $ticketModel = new \App\Models\TicketModel();
+        $ticket = $ticketModel->find($ticketId);
+
+        // Hitung due_date baru
+        $createdDate = $ticket['created_date'] ?? date('Y-m-d H:i:s');
+        $dueDate = (new DateTime($createdDate))->modify('+' . $resolutionTime . ' hours')->format('Y-m-d H:i:s');
+
+        // Isi first_response_at jika belum ada
+        $firstResponseAt = $ticket['first_response_at'];
+        if (empty($firstResponseAt)) {
+            $firstResponseAt = date('Y-m-d H:i:s');
+        }
+
+        // Jika status closed, isi finish_date
+        $finishDate = null;
+        if ($status === 'closed') {
+            $finishDate = date('Y-m-d H:i:s');
+        }
+
+        // Insert reply
         $trxModel = new TiketTransactionsModel();
         $trxModel->insert([
             'tiket_trx_id' => $ticketId,
@@ -904,14 +1018,84 @@ class Admin extends BaseController
             'created_at'   => date('Y-m-d H:i:s')
         ]);
 
-        $ticketModel = new \App\Models\TicketModel();
-        $ticketModel->update($ticketId, [
-            'ticket_status'   => $status,
-            'ticket_priority' => $priority,
-            'assigned_to'     => $assignedTo,
-            'modified_date'   => date('Y-m-d H:i:s'),
-            'modified_by'     => $username
-        ]);
+        // Update ticket
+        $updateData = [
+            'ticket_status'     => $status,
+            'ticket_priority'   => $priority,
+            'assigned_to'       => $assignedTo,
+            'due_date'          => $dueDate,
+            'first_response_at' => $firstResponseAt,
+            'modified_date'     => date('Y-m-d H:i:s'),
+            'modified_by'       => $username
+        ];
+        if ($finishDate) {
+            $updateData['finish_date'] = $finishDate;
+        }
+        $ticketModel->update($ticketId, $updateData);
+
+        // --- KIRIM EMAIL ---
+        // Ambil nama assigned_to
+        $assignedName = '-';
+        if ($assignedTo) {
+            $userModel = new \App\Models\UserModel();
+            $assignedUser = $userModel->find($assignedTo);
+            if ($assignedUser) $assignedName = $assignedUser['name'];
+        }
+
+        // Template email
+        if ($status === 'closed') {
+            $emailBody = "
+                Dear, {$ticket['emp_name']}<br><br>
+                Terima kasih telah menunggu, tiket anda telah <b>selesai</b> dikerjakan, berikut adalah detail ticket anda:<br><br>
+                <b>Request Type:</b> {$ticket['req_type']}<br>
+                <b>Original Message:</b> {$ticket['message']}<br>
+                <b>Feedback Admin:</b> {$replyText}<br><br>
+                Jika masih ada yang ingin ditanyakan, silakan hubungi kami melalui email <b>muhammad.farras@mtf.co.id</b>.<br><br>
+                Hormat kami,<br>
+                Human Capital Division
+            ";
+        } else {
+            $emailBody = "
+                Dear, {$ticket['emp_name']}<br><br>
+                Terima kasih telah mengajukan ticket di HC Helpdesk, berikut adalah detail ticket anda:<br><br>
+                <b>Request Type:</b> {$ticket['req_type']}<br>
+                <b>Original Message:</b> {$ticket['message']}<br>
+                <b>Feedback Admin:</b> {$replyText}<br><br>
+                Ticket anda telah di assign kepada <b>{$assignedName}</b>. Mohon ditunggu untuk update berikutnya.<br><br>
+                Hormat kami,<br>
+                Human Capital Division
+            ";
+        }
+
+        $toEmail = $ticket['email'] ?? '';
+        if ($toEmail) {
+            // Pastikan PHPMailer sudah diinstall via composer
+            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/PHPMailer.php');
+            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/Exception.php');
+            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/SMTP.php');
+
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host = "smtp-mail.outlook.com";
+                $mail->SMTPAuth = true;
+                $mail->Username = "muhammad.farras@mtf.co.id";
+                $mail->Password = "Tun4\$F1n@nc32025@#!-"; // isi password email Anda
+                $mail->SMTPSecure = "tls";
+                $mail->Port = 587;
+
+                $mail->setFrom("muhammad.farras@mtf.co.id", "HC Helpdesk");
+                $mail->addAddress($toEmail);
+
+                $mail->Subject = "Ticket #" . $ticketId . " - HC Helpdesk";
+                $mail->isHTML(true);
+                $mail->Body = $emailBody;
+
+                $mail->send();
+            } catch (Exception $e) {
+                // error_log('Mailer Error: ' . $mail->ErrorInfo);
+            }
+        }
 
         return redirect()->to('admin/Ticket_detail/' . $ticketId);
     }

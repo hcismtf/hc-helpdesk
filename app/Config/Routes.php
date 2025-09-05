@@ -6,6 +6,7 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 $routes->get('/', 'Ticket::create'); 
+$routes->get('ticket/create', 'Ticket::create');
 $routes->post('/ticket/store', 'Ticket::store'); 
 $routes->get('faq', 'Ticket::faq');
 

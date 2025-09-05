@@ -35,17 +35,13 @@
             </div>
             
             <!-- Modal Reply Status -->
+            <!-- Modal Reply Status -->
             <div id="replyStatusModal" class="modal-user" style="display:none;">
                 <div class="modal-user-content modal-user-frame">
                     <div class="modal-user-header" style="width:100%; display:flex; justify-content:space-between; align-items:center;">
                         <span class="modal-user-title">Update Status</span>
                         <span class="modal-user-close" onclick="closeReplyStatusModal()" style="font-size:2rem; cursor:pointer;">&times;</span>
                     </div>
-                    <?php
-                    // Cek apakah ticket sudah pernah direply (ada transaksi)
-                    $hasReply = !empty($replies);
-                    ?>
-
                     <form id="replyStatusForm" method="post" action="<?= base_url('admin/send_reply/' . esc($ticket['id'])) ?>">
                         <div class="modal-form-group">
                             <label class="modal-label">Status <span style="color:red">*</span></label>
@@ -56,17 +52,19 @@
                                 <option value="closed">Closed</option>
                             </select>
                         </div>
+                        <?php if (empty($ticket['ticket_priority'])): ?>
                         <div class="modal-form-group">
                             <label class="modal-label">Priority <span style="color:red">*</span></label>
                             <select name="priority" class="modal-input modal-textbox" required>
-                                <option value="">Select Ticket Status</option>
+                                <option value="">Select Ticket Priority</option>
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
                                 <option value="high">High</option>
                                 <option value="urgent">Urgent</option>
                             </select>
                         </div>
-                        <?php if (!$hasReply): // hanya tampil jika belum ada reply ?>
+                        <?php endif; ?>
+                        <?php if (!$hasReply): ?>
                         <div class="modal-form-group">
                             <label class="modal-label">Assigned To <span style="color:red">*</span></label>
                             <select name="assigned_to" class="modal-input modal-textbox" required>
@@ -84,6 +82,9 @@
                         <div class="modal-user-footer" style="width:100%; display:flex; justify-content:center;">
                             <button type="submit" class="modal-user-submit">Submit Status</button>
                         </div>
+                        <?php if (!empty($ticket['ticket_priority'])): ?>
+                            <input type="hidden" name="priority" value="<?= esc($ticket['ticket_priority']) ?>">
+                        <?php endif; ?>
                     </form>
                 </div>
             </div>
@@ -112,6 +113,28 @@
             </div>
             <div class="ticket-section-title">Original Message</div>
             <div class="ticket-message-box"><?= esc($ticket['message'] ?? '') ?></div>
+            <?php if (!empty($attachments)): ?>
+                <div class="ticket-section-title" style="margin-top:18px;">Attachment</div>
+                <div class="ticket-attachment-list" style="display:flex; gap:18px; flex-wrap:wrap;">
+                    <?php foreach ($attachments as $att): ?>
+                        <div class="ticket-attachment-item" style="text-align:center;">
+                            <a href="javascript:void(0);" onclick="showAttachmentModal('<?= base_url('uploads/' . esc($att['file_path'])) ?>')">
+                                <img src="<?= base_url('uploads/' . esc($att['file_path'])) ?>" alt="<?= esc($att['file_name']) ?>" style="max-width:80px; max-height:80px; border-radius:8px; border:1px solid #eee; box-shadow:0 2px 8px #eee;">
+                            </a>
+                            <div style="font-size:13px; margin-top:4px;"><?= esc($att['file_name']) ?></div>
+                        </div>
+                    <?php endforeach ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- Modal Popup Attachment -->
+            <div id="attachmentModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:9999; align-items:center; justify-content:center;">
+                <div id="attachmentModalContent" style="background:#fff; border-radius:18px; padding:24px; box-shadow:0 2px 16px #aaa; max-width:90vw; max-height:90vh; display:flex; flex-direction:column; align-items:center; position:relative;">
+                    <span onclick="closeAttachmentModal()" style="position:absolute; top:18px; right:18px; font-size:2rem; cursor:pointer;">&times;</span>
+                    <img id="attachmentModalImg" src="" alt="Attachment" style="max-width:80vw; max-height:70vh; border-radius:12px; box-shadow:0 2px 12px #eee;">
+                    <div id="attachmentModalFilename" style="margin-top:12px; font-size:15px; color:#222;"></div>
+                </div>
+            </div>
             <hr class="divider">
             <div class="ticket-section-title">Replies</div>
             <div class="reply-list">
@@ -140,6 +163,19 @@
         </div>
     </div>
     <script>
+        function showAttachmentModal(url) {
+            document.getElementById('attachmentModalImg').src = url;
+            // Ambil nama file dari url
+            var filename = url.split('/').pop();
+            document.getElementById('attachmentModalFilename').textContent = filename;
+            document.getElementById('attachmentModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        function closeAttachmentModal() {
+            document.getElementById('attachmentModal').style.display = 'none';
+            document.getElementById('attachmentModalImg').src = '';
+            document.body.style.overflow = '';
+        }
     function showStatusModal() {
         document.getElementById('statusModal').style.display = 'flex';
         document.addEventListener('keydown', escCloseModal);
