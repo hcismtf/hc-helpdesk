@@ -70,8 +70,16 @@ $routes->get('admin/get_permission', 'admin\Admin::get_permission');
 $routes->post('admin/edit_permission', 'admin\Admin::edit_permission');
 $routes->post('admin/delete_permission', 'admin\Admin::delete_permission');
 
-// report user
-$routes->get('admin/report_user', 'admin\Admin::report_user');
+
 
 //assets js
 $routes->get('assets/ticket_js', 'Assets::ticket_js');
+
+//view images
+$routes->get('admin/view/(:any)', 'admin\Admin::view/$1');
+
+// report user
+$routes->get('admin/report_user', 'admin\Admin::report_user');
+$routes->post('admin/submit_report_job', 'admin\Admin::submit_report_job');
+$routes->get('admin/download_report/(:num)', 'admin\Admin::download_report/$1');
+$routes->post('admin/delete_report_job/(:num)', 'admin\Admin::delete_report_job/$1');

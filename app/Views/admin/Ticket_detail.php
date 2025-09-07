@@ -118,8 +118,8 @@
                 <div class="ticket-attachment-list" style="display:flex; gap:18px; flex-wrap:wrap;">
                     <?php foreach ($attachments as $att): ?>
                         <div class="ticket-attachment-item" style="text-align:center;">
-                            <a href="javascript:void(0);" onclick="showAttachmentModal('<?= base_url('uploads/' . esc($att['file_path'])) ?>')">
-                                <img src="<?= base_url('uploads/' . esc($att['file_path'])) ?>" alt="<?= esc($att['file_name']) ?>" style="max-width:80px; max-height:80px; border-radius:8px; border:1px solid #eee; box-shadow:0 2px 8px #eee;">
+                            <a href="javascript:void(0);" onclick="showAttachmentModal('<?= base_url('admin/view/' . esc($att['file_path'])) ?>')">
+                                <img src="<?= base_url('admin/view/' . esc($att['file_path'])) ?>" alt="Attachment" style="max-width:80px; max-height:80px; border-radius:8px; border:1px solid #eee; box-shadow:0 2px 8px #eee;">
                             </a>
                             <div style="font-size:13px; margin-top:4px;"><?= esc($att['file_name']) ?></div>
                         </div>

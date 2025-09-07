@@ -26,6 +26,9 @@ class PermissionFilter implements FilterInterface
             'add_sla', 'edit_sla', 'delete_sla', 
             'add_permission', 'edit_permission', 'delete_permission', 
         ],
+         'reports' => [
+            'report_user', 'export_ticket_excel', 'export_sla_excel','submit_report_job', 'download_report' ,'delete_report_job'
+        ],
     ];
 
     public function before(RequestInterface $request, $arguments = null)
@@ -45,6 +48,11 @@ class PermissionFilter implements FilterInterface
         $uriObj = $request->getUri();
         $segment2 = $uriObj->getTotalSegments() >= 2 ? strtolower($uriObj->getSegment(2)) : '';
         if ($segment2 === '') return;
+
+        // Exception: allow access to attachment view
+        if ($segment2 === 'view') {
+            return;
+        }
 
         $allowed = false;
         foreach ($this->permissionFileMap as $permCode => $files) {

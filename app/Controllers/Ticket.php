@@ -70,7 +70,7 @@ class Ticket extends Controller
             if ($file->getSize() > $maxSize && strpos($file->getMimeType(), 'image/') === 0) {
                 $imageType = $file->getMimeType();
                 $srcPath = $file->getTempName();
-                $dstPath = FCPATH . 'uploads/' . $newName;
+                $dstPath = 'D:/uploads/images/' . $newName;
 
                 // Kompres gambar (JPEG/PNG)
                 if ($imageType === 'image/jpeg') {
@@ -83,11 +83,11 @@ class Ticket extends Controller
                     imagedestroy($image);
                 } else {
                     // Jika bukan jpeg/png, tetap move tanpa compress
-                    $file->move(FCPATH . 'uploads', $newName);
+                    $file->move('D:/uploads/images', $newName);
                 }
             } else {
                 // File <= 1MB atau bukan gambar, langsung move
-                $file->move(FCPATH . 'uploads', $newName);
+                $file->move('D:/uploads/images', $newName);
             }
 
             // Enkripsi file_name dan file_path

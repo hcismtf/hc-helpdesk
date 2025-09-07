@@ -8,6 +8,11 @@ use App\Models\PermissionsModel;
 use App\Models\TiketTransactionsModel;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use CodeIgniter\HTTP\CURLRequest;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use App\Models\ReportJobModel;
+use App\Models\TicketModel;
 use DateTime;
 
 class Admin extends BaseController
@@ -91,7 +96,7 @@ class Admin extends BaseController
             return redirect()->to('/admin/login');
         }
 
-        $ticketModel = new \App\Models\TicketModel();
+        $ticketModel = new TicketModel();
         $slaModel = new \App\Models\SlaModel();
 
         // Ambil filter dari GET
@@ -219,7 +224,7 @@ class Admin extends BaseController
 
     public function Ticket_dashboard()
     {
-        $model = new \App\Models\TicketModel();
+        $model = new TicketModel();
         $perPage = $this->request->getGet('per_page') ?? 10;
         $page = $this->request->getGet('page') ?? 1;
         $start = $this->request->getGet('start');
@@ -263,7 +268,7 @@ class Admin extends BaseController
     }
     public function Ticket_detail($id)
     {
-        $model = new \App\Models\TicketModel();
+        $model = new TicketModel();
         $ticket = $model->find($id);
         $userModel = new \App\Models\UserModel();
         $users = $userModel->where('status', 'active')->findAll();
@@ -924,38 +929,249 @@ class Admin extends BaseController
     {
         $username = session('username') ?? '';
         $role = session('role') ?? '';
+        $userId = session('user_id');
 
-        // Data dummy
-        $reportTypes = [
-            ['id' => 1, 'name' => 'Monthly'],
-            ['id' => 2, 'name' => 'Incident'],
-            ['id' => 3, 'name' => 'Summary'],
-        ];
-        $reports = [
-            [
-                'type_name' => 'Monthly',
-                'created_date' => '28/08/2025 15:43:23'
-            ],
-            [
-                'type_name' => 'Incident',
-                'created_date' => '27/08/2025 10:12:00'
-            ]
-        ];
-        $page = 1;
-        $perPage = 10;
-        $totalPages = 3;
+        // Ambil filter dari GET
+        $reportType = $this->request->getGet('report_type') ?? 'Report Ticket Detail';
+        $requestType = $this->request->getGet('request_type') ?? '';
+        $priority_ticket = $this->request->getGet('priority_ticket') ?? '';
+        $priority_sla = $this->request->getGet('priority_sla') ?? '';
+        $start_date_ticket = $this->request->getGet('start_date_ticket') ?? '';
+        $end_date_ticket = $this->request->getGet('end_date_ticket') ?? '';
+        $start_date_sla = $this->request->getGet('start_date_sla') ?? '';
+        $end_date_sla = $this->request->getGet('end_date_sla') ?? '';
 
-        // Tambahkan variabel $active
+        // Dropdown dari DB lokal
+        $ticketModel = new TicketModel();
+        $requestTypes = $ticketModel->select('req_type')->distinct()->where('req_type IS NOT NULL')->where('req_type !=', '')->findAll();
+        $priorities = $ticketModel->select('ticket_priority')->distinct()->where('ticket_priority IS NOT NULL')->where('ticket_priority !=', '')->findAll();
+
+        // Ambil list job export dari DB
+        $jobModel = new ReportJobModel();
+        $reportJobs = $jobModel->where('created_by', $userId)->orderBy('created_at', 'desc')->findAll(10);
+
         return view('admin/report_user', [
-            'username'    => $username,
-            'role'        => $role,
-            'reportTypes' => $reportTypes,
-            'reports'     => $reports,
-            'page'        => $page,
-            'perPage'     => $perPage,
-            'totalPages'  => $totalPages,
-            'active'      => 'reports' // <--- ini penting untuk navbar
+            'username'      => $username,
+            'role'          => $role,
+            'reportType'    => $reportType,
+            'requestTypes'  => $requestTypes,
+            'priorities'    => $priorities,
+            'requestType'   => $requestType,
+            'priority_ticket' => $priority_ticket,
+            'priority_sla'    => $priority_sla,
+            'start_date_ticket' => $start_date_ticket,
+            'end_date_ticket'   => $end_date_ticket,
+            'start_date_sla'    => $start_date_sla,
+            'end_date_sla'      => $end_date_sla,
+            'reportJobs'    => $reportJobs,
+            'active'        => 'reports'
         ]);
+    }
+
+    // Submit job export ke DB, worker di Report-Helpdesk akan proses
+     public function submit_report_job()
+    {
+        $userId = session('user_id');
+        $reportType = $this->request->getPost('report_type');
+        $filterParams = $this->request->getPost();
+
+        // Buat nama file unik di D:/uploads
+        $fileName = 'report_' . $reportType . '_' . date('Ymd_His') . '_' . uniqid() . '.xlsx';
+        $filePath = 'D:/uploads/' . $fileName;
+
+        // Ambil data dari API Report-Helpdesk
+        $client = \Config\Services::curlrequest();
+        $apiKey = 'Tun4$F1n@nc32025@#!-';
+
+        if ($reportType == 'Report Ticket Detail') {
+            $response = $client->get('http://localhost:9000/report/ticket-detail', [
+                'headers' => [
+                    'X-API-KEY' => $apiKey
+                ],
+                'query' => [
+                    'start_date'   => $filterParams['start_date_ticket'] ?? '',
+                    'end_date'     => $filterParams['end_date_ticket'] ?? '',
+                    'request_type' => $filterParams['request_type'] ?? '',
+                    'priority'     => $filterParams['priority_ticket'] ?? ''
+                ]
+            ]);
+            $data = json_decode($response->getBody(), true);
+            $headers = [
+                'ID', 'Nama', 'Email', 'WA', 'Request Type', 'Subject', 'Status', 'Prioritas',
+                'Dibuat Oleh', 'Tanggal Dibuat', 'Tanggal Diubah', 'Due Date', 'First Response', 'Finish Date'
+            ];
+
+            // Generate Excel
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->fromArray($headers, null, 'A1');
+            $rowNum = 2;
+            foreach ($data as $row) {
+                $sheet->fromArray(array_values($row), null, 'A' . $rowNum);
+                $rowNum++;
+            }
+            foreach (range('A', $sheet->getHighestColumn()) as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($filePath);
+
+        } else if ($reportType == 'Report SLA') {
+            // Ambil detail SLA
+            $slaDetailRes = $client->get('http://localhost:9000/report/sla-detail', [
+                'headers' => ['X-API-KEY' => $apiKey],
+                'query' => [
+                    'start_date' => $filterParams['start_date_sla'] ?? '',
+                    'end_date'   => $filterParams['end_date_sla'] ?? '',
+                    'priority'   => $filterParams['priority_sla'] ?? ''
+                ]
+            ]);
+            $slaDetails = json_decode($slaDetailRes->getBody(), true);
+
+            // Ambil comparison response time
+            $responseCompRes = $client->get('http://localhost:9000/report/sla-response-comparison', [
+                'headers' => ['X-API-KEY' => $apiKey],
+                'query' => [
+                    'start_date' => $filterParams['start_date_sla'] ?? '',
+                    'end_date'   => $filterParams['end_date_sla'] ?? ''
+                ]
+            ]);
+            $responseComp = json_decode($responseCompRes->getBody(), true);
+
+            // Ambil comparison resolution time
+            $resolutionCompRes = $client->get('http://localhost:9000/report/sla-resolution-comparison', [
+                'headers' => ['X-API-KEY' => $apiKey],
+                'query' => [
+                    'start_date' => $filterParams['start_date_sla'] ?? '',
+                    'end_date'   => $filterParams['end_date_sla'] ?? ''
+                ]
+            ]);
+            $resolutionComp = json_decode($resolutionCompRes->getBody(), true);
+
+            // Gabungkan data berdasarkan priority
+            $slaMap = [];
+            foreach ($slaDetails as $sla) {
+                $priority = strtolower($sla['priority']);
+                $slaMap[$priority] = [
+                    'Priority' => ucfirst($priority),
+                    'Target Response Time (jam)' => $sla['response_time'],
+                    'Actual Response Time (jam)' => '-',
+                    'Target Resolution Time (jam)' => $sla['resolution_time'],
+                    'Actual Resolution Time (jam)' => '-',
+                    'Created By' => $sla['created_by'],
+                    'Created Date' => $sla['created_date'],
+                    'Modified By' => $sla['modified_by'],
+                    'Modified Date' => $sla['modified_date']
+                ];
+            }
+            foreach ($responseComp as $rc) {
+                $priority = strtolower($rc['priority']);
+                if (isset($slaMap[$priority])) {
+                    $slaMap[$priority]['Actual Response Time (jam)'] = round($rc['avg_actual_response_time'], 2);
+                }
+            }
+            foreach ($resolutionComp as $rs) {
+                $priority = strtolower($rs['priority']);
+                if (isset($slaMap[$priority])) {
+                    $slaMap[$priority]['Actual Resolution Time (jam)'] = round($rs['avg_actual_resolution_time'], 2);
+                }
+            }
+
+            // Filter hanya priority yang dipilih user (misal Medium)
+            $priorityFilter = strtolower($filterParams['priority_sla'] ?? '');
+            $excelRows = [];
+            foreach ($slaMap as $priority => $row) {
+                if ($priorityFilter && $priority != $priorityFilter) continue;
+                $excelRows[] = $row;
+            }
+
+            // Header Excel
+            $headers = [
+                'Priority',
+                'Target Response Time (jam)',
+                'Actual Response Time (jam)',
+                'Target Resolution Time (jam)',
+                'Actual Resolution Time (jam)',
+                'Created By',
+                'Created Date',
+                'Modified By',
+                'Modified Date'
+            ];
+
+            // Generate Excel
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->fromArray($headers, null, 'A1');
+            $rowNum = 2;
+            foreach ($excelRows as $row) {
+                $sheet->fromArray(array_values($row), null, 'A' . $rowNum);
+                $rowNum++;
+            }
+            foreach (range('A', $sheet->getHighestColumn()) as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($filePath);
+        }
+
+        // ENCRYPT filter_params dan file_path sebelum simpan ke DB
+        $encrypter = \Config\Services::encrypter();
+        $filterParamsEnc = bin2hex($encrypter->encrypt(json_encode($filterParams)));
+        $filePathEnc = bin2hex($encrypter->encrypt($filePath));
+
+        $jobModel = new ReportJobModel();
+        $jobId = $jobModel->insert([
+            'report_type'   => $reportType,
+            'filter_params' => $filterParamsEnc,
+            'file_path'     => $filePathEnc,
+            'status'        => 'done',
+            'action'        => 'export',
+            'created_by'    => $userId
+        ]);
+
+        return $this->response->setJSON(['success' => true, 'job_id' => $jobId]);
+    }
+
+    // Download file dari path yang sudah diisi worker
+    public function download_report($id)
+    {
+        $jobModel = new ReportJobModel();
+        $job = $jobModel->find($id);
+        if (!$job || $job['status'] != 'done' || empty($job['file_path'])) {
+            return 'File belum tersedia';
+        }
+        // DECRYPT file_path dari DB
+        $encrypter = \Config\Services::encrypter();
+        try {
+            $filePath = $encrypter->decrypt(hex2bin($job['file_path']));
+        } catch (\Exception $e) {
+            return 'File path tidak valid';
+        }
+        $filePath = realpath($filePath);
+        if (!$filePath || !is_file($filePath)) {
+            return 'File tidak ditemukan';
+        }
+        return $this->response->download($filePath, null);
+    }
+    public function delete_report_job($id)
+    {
+        $jobModel = new ReportJobModel();
+        $job = $jobModel->find($id);
+        if ($job) {
+            if (!empty($job['file_path'])) {
+                $encrypter = \Config\Services::encrypter();
+                try {
+                    $filePath = $encrypter->decrypt(hex2bin($job['file_path']));
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                } catch (\Exception $e) {
+                    // file path invalid, skip
+                }
+            }
+            $jobModel->delete($id);
+        }
+        return redirect()->to(base_url('admin/report_user'));
     }
     public function send_reply($ticketId)
     {
@@ -985,8 +1201,8 @@ class Admin extends BaseController
         $sla = $slaModel->where('priority', $priority)->first();
         $resolutionTime = $sla ? (int)$sla['resolution_time'] : 24; // default 24 jam jika tidak ada
 
-        // Ambil ticket lama
-        $ticketModel = new \App\Models\TicketModel();
+        // Ambil ticket lamage
+        $ticketModel = new TicketModel();
         $ticket = $ticketModel->find($ticketId);
 
         // Hitung due_date baru
@@ -1099,4 +1315,24 @@ class Admin extends BaseController
 
         return redirect()->to('admin/Ticket_detail/' . $ticketId);
     }
+    public function view($filename)
+    {
+        $basePath = 'D:/uploads/images/'; // Folder penyimpanan
+        $filePath = realpath($basePath . $filename);
+
+        // Validasi path biar nggak bisa akses sembarangan file (directory traversal attack)
+        if ($filePath === false || strpos($filePath, realpath($basePath)) !== 0 || !is_file($filePath)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        // Dapatkan MIME type (jpg/png/pdf dll)
+        $mimeType = mime_content_type($filePath);
+
+        // Return file sebagai response inline
+        return $this->response
+            ->setHeader('Content-Type', $mimeType)
+            ->setHeader('Content-Disposition', 'inline; filename="' . basename($filePath) . '"')
+            ->setBody(file_get_contents($filePath));
+    }
+
 }
