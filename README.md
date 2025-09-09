@@ -28,6 +28,77 @@ to your `app` folder. The affected files can be copied or merged from
 Copy `env` to `.env` and tailor for your app, specifically the baseURL
 and any database settings.
 
+## Developer Options
+
+Fitur ini membantu developer saat pengembangan, debugging, dan testing aplikasi.
+
+### Cara Mengaktifkan Mode Developer
+
+- Edit file `.env` di root project:
+  ```
+  CI_ENVIRONMENT = development
+  ```
+  Untuk mode production:
+  ```
+  CI_ENVIRONMENT = production
+  ```
+
+### Konfigurasi Database
+
+- Edit bagian database di `.env` (hapus tanda `#` di depan baris):
+  ```
+  database.default.hostname = 
+  database.default.database = 
+  database.default.username = 
+  database.default.password = 
+  database.default.DBDriver = MySQLi
+  database.default.port = 3306
+  ```
+
+### Fitur Developer di Dashboard
+
+- **Monitoring Compliance Last Modified User**  
+  Melihat perubahan terakhir oleh user di dashboard monitoring.
+
+- **Async Export Job**  
+  Submit dan monitoring export report secara async di halaman Report.
+
+- **Debug Log**  
+  Jika mode developer aktif, error detail dan log akan muncul di halaman.
+
+### Endpoint Testing
+
+- **API Report Helpdesk**  
+  - `/report/ticket-detail`
+  - `/report/sla-detail`
+  - `/report/sla-response-comparison`
+  - `/report/sla-resolution-comparison`
+
+- **Admin Tools**  
+  - `/admin/report_user` untuk simulasi export report.
+  - `/admin/delete_report_job/{id}` untuk hapus job export.
+
+### Tips Debugging
+
+- Gunakan browser Developer Tools (F12) untuk inspect JS dan network.
+- Cek log error di folder `writable/logs/`.
+- Pastikan variable global seperti `BASE_URL` sudah tersedia di view untuk JS eksternal.
+
+### Build & Dependency
+
+- Untuk toggle antara release dan development dependency CodeIgniter, gunakan:
+  ```
+  php builds release
+  php builds development
+  ```
+  lalu jalankan `composer update`.
+
+---
+
+**Catatan:**  
+- Jangan upload file `.env` ke repo.
+- Semua data sensitif harus diganti jika pernah ter-push ke GitHub.
+
 ## Important Change with index.php
 
 `index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
