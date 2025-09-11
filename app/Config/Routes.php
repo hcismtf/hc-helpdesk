@@ -83,3 +83,5 @@ $routes->get('admin/report_user', 'admin\Admin::report_user');
 $routes->post('admin/submit_report_job', 'admin\Admin::submit_report_job');
 $routes->get('admin/download_report/(:num)', 'admin\Admin::download_report/$1');
 $routes->post('admin/delete_report_job/(:num)', 'admin\Admin::delete_report_job/$1');
+
+$routes->get('admin/developer-options', 'admin\DeveloperOptions::index');

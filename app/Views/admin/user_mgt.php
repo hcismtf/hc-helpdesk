@@ -1,4 +1,3 @@
-<?php $active = 'user_mgt'; include(APPPATH . 'Views/admin/navbar.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,283 +5,12 @@
     <title>User Management</title>
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/dashboard.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>">
-    <style>
-        body { background: #f5f6fa; font-family: 'Montserrat', Arial, sans-serif; margin: 0; }
-        .main-content {
-            margin-left: 70px; /* sesuai lebar navbar kiri */
-            padding: 30px 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .settings-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-            padding-top: 32px;
-        }
-        .settings-header-row .page-title {
-            font-size: 26px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            
-        }
-        .settings-header-row .breadcrumb {
-            font-size: 15px;
-            color: #444;
-            margin-bottom: 0;
-        }
-        .settings-header-right {
-            text-align: right;
-        }
-        .user-welcome {
-            font-size: 20px;
-            font-weight: 500;
-            color: #222;
-            margin-bottom: 2px;
-        }
-        .user-role {
-            font-size: 13px;
-            color: #444;
-        }
-        .settings-tabs {
-            display: flex;
-            position: relative;
-            background: transparent;
-            border-radius: 40px;
-            margin-bottom: 24px;
-            gap: 0;
-            width: 100%;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-            padding: 0 32px;
-            box-sizing: border-box;
-        }
-        .settings-tab {
-            flex: 1;
-            background: #ededed;
-            border: none;
-            outline: none;
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #222;
-            padding: 18px 0;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: background 0.2s;
-            position: relative;
-            z-index: 2;
-            margin: 0 2px;
-        }
-        .settings-tab.active {
-            background: #FFD600;
-            color: #222;
-        }
-        .settings-slider {
-            position: absolute;
-            top: 0;
-            left: 32px; /* sesuai padding kiri settings-tabs */
-            height: 100%;
-            background: #FFD600;
-            border-radius: 40px;
-            z-index: 1;
-            transition: left 0.2s, width 0.2s;
-        }
-        .settings-content {
-            width: 100%;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .tab-content {
-            display: none;
-            padding: 0;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .user-frame {
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-            padding: 32px 32px 24px 32px;
-            margin-bottom: 18px;
-            margin-top: 8px;
-            width: 100%;
-            max-width: 1100px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .user-frame-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-        .user-title {
-            font-weight:600; font-size:18px;
-        }
-        .user-actions {
-            display:flex; align-items:center; gap:12px;
-        }
-        .btn-add-user {
-            background: #234be7;
-            color: #fff;
-            border: none;
-            border-radius: 22px;
-            padding: 8px 24px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-add-user:hover {
-            background: #1a3bb3;
-        }
-        .user-pagination {
-            font-size: 15px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            padding: 4px 12px;
-            margin-left: 8px;
-            margin-right: 8px;
-        }
-        table.user-table {
-            width:100%; border-collapse:collapse;
-        }
-        table.user-table th, table.user-table td {
-            padding: 14px 10px;
-            text-align: left;
-        }
-        table.user-table th {
-            background:#f7f7f7; font-weight:600;
-        }
-        table.user-table td {
-            background:#fff;
-            vertical-align: middle;
-        }
-        .user-edit-btn {
-            background: #234be7;
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            padding: 6px 18px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .user-delete-btn {
-            background: #7A161C;
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            padding: 6px 18px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-left: 8px;
-        }
-        @media (max-width: 900px) {
-            .main-content { margin-left: 54px; padding: 18px 8px; }
-            .settings-header-row, .settings-tabs, .settings-content, .user-frame { max-width: 100vw; }
-        }
-        @media (max-width: 500px) {
-            .main-content { margin-left: 0; padding: 4px 2px; }
-            .settings-header-row, .settings-tabs, .settings-content, .user-frame { max-width: 100vw; }
-            .settings-tabs { padding: 0 4px; }
-            .settings-slider { left: 4px; }
-        }
-        .modal-user {
-            position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center;
-        }
-        .modal-user-content {
-            background: #fff; border-radius: 28px; box-shadow: 0 4px 32px rgba(0,0,0,0.10);
-            padding: 32px 36px 24px 36px; width: 95vw; max-width: 600px; position: relative;
-        }
-        .modal-user-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;
-        }
-        .modal-user-title {
-            font-size: 1.35rem; font-weight: 700;
-        }
-        .modal-user-close {
-            font-size: 2rem; font-weight: 400; cursor: pointer; color: #444;
-        }
-        #addUserForm label {
-            display: block; font-weight: 500; margin-bottom: 4px; margin-top: 18px;
-        }
-        #addUserForm input, #addUserForm select {
-            width: 100%; padding: 12px 18px; border-radius: 22px; border: 1px solid #bbb;
-            font-size: 1rem; margin-bottom: 2px; background: #fff;
-        }
-        .modal-user-footer {
-            display: flex; justify-content: flex-end; margin-top: 24px;
-        }
-        .modal-user-submit {
-            background: #234be7; color: #fff; border: none; border-radius: 22px;
-            padding: 10px 32px; font-size: 1rem; font-weight: 600; cursor: pointer;
-        }
-        .modal-user-submit:hover {
-            background: #1a3bb3;
-        }
-        .modal-form-group {
-            margin-bottom: 12px;
-        }
-        .modal-form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            font-size: 15px;
-        }
-        .modal-user-frame {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-            width: 750px;
-            padding: 10px;
-            border-radius: 20px;
-            background: #FFF;
-            box-shadow: 0 4px 10px 2px rgba(0, 0, 0, 0.25);
-        }
-
-        .modal-form-group {
-            width: 100%;
-        }
-
-        .modal-label {
-            font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 15px;
-            display: block;
-        }
-
-        .modal-textbox {
-            display: flex;
-            width: 100%; 
-            padding: 15px 10px 15px 15px;
-            align-items: center;
-            gap: 10px;
-            border-radius: 30px;
-            border: 1px solid #82868C;
-            background: #FFF;
-            font-size: 1rem;
-            margin-bottom: 2px;
-            box-sizing: border-box;
-        }
-    </style>
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/user_mgt.css') ?>">
 </head>
 <?php include(APPPATH . 'Views/components/warning_confirm.php'); ?>
 <?php include(APPPATH . 'Views/components/success_confirm.php'); ?>
 <body>
+    <?php $active = 'user_mgt'; include(APPPATH . 'Views/admin/navbar.php'); ?>
     <div class="main-content">
         <div class="settings-header-row">
             <div>
@@ -328,8 +56,15 @@
                                 <input type="text" name="name" placeholder="Input real name here" required>
                                 <label>Email</label>
                                 <input type="email" name="email" placeholder="Input active email here" required>
-                                <label>Password</label>
-                                <input type="password" name="password" placeholder="Input password here" required>
+                                <label>Password <span style="font-weight:normal;color:#888;font-size:0.98em;">(Minimal 16 karakter & wajib ada special character)</span></label>
+                                <div class="password-input-group">
+                                    <input type="password" name="password" id="add-user-password" class="modal-input modal-textbox"
+                                        placeholder="Input password here" required
+                                        minlength="16" pattern="^(?=.*[!@#$%^&*(),.?\":{}|<>
+                                    <span class="password-eye" onclick="toggleAddUserPassword()">
+                                        <span id="add-eye-icon">👁️</span>
+                                    </span>
+                                </div>
                                 <label>Role</label>
                                 <select name="role" required>
                                     <option value="">Select User Role</option>
@@ -363,8 +98,15 @@
                                     <input type="text" name="username" id="edit-user-username" class="modal-input modal-textbox" required>
                                 </div>
                                 <div class="modal-form-group">
-                                    <label class="modal-label">Password <span style="font-weight:normal">(Kosongkan jika tidak ingin ganti)</span></label>
-                                    <input type="password" name="password" id="edit-user-password" class="modal-input modal-textbox" placeholder="Input password here">
+                                    <label class="modal-label">Password <span style="font-weight:normal;color:#888;font-size:0.98em;">(Minimal 16 karakter & wajib ada special character, kosongkan jika tidak ingin ganti)</span></label>
+                                    <div class="password-input-group">
+                                        <input type="password" name="password" id="edit-user-password" class="modal-input modal-textbox"
+                                            placeholder="Input password here"
+                                            minlength="16" pattern="^(?=.*[!@#$%^&*(),.?\":{}|<>
+                                        <span class="password-eye" onclick="toggleEditUserPassword()">
+                                            <span id="edit-eye-icon">👁️</span>
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="modal-form-group">
                                     <label class="modal-label">Name</label>
@@ -476,6 +218,28 @@
     </div>
     </div>
     <script>
+        function toggleAddUserPassword() {
+            const input = document.getElementById('add-user-password');
+            const eyeIcon = document.getElementById('add-eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.textContent = "👁️‍🗨️";
+            } else {
+                input.type = 'password';
+                eyeIcon.textContent = "👁️";
+            }
+        }
+        function toggleEditUserPassword() {
+            const input = document.getElementById('edit-user-password');
+            const eyeIcon = document.getElementById('edit-eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.textContent = "👁️‍🗨️";
+            } else {
+                input.type = 'password';
+                eyeIcon.textContent = "👁️";
+            }
+        }
         const roleMap = {
             <?php foreach ($roles as $role): ?>
                 "<?= $role['id'] ?>": "<?= esc($role['name']) ?>",

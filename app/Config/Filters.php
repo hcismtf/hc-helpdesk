@@ -104,6 +104,7 @@ class Filters extends BaseFilters
                 'admin/report_user',
                 'ticket/store',
                 'ticket/create',
+                'admin/developer-options',
                 // 'admin/view',
                 // 'admin/view/*'
                 // Tambahkan endpoint lain yang dipakai AJAX

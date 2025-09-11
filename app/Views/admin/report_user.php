@@ -5,178 +5,17 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Laporan User</title>
+    <title>Report User</title>
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>">
-    <style>
-        body { background: #f5f6fa; font-family: 'Montserrat', Arial, sans-serif; margin: 0; }
-        .main-content { margin-left: 70px; padding: 32px 0 0 0; min-height: 100vh; }
-        .container { max-width: 100vw; width: 100%; margin: 0 auto; padding: 0 32px; box-sizing: border-box; }
-        .page-title { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
-        .breadcrumb { font-size: 15px; color: #444; margin-bottom: 18px; }
-        .welcome-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-        .welcome-user { font-size: 20px; font-weight: 500; }
-        .welcome-role { font-size: 13px; color: #444; }
-        .report-card { background: #fff; border-radius: 22px; box-shadow: 0 2px 12px #eee; padding: 28px 32px; margin-bottom: 22px; width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto; }
-        .report-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 18px; }
-        .form-row { display: flex; gap: 18px; flex-wrap: wrap; }
-        .form-group { flex: 1; min-width: 220px; }
-        .form-group label { font-weight: 500; display: block; margin-bottom: 8px; }
-        .form-group select, .form-group input { width: 100%; padding: 10px 16px; border-radius: 22px; border: 1px solid #ccc; }
-        .btn-report { background: #2563eb; color: #fff; border: none; border-radius: 22px; padding: 8px 32px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .btn-report:hover { background: #1a3bb3; }
-        @media (max-width: 900px) {
-            .main-content { margin-left: 0 !important; padding: 12px 0 0 0; }
-            .container { padding: 0 8px; }
-            .report-card { padding: 12px 4px; max-width: 100vw; }
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 24px;
-            table-layout: auto;
-            background: #fff;
-        }
-        th, td {
-            padding: 8px 10px;
-            border: 1px solid #e5e7eb;
-            text-align: left;
-            vertical-align: top;
-            word-break: break-word;
-            font-size: 15px;
-        }
-        th {
-            background: #f5f6fa;
-            font-weight: 600;
-            font-size: 15px;
-        }
-        @media (max-width: 900px) {
-            table, th, td {
-                font-size: 13px;
-                padding: 6px 4px;
-            }
-            .report-card {
-                padding: 8px 2px;
-            }
-            th, td {
-                min-width: 80px;
-            }
-            table {
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-        }
-    </style>
-    <script>
-        function onReportTypeChange() {
-            var val = document.getElementById('report_type').value;
-            var ticketFields = document.getElementById('ticket-fields');
-            var slaFields = document.getElementById('sla-fields');
-            if (val === 'Report Ticket Detail') {
-                ticketFields.style.display = 'flex';
-                slaFields.style.display = 'none';
-            } else {
-                ticketFields.style.display = 'none';
-                slaFields.style.display = 'flex';
-            }
-        }
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/report_user.css') ?>">
+    <script src="<?= base_url('assets/js/admin/report_user.js') ?>" defer></script>
 
-        // Fungsi modal error
-        function showGlobalError(msg) {
-            var errorDiv = document.getElementById('global-error-confirm');
-            errorDiv.innerHTML = '<div style="background:#fff;padding:32px 24px;border-radius:18px;box-shadow:0 2px 12px #eee;max-width:350px;margin:auto;text-align:center;"><div style="font-size:22px;color:#ef4444;margin-bottom:12px;">❌ Error</div><div style="font-size:16px;color:#333;margin-bottom:18px;">'+msg+'</div><button onclick="document.getElementById(\'global-error-confirm\').style.display=\'none\'" style="background:#ef4444;color:#fff;border:none;border-radius:12px;padding:8px 24px;font-size:15px;cursor:pointer;">Tutup</button></div>';
-            errorDiv.style.display = 'flex';
-        }
-
-        window.addEventListener('DOMContentLoaded', function() {
-            var exportForm = document.getElementById('exportAsyncForm');
-            if (exportForm) {
-                exportForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    var form = e.target;
-                    var formData = new FormData(form);
-                    fetch(form.action, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            document.getElementById('global-success-message').innerText = 'Export job berhasil ditambahkan! Silakan cek daftar di bawah.';
-                            document.getElementById('global-success-confirm-bg').style.display = 'block';
-                            document.getElementById('global-success-confirm').style.display = 'block';
-                            setTimeout(function() {
-                                document.getElementById('global-success-confirm-bg').style.display = 'none';
-                                document.getElementById('global-success-confirm').style.display = 'none';
-                                location.reload();
-                            }, 1500);
-                        } else {
-                            showGlobalError(data.message || 'Gagal submit export job.');
-                        }
-                    })
-                    .catch(function() {
-                        showGlobalError('Gagal submit export job.');
-                    });
-                });
-            }
-            onReportTypeChange();
-
-            // Success modal function
-            function showSuccessModal(msg) {
-                document.getElementById('global-success-message').innerText = msg;
-                document.getElementById('global-success-confirm-bg').style.display = 'block';
-                document.getElementById('global-success-confirm').style.display = 'block';
-                setTimeout(function() {
-                    document.getElementById('global-success-confirm-bg').style.display = 'none';
-                    document.getElementById('global-success-confirm').style.display = 'none';
-                    location.reload();
-                }, 1500);
-            }
-
-            // Warning modal function
-            function showWarningModal(msg, onOk) {
-                document.getElementById('global-warning-message').innerText = msg;
-                document.getElementById('global-warning-confirm-bg').style.display = 'block';
-                document.getElementById('global-warning-confirm').style.display = 'block';
-                document.getElementById('global-warning-cancel-btn').onclick = function() {
-                    document.getElementById('global-warning-confirm-bg').style.display = 'none';
-                    document.getElementById('global-warning-confirm').style.display = 'none';
-                };
-                document.getElementById('global-warning-ok-btn').onclick = function() {
-                    document.getElementById('global-warning-confirm-bg').style.display = 'none';
-                    document.getElementById('global-warning-confirm').style.display = 'none';
-                    onOk();
-                };
-            }
-
-            // Intercept delete form submit
-            document.querySelectorAll('.delete-job-form').forEach(function(form) {
-                var btn = form.querySelector('button[type="button"]');
-                btn.addEventListener('click', function(e) {
-                    showWarningModal('Yakin hapus job ini?', function() {
-                        // Submit via AJAX
-                        var xhr = new XMLHttpRequest();
-                        xhr.open('POST', form.action, true);
-                        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                        xhr.onload = function() {
-                            if (xhr.status === 200) {
-                                showSuccessModal('Job berhasil dihapus!');
-                            } else {
-                                showGlobalError('Gagal menghapus job.');
-                            }
-                        };
-                        xhr.send(new FormData(form));
-                    });
-                });
-            });
-        });
-    </script>
 </head>
 <body>
     <?php include(APPPATH . 'Views/admin/navbar.php'); ?>
     <div class="main-content">
         <div class="container">
-            <div class="page-title">Laporan</div>
+            <div class="page-title">Report</div>
             <div class="breadcrumb">Home &gt; Laporan</div>
             <div class="welcome-row">
                 <div class="welcome-user">Selamat datang, <?= esc($username) ?></div>
@@ -251,7 +90,7 @@
                         </div>
                     </div>
                     <div style="display:flex; justify-content:flex-end;">
-                        <button type="submit" class="btn-report">Submit Export</button>
+                        <button type="submit" class="btn-report">Submit Report</button>
                     </div>
                 </form>
             </div>
