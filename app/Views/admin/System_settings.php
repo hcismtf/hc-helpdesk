@@ -408,6 +408,7 @@ function hasMenuAccess($menuName) {
                 <div id="sla-list"></div>
             </div>
         </div>
+        <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>
         <script>
             function validateRoleForm(formId, nameId, permissionContainerId, submitBtnSelector) {
                 var name = document.getElementById(nameId).value.trim();

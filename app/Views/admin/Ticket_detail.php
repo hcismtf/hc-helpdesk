@@ -162,6 +162,7 @@
             </div>
         </div>
     </div>
+    <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>
     <script>
         function showAttachmentModal(url) {
             document.getElementById('attachmentModalImg').src = url;

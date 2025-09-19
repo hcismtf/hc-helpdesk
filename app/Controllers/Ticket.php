@@ -102,7 +102,33 @@ class Ticket extends Controller
                 'created_date' => date('Y-m-d H:i:s'),
             ]);
         }
+        // Kirim email ke user
+        $email = \Config\Services::email();
+        $email->setTo($this->request->getPost('email'));
+        $email->setSubject('Konfirmasi Pengajuan Ticket HC Helpdesk');
 
+        $emp_name = $this->request->getPost('emp_name');
+        $subject = $this->request->getPost('subject');
+        $message = $this->request->getPost('message');
+
+        $emailBody = "
+        Dear {$emp_name},<br><br>
+        Selamat!<br><br>
+        Anda telah berhasil mengajukan ticket ke HC Helpdesk. Berikut detail tiket anda :<br>
+        No tiket : {$ticketId}<br>
+        Subject : {$subject}<br>
+        Message : {$message}<br><br>
+        Mohon di tunggu konfirmasi dari tim kami,<br><br>
+        Terima kasih.<br><br>
+        Hormat kami,<br>
+        Human Capital Division
+        ";
+
+        $email->setMessage($emailBody);
+        $email->setMailType('html');
+        if (!$email->send()) {
+            log_message('error', $email->printDebugger(['headers']));
+        }  
         return view('components/success_confirm');
     }
 }

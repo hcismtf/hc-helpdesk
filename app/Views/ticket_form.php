@@ -15,9 +15,7 @@
             <p class="text-muted">Get support and find answers to common question</p>
         </div>
         <div>
-            <a href="<?= base_url('login') ?>" class="admin-login-btn">
-                Admin Login
-            </a>
+            
         </div>
     </div>
 
@@ -117,10 +115,10 @@
 
 
     <!-- FAQ Section -->
-         <h2 style="text-align:center; font-weight:600; margin-bottom:32px;">Frequently Asked Question</h2>
-    <div id="faq-section" class="card d-none">
-        <?php include(APPPATH . 'Views/list_faq.php'); ?>
-    </div>
+         <h2 id="faq-title" style="text-align:center; font-weight:600; margin-bottom:32px; display:none;">Frequently Asked Question</h2>
+        <div id="faq-section" class="card d-none">
+            <?php include(APPPATH . 'Views/list_faq.php'); ?>
+        </div>
 
     <svg width="414" height="100" viewBox="0 0 414 100" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:block; margin:50px auto; width:413px; height:100px;">
 <rect x="0.5" width="413" height="100" fill="url(#pattern0_11_913)"/>

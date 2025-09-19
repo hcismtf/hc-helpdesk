@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/report_user.css') ?>">
     <script src="<?= base_url('assets/js/admin/report_user.js') ?>" defer></script>
+    <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>
 
 </head>
 <body>

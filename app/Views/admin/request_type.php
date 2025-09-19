@@ -45,3 +45,4 @@
 <?php else: ?>
     <div style="text-align:center; color:#888; margin:32px 0;">Belum ada Request Type.</div>
 <?php endif ?>
+<script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>

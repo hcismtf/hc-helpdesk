@@ -2,12 +2,14 @@ const btnTicket = document.getElementById('btn-ticket');
 const btnFaq = document.getElementById('btn-faq');
 const ticketSection = document.getElementById('ticket-section');
 const faqSection = document.getElementById('faq-section');
+const faqTitle = document.getElementById('faq-title'); 
 
 btnTicket.addEventListener('click', () => {
     btnTicket.classList.add('active');
     btnFaq.classList.remove('active');
     ticketSection.classList.remove('d-none');
     faqSection.classList.add('d-none');
+    faqTitle.style.display = 'none';
 });
 
 btnFaq.addEventListener('click', () => {
@@ -15,6 +17,7 @@ btnFaq.addEventListener('click', () => {
     btnTicket.classList.remove('active');
     faqSection.classList.remove('d-none');
     ticketSection.classList.add('d-none');
+    faqTitle.style.display = 'block';
 });
 document.getElementById('confirmBtn').onclick = function(e) {
   // Ambil data dari form

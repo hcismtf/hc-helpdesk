@@ -175,8 +175,17 @@ class Admin extends BaseController
             if (!empty($t['finish_date']) && !empty($t['created_date'])) {
                 $resolutionTime = strtotime($t['finish_date']) - strtotime($t['created_date']);
                 $totalResolution += $resolutionTime;
-                // SLA Compliance: finish_date <= due_date
-                if (!empty($t['due_date']) && strtotime($t['finish_date']) <= strtotime($t['due_date'])) {
+
+                // Ambil SLA dari tabel sla_configuration sesuai priority tiket
+                $sla = $slaModel->where('priority', $t['ticket_priority'])->first();
+                $slaHour = $sla ? (int)$sla['resolution_time'] : 24; // default 24 jam jika tidak ada
+
+                // Hitung batas waktu SLA
+                $createdDate = new DateTime($t['created_date']);
+                $slaDueDate = $createdDate->modify('+' . $slaHour . ' hours')->format('Y-m-d H:i:s');
+
+                // SLA Compliance: finish_date <= slaDueDate
+                if (strtotime($t['finish_date']) <= strtotime($slaDueDate)) {
                     $slaCompliant++;
                 }
             }
@@ -969,22 +978,25 @@ class Admin extends BaseController
     }
 
     // Submit job export ke DB, worker di Report-Helpdesk akan proses
-     public function submit_report_job()
+    public function submit_report_job()
     {
         $userId = session('user_id');
         $reportType = $this->request->getPost('report_type');
         $filterParams = $this->request->getPost();
 
-        // Buat nama file unik di D:/uploads
-        $fileName = 'report_' . $reportType . '_' . date('Ymd_His') . '_' . uniqid() . '.xlsx';
-        $filePath = 'D:/uploads/' . $fileName;
+        // Ambil konfigurasi dari .env
+        $uploadPath = env('report.uploadPath', 'D:/uploads/');
+        $apiKey = env('report.apiKey');
+        $endpoint = env('report.endpoint', 'http://localhost:9000');
 
-        // Ambil data dari API Report-Helpdesk
+        // Buat nama file unik
+        $fileName = 'report_' . $reportType . '_' . date('Ymd_His') . '_' . uniqid() . '.xlsx';
+        $filePath = $uploadPath . $fileName;
+
         $client = \Config\Services::curlrequest();
-        $apiKey = 'Tun4$F1n@nc32025@#!-';
 
         if ($reportType == 'Report Ticket Detail') {
-            $response = $client->get('http://localhost:9000/report/ticket-detail', [
+            $response = $client->get($endpoint . '/report/ticket-detail', [
                 'headers' => [
                     'X-API-KEY' => $apiKey
                 ],
@@ -997,8 +1009,8 @@ class Admin extends BaseController
             ]);
             $data = json_decode($response->getBody(), true);
             $headers = [
-                'ID', 'Nama', 'Email', 'WA', 'Request Type', 'Subject', 'Status', 'Prioritas',
-                'Dibuat Oleh', 'Tanggal Dibuat', 'Tanggal Diubah', 'Due Date', 'First Response', 'Finish Date'
+                'ID', 'Employee ID', 'Nama', 'Email', 'WA', 'Request Type', 'Subject', 'Message',
+                'Status', 'Priority', 'Name', 'Due Date', 'First Response', 'Finish Date'
             ];
 
             // Generate Excel
@@ -1018,7 +1030,7 @@ class Admin extends BaseController
 
         } else if ($reportType == 'Report SLA') {
             // Ambil detail SLA
-            $slaDetailRes = $client->get('http://localhost:9000/report/sla-detail', [
+            $slaDetailRes = $client->get($endpoint . '/report/sla-detail', [
                 'headers' => ['X-API-KEY' => $apiKey],
                 'query' => [
                     'start_date' => $filterParams['start_date_sla'] ?? '',
@@ -1029,7 +1041,7 @@ class Admin extends BaseController
             $slaDetails = json_decode($slaDetailRes->getBody(), true);
 
             // Ambil comparison response time
-            $responseCompRes = $client->get('http://localhost:9000/report/sla-response-comparison', [
+            $responseCompRes = $client->get($endpoint . '/report/sla-response-comparison', [
                 'headers' => ['X-API-KEY' => $apiKey],
                 'query' => [
                     'start_date' => $filterParams['start_date_sla'] ?? '',
@@ -1039,7 +1051,7 @@ class Admin extends BaseController
             $responseComp = json_decode($responseCompRes->getBody(), true);
 
             // Ambil comparison resolution time
-            $resolutionCompRes = $client->get('http://localhost:9000/report/sla-resolution-comparison', [
+            $resolutionCompRes = $client->get($endpoint . '/report/sla-resolution-comparison', [
                 'headers' => ['X-API-KEY' => $apiKey],
                 'query' => [
                     'start_date' => $filterParams['start_date_sla'] ?? '',
@@ -1285,31 +1297,13 @@ class Admin extends BaseController
 
         $toEmail = $ticket['email'] ?? '';
         if ($toEmail) {
-            // Pastikan PHPMailer sudah diinstall via composer
-            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/PHPMailer.php');
-            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/Exception.php');
-            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/SMTP.php');
-
-            $mail = new PHPMailer(true);
-            try {
-                $mail->isSMTP();
-                $mail->Host = "smtp-mail.outlook.com";
-                $mail->SMTPAuth = true;
-                $mail->Username = "muhammad.farras@mtf.co.id";
-                $mail->Password = "Tun4\$F1n@nc32025@#!-"; // isi password email Anda
-                $mail->SMTPSecure = "tls";
-                $mail->Port = 587;
-
-                $mail->setFrom("muhammad.farras@mtf.co.id", "HC Helpdesk");
-                $mail->addAddress($toEmail);
-
-                $mail->Subject = "Ticket #" . $ticketId . " - HC Helpdesk";
-                $mail->isHTML(true);
-                $mail->Body = $emailBody;
-
-                $mail->send();
-            } catch (Exception $e) {
-                // error_log('Mailer Error: ' . $mail->ErrorInfo);
+            $email = \Config\Services::email();
+            $email->setTo($toEmail);
+            $email->setSubject("Ticket #{$ticketId} - HC Helpdesk");
+            $email->setMessage($emailBody);
+            $email->setMailType('html');
+            if (!$email->send()) {
+                log_message('error', $email->printDebugger(['headers']));
             }
         }
 

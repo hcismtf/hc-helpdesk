@@ -166,5 +166,6 @@
         </div>
     </div>
     <script src="<?= base_url('assets/js/admin/dashboard.js') ?>"></script>
+    <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>
 </body>
 </html>

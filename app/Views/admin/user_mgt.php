@@ -217,6 +217,7 @@
         </div>
     </div>
     </div>
+    <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>
     <script>
         function toggleAddUserPassword() {
             const input = document.getElementById('add-user-password');
