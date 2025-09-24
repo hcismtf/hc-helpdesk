@@ -17,10 +17,10 @@
     <div class="main-content">
         <div class="container">
             <div class="page-title">Report</div>
-            <div class="breadcrumb">Home &gt; Laporan</div>
+            <div class="breadcrumb">Home &gt; Report</div>
             <div class="welcome-row">
                 <div class="welcome-user">Selamat datang, <?= esc($username) ?></div>
-                <div class="welcome-role"><?= esc($role) ?></div>
+                
             </div>
 
             <div class="report-card">

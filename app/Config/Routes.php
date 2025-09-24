@@ -85,3 +85,4 @@ $routes->get('admin/download_report/(:num)', 'admin\Admin::download_report/$1');
 $routes->post('admin/delete_report_job/(:num)', 'admin\Admin::delete_report_job/$1');
 
 $routes->get('admin/developer-options', 'admin\DeveloperOptions::index');
+$routes->get('admin/ajax_ticket_table', 'admin\Admin::ajax_ticket_table');

@@ -165,6 +165,11 @@ body {
             gap: 6px;
             margin-top: 18px;
         }
+        .pagination ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
         .pagination li a,
         .pagination li span {
             display: flex;
@@ -293,4 +298,8 @@ body {
                 flex-direction: column;
                 gap: 8px;
             }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(360deg);}
         }

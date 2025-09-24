@@ -238,15 +238,18 @@ class Admin extends BaseController
         $page = $this->request->getGet('page') ?? 1;
         $start = $this->request->getGet('start');
         $end = $this->request->getGet('end');
-
-        // Query builder: filter berdasarkan tanggal created_date & priority
         $priority = $this->request->getGet('priority');
+
         $builder = $model;
         if ($start) $builder = $builder->where('created_date >=', $start . ' 00:00:00');
         if ($end) $builder = $builder->where('created_date <=', $end . ' 23:59:59');
         if ($priority) $builder = $builder->where('ticket_priority', $priority);
 
         $ticketsRaw = $builder->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
+        $pager = $model->pager;
+
+        // Hitung total tickets dari pager
+        $totalTickets = $pager->getTotal('tickets');
 
         $encrypter = \Config\Services::encrypter();
         $tickets = [];
@@ -263,8 +266,6 @@ class Admin extends BaseController
             $tickets[] = $ticket;
         }
 
-        $pager = $model->pager;
-
         return view('admin/Ticket_dashboard', [
             'tickets' => $tickets,
             'pager' => $pager,
@@ -272,7 +273,51 @@ class Admin extends BaseController
             'active' => 'tickets',
             'start' => $start,
             'end' => $end,
-            'priority' => $priority
+            'priority' => $priority,
+            'totalTickets' => $totalTickets // <-- Tambahkan ini!
+        ]);
+    }
+    public function ajax_ticket_table()
+    {
+        $model = new TicketModel();
+        $perPage = $this->request->getGet('per_page') ?? 10;
+        $page = $this->request->getGet('page_tickets') ?? 1;
+        $start = $this->request->getGet('start');
+        $end = $this->request->getGet('end');
+        $priority = $this->request->getGet('priority');
+
+        $builder = $model;
+        if ($start) $builder = $builder->where('created_date >=', $start . ' 00:00:00');
+        if ($end) $builder = $builder->where('created_date <=', $end . ' 23:59:59');
+        if ($priority) $builder = $builder->where('ticket_priority', $priority);
+
+        $ticketsRaw = $builder->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
+        $pager = $model->pager;
+        $totalTickets = $pager->getTotal('tickets');
+
+        $encrypter = \Config\Services::encrypter();
+        $tickets = [];
+        foreach ($ticketsRaw as $ticket) {
+            $nip_decrypted = '';
+            if (!empty($ticket['nip_encrypted'])) {
+                try {
+                    $nip_decrypted = $encrypter->decrypt(hex2bin($ticket['nip_encrypted']));
+                } catch (\Exception $e) {
+                    $nip_decrypted = '[Invalid]';
+                }
+            }
+            $ticket['emp_nip'] = $nip_decrypted;
+            $tickets[] = $ticket;
+        }
+
+        return view('admin/ticket_table', [ // <-- Ganti dari 'admin/_ticket_table'
+            'tickets' => $tickets,
+            'pager' => $pager,
+            'perPage' => $perPage,
+            'priority' => $priority,
+            'start' => $start,
+            'end' => $end,
+            'totalTickets' => $totalTickets
         ]);
     }
     public function Ticket_detail($id)
@@ -1008,18 +1053,62 @@ class Admin extends BaseController
                 ]
             ]);
             $data = json_decode($response->getBody(), true);
+
+            // HEADER SESUAI URUTAN YANG DIMINTA
             $headers = [
-                'ID', 'Employee ID', 'Nama', 'Email', 'WA', 'Request Type', 'Subject', 'Message',
-                'Status', 'Priority', 'Name', 'Due Date', 'First Response', 'Finish Date'
+                'Nomor Tiket',         // ID
+                'Employee ID',         // NIP (decrypted)
+                'Nama',
+                'Email',
+                'No Whatsapp',
+                'Request Type',
+                'Priority',
+                'Subject',
+                'Message',
+                'Status',
+                'Due Date',
+                'First Response',
+                'Finish Date',
+                'Waktu Pengerjaan (menit)'
             ];
 
-            // Generate Excel
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->fromArray($headers, null, 'A1');
             $rowNum = 2;
+
+            $encrypter = \Config\Services::encrypter();
+
             foreach ($data as $row) {
-                $sheet->fromArray(array_values($row), null, 'A' . $rowNum);
+                // Ambil NIP hasil decrypt dari API
+                $emp_nip = $row['nip'] ?? '-';
+
+                // Hitung waktu pengerjaan (menit)
+                $waktuPengerjaan = '-';
+                if (!empty($row['first_response_at']) && !empty($row['finish_date'])) {
+                    $start = strtotime($row['first_response_at']);
+                    $end = strtotime($row['finish_date']);
+                    if ($end > $start) {
+                        $waktuPengerjaan = round(($end - $start) / 60);
+                    }
+                }
+
+                $sheet->fromArray([
+                    $row['id'] ?? '-',
+                    $emp_nip,
+                    $row['emp_name'] ?? '-',
+                    $row['email'] ?? '-',
+                    $row['wa_no'] ?? '-',
+                    $row['req_type'] ?? '-',
+                    ucfirst($row['ticket_priority'] ?? '-'),
+                    $row['subject'] ?? '-',
+                    $row['message'] ?? '-',
+                    $row['ticket_status'] ?? '-',
+                    $row['due_date'] ?? '-',
+                    $row['first_response_at'] ?? '-',
+                    $row['finish_date'] ?? '-',
+                    $waktuPengerjaan
+                ], null, 'A' . $rowNum);
                 $rowNum++;
             }
             foreach (range('A', $sheet->getHighestColumn()) as $col) {
@@ -1027,7 +1116,6 @@ class Admin extends BaseController
             }
             $writer = new Xlsx($spreadsheet);
             $writer->save($filePath);
-
         } else if ($reportType == 'Report SLA') {
             // Ambil detail SLA
             $slaDetailRes = $client->get($endpoint . '/report/sla-detail', [

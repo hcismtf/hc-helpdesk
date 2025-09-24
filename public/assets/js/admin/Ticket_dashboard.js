@@ -14,11 +14,7 @@ function searchTicketTable() {
                 tr[i].style.display = show ? "" : "none";
             }
         }
-        function applyFilter() {
-            var params = [];
-            params.push('per_page='+document.getElementById('perPage').value);
-            window.location = '?' + params.join('&');
-        }
+       
         function openFilterModal() {
             // Implement modal if needed
         }

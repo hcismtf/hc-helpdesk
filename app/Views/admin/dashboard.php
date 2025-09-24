@@ -161,7 +161,12 @@
             </table>
             <!-- Pagination -->
             <div style="margin-top:24px;">
-                <?= $pager->links('tickets', 'default_full') ?>
+                <?= $pager->links('tickets', 'default_full', [
+                    'per_page' => $perPage,
+                    'type' => $type,
+                    'start' => $start,
+                    'end' => $end
+                ]) ?>
             </div>
         </div>
     </div>

@@ -93,9 +93,11 @@ class Ticket extends Controller
             // Enkripsi file_name dan file_path
             $file_name_encrypted = bin2hex($encrypter->encrypt($file->getClientName()));
             $file_path_encrypted = bin2hex($encrypter->encrypt($newName));
+            $encrypter = \Config\Services::encrypter();
+            $tiket_trx_id_encrypted = bin2hex($encrypter->encrypt($ticketId));
 
             $ticketAttModel->insert([
-                'tiket_trx_id' => $ticketId,
+                'tiket_trx_id' => $tiket_trx_id_encrypted, 
                 'file_name'    => $file_name_encrypted,
                 'file_path'    => $file_path_encrypted,
                 'created_by'   => $this->request->getPost('emp_name'),
