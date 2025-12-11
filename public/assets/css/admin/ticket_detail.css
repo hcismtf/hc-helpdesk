@@ -1,0 +1,331 @@
+body { background: #f5f6fa; font-family: 'Montserrat', Arial, sans-serif; }
+        .main-content {
+            margin-left: 70px;
+            padding: 30px 40px;
+            min-height: 100vh;
+            transition: margin-left 0.2s;
+        }
+        .page-title { font-size: 26px; font-weight: 700; margin-bottom: 8px; margin-left: 40px; }
+        .breadcrumb { font-size: 15px; color: #444; margin-bottom: 18px; margin-left: 40px; }
+        .btn-back {
+            background: #234be7;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 8px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 40px;
+            margin-bottom: 24px;
+            margin-top: 8px;
+            display: inline-block;
+        }
+        .ticket-detail-box {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 10px 2px rgba(0,0,0,0.13);
+            margin: 0 auto;
+            padding: 40px 40px 32px 40px;
+            max-width: 1100px;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+        .btn-update-status {
+            background: #234be7;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 8px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+        .ticket-id-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .ticket-status {
+            display: inline-block;
+            background: #fcd116;
+            color: #fff;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 4px 18px;
+            font-size: 15px;
+            margin-right: 8px;
+        }
+        .ticket-priority {
+            display: inline-block;
+            color: #fff;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 4px 18px;
+            font-size: 15px;
+            margin-right: 8px;
+        }
+        .ticket-subject {
+            font-weight:600;
+            font-size:16px;
+            margin-bottom:8px;
+        }
+        .divider {
+            border: none;
+            border-top: 2px solid #82868C;
+            margin: 14px 0 22px 0;
+        }
+        .ticket-info-row {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .ticket-info-col {
+            flex: 1;
+            min-width: 220px;
+        }
+        .ticket-info-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        .ticket-info-list {
+            font-size: 15px;
+            color: #444;
+            margin-bottom: 6px;
+        }
+        .ticket-section-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+            margin-top: 18px;
+        }
+        .ticket-message-box {
+            background: #f5f6fa;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 15px;
+            color: #444;
+            margin-bottom: 12px;
+            max-height: 160px;
+            min-height: 40px;
+            overflow-y: auto;
+            word-break: break-word;
+        }
+        .reply-list {
+            margin-bottom: 18px;
+        }
+        .reply-item {
+            background: #f5f6fa;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+        }
+        .reply-author {
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .reply-date {
+            font-size: 13px;
+            color: #888;
+            margin-left: 8px;
+        }
+        .reply-text {
+            margin-top: 4px;
+            font-size: 15px;
+            color: #444;
+        }
+        .add-reply-box {
+            margin-top: 18px;
+            position: relative;
+            min-height: 90px;
+        }
+        .add-reply-textarea {
+            width: 100%;
+            min-height: 60px;
+            border-radius: 12px;
+            border: 1px solid #ccc;
+            padding: 10px 14px;
+            font-size: 15px;
+            margin-bottom: 0;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 70px;
+        }
+        .btn-send-reply {
+            background: #234be7;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 8px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            position: absolute;
+            right: 24px;
+            bottom: 18px;
+            margin: 0;
+        }
+        @media (max-width: 1200px) {
+            .ticket-detail-box { max-width: 98vw; width: calc(100vw - 24px); }
+        }
+        @media (max-width: 900px) {
+            .main-content { margin-left: 0; padding: 18px 0 0 0; }
+            .ticket-detail-box { margin: 0 8px; padding: 18px 8px; }
+            .ticket-info-row { flex-direction: column; gap: 8px; }
+            .btn-send-reply { position: static; width: 100%; margin-top: 8px; }
+            .btn-back { margin-left: 8px; }
+        }
+        .modal-status {
+            position: fixed;
+            z-index: 9999;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            background: rgba(255,255,255,0.7); /* lebih putih */
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(1px);
+            -webkit-backdrop-filter: blur(1px);
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 10px 2px rgba(0,0,0,0.13);
+            padding: 32px 32px 24px 32px;
+            min-width: 400px;
+            max-width: 480px;
+            position: relative;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;
+        }
+        .close-modal {
+            font-size: 28px; font-weight: 700; cursor: pointer; color: #222;
+        }
+        .modal-body { margin-bottom: 18px; }
+        .modal-select {
+            width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #ccc; font-size: 15px; margin-top: 8px;
+        }
+        .btn-modal-submit {
+            background: #234be7;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        @media (max-width: 600px) {
+            .modal-content { min-width: 90vw; padding: 18px 8px; }
+        }
+        .ticket-priority.low    { background: #5466DC; color: #FFFFFF; }
+        .ticket-priority.medium { background: #FDDA45; color: #FFFFFF; }
+        .ticket-priority.high   { background: #FF474A; color: #FFFFFF; }
+        .ticket-priority.urgent { background: #7A161C; color: #FFFFFF; }
+        .ticket-status.in_progress { background: #2940D3; }
+        .ticket-status.closed      { background: #14C40E; }
+
+        .modal-user {
+            position: fixed;
+            z-index: 9999;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-user-content.modal-user-frame {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch; /* ubah dari flex-start ke stretch */
+            gap: 10px;
+            width: 750px;
+            padding: 32px 36px 24px 36px; /* padding lebih besar dan rata */
+            border-radius: 20px;
+            background: #FFF;
+            box-shadow: 0 4px 10px 2px rgba(0, 0, 0, 0.25);
+        }
+        .modal-user-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .modal-user-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+        .modal-form-group {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        .modal-label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 15px;
+            display: block;
+            padding-left: 4px;
+        }
+        .modal-textbox {
+            display: block;
+            width: 100%;
+            height: 62px;
+            border-radius: 30px;
+            border: 1px solid #82868C;
+            background: #FFF;
+            font-size: 1rem;
+            margin-bottom: 2px;
+            box-sizing: border-box;
+            padding: 0 18px;
+        }
+        .modal-form-group textarea.modal-textbox {
+            min-height: 100px;
+            height: auto;
+            resize: vertical;
+            padding-top: 15px;
+            padding-bottom: 15px;
+        }
+        .modal-user-footer {
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 18px;
+        }
+        .modal-user-submit {
+        background: #234be7;
+        color: #fff;
+        border: none;
+        border-radius: 22px;
+        padding: 14px 38px;
+        font-size: 1.08rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(35,75,231,0.08);
+        transition: background 0.2s;
+        }
+        .modal-user-submit:hover {
+            background: #1a3bb3;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+        .modal-user-content.modal-user-frame {
+            width: 98vw;
+            min-width: 0;
+            padding: 12px;
+        }
+        .modal-textbox {
+            width: 100%;
+            min-width: 0;
+        }
+    }
