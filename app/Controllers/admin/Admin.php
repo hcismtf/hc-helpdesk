@@ -705,11 +705,16 @@ class Admin extends BaseController
             // Ambil permission untuk role ini
             $rolePerms = $rolePermissionsModel->where('role_id', $role['id'])->findAll();
             $permNames = [];
+            $permIds = [];
             foreach ($rolePerms as $rp) {
                 $perm = $permissionsModel->find($rp['permission_id']);
-                if ($perm) $permNames[] = $perm['name'];
+                if ($perm) {
+                    $permNames[] = $perm['name'];
+                    $permIds[] = $rp['permission_id'];
+                }
             }
             $role['menu_access'] = implode(', ', $permNames);
+            $role['permission_ids'] = $permIds; // Tambahkan permission IDs untuk digunakan di JavaScript
         }
 
         // Generate pagination HTML

@@ -424,18 +424,6 @@ function hasMenuAccess($menuName) {
             }
 
             // Event listener untuk Add User Role
-            document.getElementById('role-name').addEventListener('input', function() {
-                validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
-            });
-            document.getElementById('permission-container').addEventListener('change', function() {
-                validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
-            });
-            document.getElementById('add-permission-btn').addEventListener('click', function() {
-                setTimeout(function() {
-                    validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
-                }, 100);
-            });
-
             // Event listener untuk Edit User Role
             document.getElementById('edit-role-name').addEventListener('input', function() {
                 validateRoleForm('user-role-edit-form', 'edit-role-name', 'edit-permission-container', '#user-role-edit-form .btn-submit-faq');
@@ -449,7 +437,6 @@ function hasMenuAccess($menuName) {
                 }, 100);
             });
 
-            // Validasi sebelum submit (Add)
             // Validasi sebelum submit (Edit)
             document.getElementById('user-role-edit-form').onsubmit = function(e) {
                 e.preventDefault();
@@ -487,43 +474,79 @@ function hasMenuAccess($menuName) {
                 });
             };
 
-            // Inisialisasi validasi awal
-            validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
-            validateRoleForm('user-role-edit-form', 'edit-role-name', 'edit-permission-container', '#user-role-edit-form .btn-submit-faq');
+            // Wrapper function untuk get data dari button attributes
+            function openRoleEditModalFromButton(button) {
+                var id = button.getAttribute('data-id');
+                var name = button.getAttribute('data-name');
+                var permissionsJson = button.getAttribute('data-permissions');
+                var permissionIds = [];
+                
+                try {
+                    permissionIds = JSON.parse(permissionsJson || '[]');
+                } catch(e) {
+                    console.error('Error parsing permissions JSON:', permissionsJson, e);
+                    permissionIds = [];
+                }
+                
+                openRoleEditModal(id, name, permissionIds);
+            }
+
             // Open Edit Modal
-            function openRoleEditModal(id, name, permissionIdsRaw) {
-                var permissionIds = Array.isArray(permissionIdsRaw)
-                    ? permissionIdsRaw
-                    : (typeof permissionIdsRaw === 'string' && permissionIdsRaw.length > 0
-                        ? permissionIdsRaw.split(',').map(function(x){return x.trim();})
-                        : []);
+            function openRoleEditModal(id, name, permissionIds) {
+                console.log('Opening edit modal for role:', id, name, permissionIds);
+                
+                // Ensure permissionIds is an array
+                if (!Array.isArray(permissionIds)) {
+                    console.warn('permissionIds is not an array, converting...', typeof permissionIds);
+                    permissionIds = [];
+                }
+                
                 document.getElementById('edit-role-id').value = id;
                 document.getElementById('edit-role-name').value = name;
                 var container = document.getElementById('edit-permission-container');
                 container.innerHTML = '';
-                permissionIds.forEach(function(pId) {
+                
+                // Create select for each permission ID
+                permissionIds.forEach(function(pId, idx) {
                     var select = document.createElement('select');
                     select.name = "permissions[]";
                     select.className = "faq-input";
                     select.style.marginBottom = "8px";
+                    select.style.width = "100%";
+                    
+                    var optionHtml = '<option value="">Select Permission</option>';
+                    optionHtml += `
+                        <?php foreach ($permissions as $perm): ?>
+                            <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
+                        <?php endforeach ?>
+                    `;
+                    select.innerHTML = optionHtml;
+                    select.value = pId; // Set selected value
+                    
+                    container.appendChild(select);
+                    console.log('Added permission select for pId:', pId);
+                });
+                
+                // If no permissions, add one empty select
+                if (permissionIds.length === 0) {
+                    console.log('No permissions found, adding empty select');
+                    var select = document.createElement('select');
+                    select.name = "permissions[]";
+                    select.className = "faq-input";
+                    select.style.marginBottom = "8px";
+                    select.style.width = "100%";
                     select.innerHTML = `
                         <option value="">Select Permission</option>
                         <?php foreach ($permissions as $perm): ?>
-                            <option value="<?= esc($perm['id']) ?>" ${pId == <?= esc($perm['id']) ?> ? "selected" : ""}>
-                                <?= esc($perm['name']) ?>
-                            </option>
+                            <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
                         <?php endforeach ?>
                     `;
                     container.appendChild(select);
-                });
-                document.getElementById('userRoleEditModal').style.display = 'flex';
-                // Add event listener ketika modal edit dibuka
-                document.getElementById('edit-role-name').addEventListener('blur', function() {
-                    var name = this.value.trim();
-                    if (!name) {
-                        showGlobalInvalid('Role Name wajib diisi!');
-                    }
-                });
+                }
+                
+                var modal = document.getElementById('userRoleEditModal');
+                modal.style.display = 'flex';
+                console.log('Modal displayed');
             }
             document.getElementById('add-edit-permission-btn').onclick = function() {
                 var container = document.getElementById('edit-permission-container');
@@ -627,15 +650,39 @@ function hasMenuAccess($menuName) {
                 div.style.display = 'flex';
                 div.style.alignItems = 'center';
                 div.style.gap = '8px';
-                div.innerHTML = `
-                    <select name="permissions[]" class="faq-input permission-select" style="flex:1; margin-bottom:8px;">
-                        <option value="">Select Permission</option>
-                        <?php foreach ($permissions as $perm): ?>
-                            <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
-                        <?php endforeach ?>
-                    </select>
-                    <button type="button" class="remove-permission-btn" style="background:#bbb; color:#fff; border:none; border-radius:12px; padding:6px 12px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">-</button>
+                var select = document.createElement('select');
+                select.name = "permissions[]";
+                select.className = "faq-input permission-select";
+                select.style.flex = '1';
+                select.style.marginBottom = '8px';
+                select.innerHTML = `
+                    <option value="">Select Permission</option>
+                    <?php foreach ($permissions as $perm): ?>
+                        <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
+                    <?php endforeach ?>
                 `;
+                
+                var removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'remove-permission-btn';
+                removeBtn.textContent = '-';
+                removeBtn.style.background = '#bbb';
+                removeBtn.style.color = '#fff';
+                removeBtn.style.border = 'none';
+                removeBtn.style.borderRadius = '12px';
+                removeBtn.style.padding = '6px 12px';
+                removeBtn.style.fontSize = '15px';
+                removeBtn.style.fontWeight = '600';
+                removeBtn.style.cursor = 'pointer';
+                removeBtn.style.marginBottom = '8px';
+                removeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    div.remove();
+                    updatePermissionDropdowns();
+                });
+                
+                div.appendChild(select);
+                div.appendChild(removeBtn);
                 container.appendChild(div);
                 updatePermissionDropdowns();
             };
@@ -1031,13 +1078,6 @@ function hasMenuAccess($menuName) {
             }
             document.getElementById('btn-add-user-role').onclick = function() {
                 document.getElementById('userRoleModal').style.display = 'flex';
-                // Add event listeners ketika modal dibuka
-                document.getElementById('role-name').addEventListener('blur', function() {
-                    var name = this.value.trim();
-                    if (!name) {
-                        showGlobalInvalid('Role Name wajib diisi!');
-                    }
-                });
             }
             function closeUserRoleModal() {
                 document.getElementById('userRoleModal').style.display = 'none';

@@ -14,8 +14,11 @@
                     <td style="padding:10px 8px; text-align:center;"><?= esc($role['name']) ?></td>
                     <td style="padding:10px 8px; text-align:center;"><?= esc($role['menu_access']) ?></td>
                     <td style="padding:10px 8px; text-align:center;">
-                        <button class="role-edit-btn"
-                            onclick="openRoleEditModal('<?= $role['id'] ?>', '<?= htmlspecialchars($role['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($role['menu_access'], ENT_QUOTES) ?>')">
+                        <button class="role-edit-btn" 
+                            data-id="<?= $role['id'] ?>" 
+                            data-name="<?= htmlspecialchars($role['name'], ENT_QUOTES) ?>" 
+                            data-permissions="<?= htmlspecialchars(json_encode($role['permission_ids'] ?? []), ENT_QUOTES) ?>"
+                            onclick="openRoleEditModalFromButton(this)">
                             Edit
                         </button>
                         <button class="role-delete-btn"

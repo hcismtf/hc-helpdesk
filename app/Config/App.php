@@ -27,7 +27,7 @@ class App extends BaseConfig
         
         // Load baseURL from .env file
         if (empty($this->baseURL)) {
-            $this->baseURL = getenv('app.baseURL') ?: 'http://localhost/HC-Helpdesk/public/';
+            $this->baseURL = getenv('app.baseURL') ?: 'http://localhost/hc-helpdeskk/public/';
         }
     }
 

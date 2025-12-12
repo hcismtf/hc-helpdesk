@@ -78,6 +78,19 @@ $routes->get('assets/ticket_js', 'Assets::ticket_js');
 //view images
 $routes->get('admin/view/(:any)', 'admin\Admin::view/$1');
 
+//Report Routes 
+$routes->get('admin/report', 'ReportController::index');
+$routes->get('admin/report/ticket-detail', 'ReportController::ticketDetail');
+$routes->get('admin/report/sla-detail', 'ReportController::slaDetail');
+$routes->get('admin/report/sla-response', 'ReportController::slaResponseComparison');
+$routes->get('admin/report/sla-resolution', 'ReportController::slaResolutionComparison');
+
+
+// $routes->get('api/report/ticket-detail', 'ReportApiController::ticketDetail');
+// $routes->get('api/report/sla-detail', 'ReportApiController::slaDetail');
+// $routes->get('api/report/sla-response', 'ReportApiController::slaResponseComparison');
+// $routes->get('api/report/sla-resolution', 'ReportApiController::slaResolutionComparison');
+
 // report user
 $routes->get('admin/report_user', 'admin\Admin::report_user');
 $routes->post('admin/submit_report_job', 'admin\Admin::submit_report_job');

@@ -116,7 +116,7 @@ document.getElementById('submitTicketConfirm').onclick = function() {
       // Hide loading modal langsung
       hideLoadingModal();
       document.getElementById('successConfirmModal').style.display = 'flex';
-      setTimeout(() => window.location.href = "/HC-Helpdesk/public/ticket/create", 2000);
+      setTimeout(() => window.location.href = "/hc-helpdeskk/public/ticket/create", 2000);
     } else {
       throw new Error('Server error');
     }
