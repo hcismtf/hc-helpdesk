@@ -19,7 +19,7 @@
             <div class="breadcrumb">Home &gt; Laporan</div>
             <div class="welcome-row">
                 <div class="welcome-user">Selamat datang, <?= esc($username) ?></div>
-                <div class="welcome-role"><?= esc($role) ?></div>
+                <!-- <div class="welcome-role"><?= esc($role) ?></div> -->
             </div>
 
             <div class="report-card">

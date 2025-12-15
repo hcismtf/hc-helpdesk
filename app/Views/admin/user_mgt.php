@@ -438,7 +438,7 @@
         function closeAddPermissionModal() {
             document.getElementById('addPermissionModal').style.display = 'none';
         }
-        // Optional: close modal on outside click/Escape
+        // close modal pake esc
         window.onclick = function(event) {
             var modal = document.getElementById('addPermissionModal');
             if (event.target == modal) closeAddPermissionModal();
@@ -459,7 +459,7 @@
                 return;
             }
 
-            // Generate code: lowercase, replace space with underscore, remove non-alphanumeric
+            // untuk convert ke lowercase, replace space with underscore, remove non-alphanumeric
             const code = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
             const formData = new FormData();
