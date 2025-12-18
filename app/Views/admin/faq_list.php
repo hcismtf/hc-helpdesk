@@ -12,23 +12,10 @@
             </div>
         </div>
     <?php endforeach ?>
-    <div class="faq-pagination-row">
-        <button class="faq-page-btn" <?= $page <= 1 ? 'disabled' : '' ?> onclick="loadFaqList(<?= $page-1 ?>, <?= $perPage ?>)">&lt;</button>
-        <?php for($i=1; $i<=$totalPages; $i++): ?>
-            <button class="faq-page-btn <?= $i==$page ? 'active' : '' ?>" onclick="loadFaqList(<?= $i ?>, <?= $perPage ?>)"><?= $i ?></button>
-        <?php endfor ?>
-        <button class="faq-page-btn" <?= $page >= $totalPages ? 'disabled' : '' ?> onclick="loadFaqList(<?= $page+1 ?>, <?= $perPage ?>)">&gt;</button>
+    <!-- Pagination -->
+    <div class="pagination" style="margin-top: 20px;">
+        <?= isset($paginationHTML) ? $paginationHTML : '' ?>
     </div>
 <?php else: ?>
     <div style="text-align:center; color:#888; margin:32px 0;">Belum ada FAQ.</div>
 <?php endif ?>
-
-<script>
-    function loadFaqList(page = 1, perPage = 10) {
-        fetch('<?= base_url('admin/get_faq_list') ?>?page=' + page + '&per_page=' + perPage)
-        .then(res => res.text())
-        .then(html => {
-            document.getElementById('faq-list').innerHTML = html;
-        });
-    }
-</script>

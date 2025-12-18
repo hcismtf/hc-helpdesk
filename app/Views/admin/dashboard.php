@@ -160,17 +160,11 @@
                 </tbody>
             </table>
             <!-- Pagination -->
-            <div style="margin-top:24px;">
-                <?= $pager->links('tickets', 'default_full', [
-                    'per_page' => $perPage,
-                    'type' => $type,
-                    'start' => $start,
-                    'end' => $end
-                ]) ?>
+            <div class="pagination" style="margin-top: 24px;">
+                <?= isset($paginationHTML) ? $paginationHTML : '' ?>
             </div>
         </div>
     </div>
     <script src="<?= base_url('assets/js/admin/dashboard.js') ?>"></script>
-    <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>
 </body>
 </html>

@@ -35,14 +35,10 @@
             <?php endforeach ?>
         </tbody>
     </table>
-    <div class="faq-pagination-row">
-        <button class="faq-page-btn" <?= $page <= 1 ? 'disabled' : '' ?> onclick="loadRequestTypeList(<?= $page-1 ?>, <?= $perPage ?>)">&lt;</button>
-        <?php for($i=1; $i<=$totalPages; $i++): ?>
-            <button class="faq-page-btn <?= $i==$page ? 'active' : '' ?>" onclick="loadRequestTypeList(<?= $i ?>, <?= $perPage ?>)"><?= $i ?></button>
-        <?php endfor ?>
-        <button class="faq-page-btn" <?= $page >= $totalPages ? 'disabled' : '' ?> onclick="loadRequestTypeList(<?= $page+1 ?>, <?= $perPage ?>)">&gt;</button>
+    <!-- Pagination -->
+    <div class="pagination" style="margin-top: 20px;">
+        <?= isset($paginationHTML) ? $paginationHTML : '' ?>
     </div>
 <?php else: ?>
     <div style="text-align:center; color:#888; margin:32px 0;">Belum ada Request Type.</div>
 <?php endif ?>
-<script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>

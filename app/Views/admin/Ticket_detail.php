@@ -130,7 +130,7 @@
             <!-- Modal Popup Attachment -->
             <div id="attachmentModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:9999; align-items:center; justify-content:center;">
                 <div id="attachmentModalContent" style="background:#fff; border-radius:18px; padding:24px; box-shadow:0 2px 16px #aaa; max-width:90vw; max-height:90vh; display:flex; flex-direction:column; align-items:center; position:relative;">
-                    <span onclick="closeAttachmentModal()" style="position:absolute; top:18px; right:18px; font-size:2rem; cursor:pointer;">&times;</span>
+                    <span onclick="closeAttachmentModal()" style="position:absolute; top:-5px; right:1px; font-size:2rem; cursor:pointer; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">&times;</span>
                     <img id="attachmentModalImg" src="" alt="Attachment" style="max-width:80vw; max-height:70vh; border-radius:12px; box-shadow:0 2px 12px #eee;">
                     <div id="attachmentModalFilename" style="margin-top:12px; font-size:15px; color:#222;"></div>
                 </div>
@@ -162,7 +162,6 @@
             </div>
         </div>
     </div>
-    <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>
     <script>
         function showAttachmentModal(url) {
             document.getElementById('attachmentModalImg').src = url;
@@ -171,11 +170,18 @@
             document.getElementById('attachmentModalFilename').textContent = filename;
             document.getElementById('attachmentModal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
+            document.addEventListener('keydown', escCloseAttachmentModal);
         }
         function closeAttachmentModal() {
             document.getElementById('attachmentModal').style.display = 'none';
             document.getElementById('attachmentModalImg').src = '';
             document.body.style.overflow = '';
+            document.removeEventListener('keydown', escCloseAttachmentModal);
+        }
+        function escCloseAttachmentModal(e) {
+            if (e.key === "Escape") {
+                closeAttachmentModal();
+            }
         }
     function showStatusModal() {
         document.getElementById('statusModal').style.display = 'flex';

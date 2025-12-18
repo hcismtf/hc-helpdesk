@@ -9,7 +9,7 @@ use Config\Superadmin;
 class PermissionFilter implements FilterInterface
 {
     protected $permissionFileMap = [
-        'tickets'         => ['ticket_dashboard', 'ticket_detail', 'get_ticket_list', 'send_reply', 'ajax_ticket_table'],
+        'tickets'         => ['ticket_dashboard', 'ticket_detail', 'get_ticket_list', 'send_reply'],
         'dashboard'       => ['dashboard'],
         'user_management' => [
             'user_mgt', 'get_user_list',
@@ -24,7 +24,7 @@ class PermissionFilter implements FilterInterface
             'add_request_type', 'edit_request_type', 'delete_request_type', 
             'sla_settings', 'get_sla_list',
             'add_sla', 'edit_sla', 'delete_sla', 
-            'add_permission', 'edit_permission', 'delete_permission', 
+            'add_permission', 'get_permission', 'edit_permission', 'delete_permission', 
         ],
          'reports' => [
             'report_user', 'export_ticket_excel', 'export_sla_excel','submit_report_job', 'download_report' ,'delete_report_job'

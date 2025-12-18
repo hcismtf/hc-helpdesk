@@ -34,7 +34,9 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
-        'permission' => \App\Filters\PermissionFilter::class,
+        'permission'    => \App\Filters\PermissionFilter::class,
+        'devicesecurity' => \App\Filters\DeviceSecurityFilter::class,
+        'apikeyfilter'  => \App\Filters\ApiKeyFilter::class,
     ];
 
     /**
@@ -76,6 +78,10 @@ class Filters extends BaseFilters
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
+            'devicesecurity' => ['except' => [
+                'admin/*',
+                'pusat_bantuan',
+            ]],
             'permission' => ['except' => [
                 'admin/login',
                 'admin/authenticate',

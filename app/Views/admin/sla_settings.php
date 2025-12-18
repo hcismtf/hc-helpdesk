@@ -51,4 +51,3 @@
     </div>
     <?php endif ?>
 </div>
-<script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>

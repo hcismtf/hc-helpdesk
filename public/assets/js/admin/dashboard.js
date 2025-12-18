@@ -1,17 +1,26 @@
-function searchTicketTable() {
+function handleSearchKeypress(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                searchTicketTable();
+            }
+        }
+
+        function searchTicketTable() {
             var input = document.getElementById("searchTicket");
-            var filter = input.value.toUpperCase();
-            var table = document.getElementById("ticketsTable");
-            var tr = table.getElementsByTagName("tr");
-            for (var i = 1; i < tr.length; i++) {
-                var td = tr[i].getElementsByTagName("td");
-                var show = false;
-                for (var j = 0; j < td.length-1; j++) {
-                    if (td[j] && td[j].innerText.toUpperCase().indexOf(filter) > -1) {
-                        show = true;
-                    }
-                }
-                tr[i].style.display = show ? "" : "none";
+            var filter = input.value.trim();
+            
+            if (filter === '') {
+                // If search is empty, reload without search parameter
+                var url = new URL(window.location.href);
+                url.searchParams.delete('search');
+                url.searchParams.set('page', 1);
+                window.location = url.pathname + '?' + url.searchParams.toString();
+            } else {
+                // Perform server-side search
+                var url = new URL(window.location.href);
+                url.searchParams.set('search', filter);
+                url.searchParams.set('page', 1); // Reset to page 1
+                window.location = url.pathname + '?' + url.searchParams.toString();
             }
         }
         function openFilterModal() {

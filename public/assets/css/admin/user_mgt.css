@@ -144,6 +144,7 @@ body { background: #f5f6fa; font-family: 'Montserrat', Arial, sans-serif; margin
             padding: 4px 12px;
             margin-left: 8px;
             margin-right: 8px;
+            text-decoration: none;
         }
         table.user-table {
             width:100%; border-collapse:collapse;
@@ -212,7 +213,33 @@ body { background: #f5f6fa; font-family: 'Montserrat', Arial, sans-serif; margin
         }
         #addUserForm input, #addUserForm select {
             width: 100%; padding: 12px 18px; border-radius: 22px; border: 1px solid #bbb;
-            font-size: 1rem; margin-bottom: 2px; background: #fff;
+            font-size: 1rem; margin-bottom: 2px; background: #fff; box-sizing: border-box;
+        }
+        .modal-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 15px;
+        }
+        .modal-form-group {
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        .modal-form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 15px;
+        }
+        .modal-form-group .modal-input,
+        .modal-form-group .modal-textbox {
+            width: 100%;
+            padding: 12px 18px;
+            border-radius: 22px;
+            border: 1px solid #bbb;
+            font-size: 1rem;
+            background: #fff;
+            box-sizing: border-box;
         }
         .modal-user-footer {
             display: flex; justify-content: flex-end; margin-top: 24px;
@@ -223,15 +250,6 @@ body { background: #f5f6fa; font-family: 'Montserrat', Arial, sans-serif; margin
         }
         .modal-user-submit:hover {
             background: #1a3bb3;
-        }
-        .modal-form-group {
-            margin-bottom: 12px;
-        }
-        .modal-form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            font-size: 15px;
         }
         .modal-user-frame {
             display: flex;

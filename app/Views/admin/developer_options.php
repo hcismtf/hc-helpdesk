@@ -70,6 +70,10 @@
             <li>Edit file <code>.env</code> di root project:<br>
                 <code>CI_ENVIRONMENT = development</code> atau <code>CI_ENVIRONMENT = production</code>
             </li>
+            <li>
+                Untuk mengarahkan otomatis ke halaman HCEazy ketika fitur developer aktif, tambahkan di <code>.env</code>:
+                <br><code>DEVELOPER_OPTIONS_ENABLED = true</code>
+            </li>
         </ul>
         <div class="section-title">=Database Config</div>
         <ul>

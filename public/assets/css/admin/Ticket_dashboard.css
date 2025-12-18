@@ -164,11 +164,10 @@ body {
             justify-content: center;
             gap: 6px;
             margin-top: 18px;
-        }
-        .pagination ul {
             list-style: none;
-            padding-left: 0;
-            margin: 0;
+            padding: 0;
+            margin: 18px 0 0 0;
+            text-decoration: none;
         }
         .pagination li a,
         .pagination li span {
@@ -183,6 +182,11 @@ body {
             font-size: 14px;
             font-weight: 500;
             transition: background 0.2s;
+        }
+        .pagination li {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
         .pagination li a:hover {
             background: #f0f0f0;
@@ -298,8 +302,4 @@ body {
                 flex-direction: column;
                 gap: 8px;
             }
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg);}
-            100% { transform: rotate(360deg);}
         }

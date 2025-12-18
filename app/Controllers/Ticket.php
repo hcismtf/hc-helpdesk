@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\TicketModel;
 use App\Models\TicketAttModel;
 use CodeIgniter\Controller;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class Ticket extends Controller
 {
@@ -93,44 +95,91 @@ class Ticket extends Controller
             // Enkripsi file_name dan file_path
             $file_name_encrypted = bin2hex($encrypter->encrypt($file->getClientName()));
             $file_path_encrypted = bin2hex($encrypter->encrypt($newName));
-            $encrypter = \Config\Services::encrypter();
-            $tiket_trx_id_encrypted = bin2hex($encrypter->encrypt($ticketId));
 
             $ticketAttModel->insert([
-                'tiket_trx_id' => $tiket_trx_id_encrypted, 
+                'tiket_trx_id' => $ticketId,
                 'file_name'    => $file_name_encrypted,
                 'file_path'    => $file_path_encrypted,
                 'created_by'   => $this->request->getPost('emp_name'),
                 'created_date' => date('Y-m-d H:i:s'),
             ]);
         }
-        // Kirim email ke user
-        $email = \Config\Services::email();
-        $email->setTo($this->request->getPost('email'));
-        $email->setSubject('Konfirmasi Pengajuan Ticket HC Helpdesk');
 
+        // Kirim email konfirmasi
         $emp_name = $this->request->getPost('emp_name');
+        $email = $this->request->getPost('email');
         $subject = $this->request->getPost('subject');
-        $message = $this->request->getPost('message');
+        $this->sendTicketConfirmationEmail($emp_name, $email, $ticketId, $subject);
 
-        $emailBody = "
-        Dear {$emp_name},<br><br>
-        Selamat!<br><br>
-        Anda telah berhasil mengajukan ticket ke HC Helpdesk. Berikut detail tiket anda :<br>
-        No tiket : {$ticketId}<br>
-        Subject : {$subject}<br>
-        Message : {$message}<br><br>
-        Mohon di tunggu konfirmasi dari tim kami,<br><br>
-        Terima kasih.<br><br>
-        Hormat kami,<br>
-        Human Capital Division
-        ";
-
-        $email->setMessage($emailBody);
-        $email->setMailType('html');
-        if (!$email->send()) {
-            log_message('error', $email->printDebugger(['headers']));
-        }  
         return view('components/success_confirm');
+    }
+
+    /**
+     * Kirim email konfirmasi ticket
+     * 
+     * @param string $emp_name Nama karyawan
+     * @param string $email Email karyawan
+     * @param string $ticketId ID ticket
+     * @param string $subject Subject ticket
+     * @return void
+     */
+    private function sendTicketConfirmationEmail($emp_name, $email, $ticketId, $subject)
+    {
+        if (empty($email)) {
+            return;
+        }
+
+        require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/PHPMailer.php');
+        require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/Exception.php');
+        require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/SMTP.php');
+
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host = getenv('email.SMTPHost') ?: 'smtp-mail.outlook.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = getenv('email.SMTPUser') ?: 'support@example.com';
+            $mail->Password = getenv('email.SMTPPass') ?: '';
+            $mail->SMTPSecure = getenv('email.SMTPCrypto') ?: 'tls';
+            $mail->Port = getenv('email.SMTPPort') ?: 587;
+
+            $mail->setFrom(getenv('email.fromEmail') ?: 'support@example.com', getenv('email.fromName') ?: 'HC Helpdesk');
+            $mail->addAddress($email);
+
+            $mail->Subject = "Ticket Confirmation - " . $subject;
+            $mail->isHTML(true);
+
+            $emailBody = "
+                <html>
+                <body style='font-family: Arial, sans-serif; color: #333; line-height: 1.6;'>
+                    <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                        <h2 style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>Ticket Confirmation</h2>
+                        
+                        <p>Dear <strong>{$emp_name}</strong>,</p>
+                        <p>Terima kasih telah mengajukan ticket. Kami telah menerima permintaan Anda dan akan segera ditangani oleh tim kami.</p>
+                        
+                        <div style='background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 15px 0;'>
+                            <p><strong>Ticket ID:</strong> {$ticketId}</p>
+                            <p><strong>Subject:</strong> {$subject}</p>
+                            <p><strong>Status:</strong> <span style='background-color: #fbbf24; color: #78350f; padding: 4px 8px; border-radius: 3px; display: inline-block;'>Open</span></p>
+                            <p><strong>Submitted Date:</strong> " . date('d-m-Y H:i:s') . "</p>
+                        </div>
+                        
+                        <p>Tim support kami akan meninjau dan memberikan update tentang ticket Anda segera.</p>
+                        <p>Jika ada pertanyaan, silakan hubungi kami.</p>
+                        
+                        <p style='margin-top: 20px;'>Hormat kami,<br><strong>Human Capital Division</strong></p>
+                    </div>
+                </body>
+                </html>
+            ";
+
+            $mail->Body = $emailBody;
+            $mail->send();
+            
+            log_message('info', 'Ticket confirmation email sent to: ' . $email . ' for ticket ID: ' . $ticketId);
+        } catch (Exception $e) {
+            log_message('error', 'Failed to send ticket confirmation email: ' . $mail->ErrorInfo);
+        }
     }
 }

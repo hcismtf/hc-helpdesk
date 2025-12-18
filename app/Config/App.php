@@ -15,8 +15,21 @@ class App extends BaseConfig
      * WITH a trailing slash:
      *
      * E.g., http://example.com/
+     * 
+     * Set via .env file:
+     * app.baseURL = 'http://your-domain.com/'
      */
-    public string $baseURL = 'http://localhost:8080/';
+    public string $baseURL = '';
+
+    public function __construct()
+    {
+        parent::__construct();
+        
+        // Load baseURL from .env file
+        if (empty($this->baseURL)) {
+            $this->baseURL = getenv('app.baseURL') ?: 'http://localhost/hc-helpdeskk/public/';
+        }
+    }
 
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.
@@ -133,7 +146,7 @@ class App extends BaseConfig
      * @see https://www.php.net/manual/en/timezones.php for list of timezones
      *      supported by PHP.
      */
-    public string $appTimezone = 'UTC';
+    public string $appTimezone = 'Asia/Jakarta';
 
     /**
      * --------------------------------------------------------------------------

@@ -6,9 +6,12 @@
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/dashboard.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/user_mgt.css') ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <?php include(APPPATH . 'Views/components/warning_confirm.php'); ?>
 <?php include(APPPATH . 'Views/components/success_confirm.php'); ?>
+<?php include(APPPATH . 'Views/components/error_confirm.php'); ?>
+<?php include(APPPATH . 'Views/components/invalid_confirm.php'); ?>
 <body>
     <?php $active = 'user_mgt'; include(APPPATH . 'Views/admin/navbar.php'); ?>
     <div class="main-content">
@@ -51,33 +54,44 @@
                                 <span class="modal-user-title">Add New User</span>
                                 <span class="modal-user-close" onclick="closeAddUserModal()">&times;</span>
                             </div>
-                            <form id="addUserForm" method="post" action="<?= base_url('admin/add_user') ?>">
-                                <label>Name</label>
-                                <input type="text" name="name" placeholder="Input real name here" required>
-                                <label>Email</label>
-                                <input type="email" name="email" placeholder="Input active email here" required>
-                                <label>Password <span style="font-weight:normal;color:#888;font-size:0.98em;">(Minimal 16 karakter & wajib ada special character)</span></label>
-                                <div class="password-input-group">
-                                    <input type="password" name="password" id="add-user-password" class="modal-input modal-textbox"
-                                        placeholder="Input password here" required
-                                        minlength="16" pattern="^(?=.*[!@#$%^&*(),.?\":{}|<>
-                                    <span class="password-eye" onclick="toggleAddUserPassword()">
-                                        <span id="add-eye-icon">👁️</span>
-                                    </span>
+                            <form id="addUserForm" method="post" action="<?= base_url('admin/add_user') ?>" novalidate>
+                                <div class="modal-form-group">
+                                    <label class="modal-label">Name</label>
+                                    <input type="text" name="name" class="modal-input modal-textbox" placeholder="Input real name here" required>
                                 </div>
-                                <label>Role</label>
-                                <select name="role" required>
-                                    <option value="">Select User Role</option>
-                                    <?php foreach ($roles as $role): ?>
-                                        <option value="<?= esc($role['id']) ?>"><?= esc($role['name']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <label>Status</label>
-                                <select name="status" required>
-                                    <option value="">Select user active / in active</option>
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                </select>
+                                <div class="modal-form-group">
+                                    <label class="modal-label">Email</label>
+                                    <input type="email" name="email" class="modal-input modal-textbox" placeholder="Input active email here" required>
+                                </div>
+                                <div class="modal-form-group">
+                                    <label class="modal-label">Password <span style="font-weight:normal;color:#888;font-size:0.98em;">(Min 16 karakter, 1 huruf kapital, 1 special character)</span></label>
+                                    <div class="password-input-group">
+                                        <input type="password" name="password" id="add-user-password" class="modal-input modal-textbox"
+                                            placeholder="Input password here" required minlength="16"
+                                            pattern="^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':\\|,.<>\/~`]).{16,}$"
+                                            title="Minimal 16 karakter, harus mengandung setidaknya 1 huruf kapital dan 1 karakter spesial">
+                                        <span class="password-eye" onclick="toggleAddUserPassword()">
+                                            <i id="add-eye-icon" class="fas fa-eye"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="modal-form-group">
+                                    <label class="modal-label">Role</label>
+                                    <select name="role" class="modal-input modal-textbox" required>
+                                        <option value="">Select User Role</option>
+                                        <?php foreach ($roles as $role): ?>
+                                            <option value="<?= esc($role['id']) ?>"><?= esc($role['name']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="modal-form-group">
+                                    <label class="modal-label">Status</label>
+                                    <select name="status" class="modal-input modal-textbox" required>
+                                        <option value="">Select user active / in active</option>
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                    </select>
+                                </div>
                                 <div class="modal-user-footer">
                                     <button type="submit" class="modal-user-submit">Submit</button>
                                 </div>
@@ -91,20 +105,21 @@
                                 <span class="modal-user-title">Edit User</span>
                                 <span class="modal-user-close" onclick="closeEditUserModal()">&times;</span>
                             </div>
-                            <form id="editUserForm" method="post" action="<?= base_url('admin/edit_user') ?>" style="width:100%;">
+                            <form id="editUserForm" method="post" action="<?= base_url('admin/edit_user') ?>" style="width:100%;" novalidate>
                                 <input type="hidden" name="id" id="edit-user-id">
                                 <div class="modal-form-group">
                                     <label class="modal-label">Username</label>
                                     <input type="text" name="username" id="edit-user-username" class="modal-input modal-textbox" required>
                                 </div>
                                 <div class="modal-form-group">
-                                    <label class="modal-label">Password <span style="font-weight:normal;color:#888;font-size:0.98em;">(Minimal 16 karakter & wajib ada special character, kosongkan jika tidak ingin ganti)</span></label>
+                                    <label class="modal-label">Password <span style="font-weight:normal;color:#888;font-size:0.98em;">(Min 16 karakter, 1 huruf kapital, 1 special character, kosongkan jika tidak ingin ganti)</span></label>
                                     <div class="password-input-group">
                                         <input type="password" name="password" id="edit-user-password" class="modal-input modal-textbox"
                                             placeholder="Input password here"
-                                            minlength="16" pattern="^(?=.*[!@#$%^&*(),.?\":{}|<>
+                                            minlength="16" pattern="^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':\\|,.<>\/~`]).{16,}$"
+                                            title="Minimal 16 karakter, harus mengandung setidaknya 1 huruf kapital dan 1 karakter spesial">
                                         <span class="password-eye" onclick="toggleEditUserPassword()">
-                                            <span id="edit-eye-icon">👁️</span>
+                                            <i id="edit-eye-icon" class="fas fa-eye"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -217,17 +232,18 @@
         </div>
     </div>
     </div>
-    <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>
     <script>
         function toggleAddUserPassword() {
             const input = document.getElementById('add-user-password');
             const eyeIcon = document.getElementById('add-eye-icon');
             if (input.type === 'password') {
                 input.type = 'text';
-                eyeIcon.textContent = "👁️‍🗨️";
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
             } else {
                 input.type = 'password';
-                eyeIcon.textContent = "👁️";
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
             }
         }
         function toggleEditUserPassword() {
@@ -235,10 +251,12 @@
             const eyeIcon = document.getElementById('edit-eye-icon');
             if (input.type === 'password') {
                 input.type = 'text';
-                eyeIcon.textContent = "👁️‍🗨️";
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
             } else {
                 input.type = 'password';
-                eyeIcon.textContent = "👁️";
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
             }
         }
         const roleMap = {
@@ -248,16 +266,32 @@
         };
         // Buka modal edit
         function editPermission(id) {
+            if (!id || id === '' || isNaN(id)) {
+                console.error('Invalid permission ID:', id);
+                showGlobalInvalid('ID permission tidak valid!');
+                return;
+            }
+            
             fetch('<?= base_url('admin/get_permission') ?>?id=' + encodeURIComponent(id))
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.success) {
+                if (data.success && data.permission) {
                     document.getElementById('edit-permission-id').value = data.permission.id;
                     document.getElementById('edit-permission-name').value = data.permission.name;
                     document.getElementById('editPermissionModal').style.display = 'flex';
                 } else {
-                    alert('Gagal mengambil data permission!');
+                    console.error('API returned success=false:', data);
+                    showGlobalInvalid('Gagal mengambil data permission!');
                 }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showGlobalInvalid('Gagal mengambil data permission: ' + error.message);
             });
         }
         function closeEditPermissionModal() {
@@ -269,8 +303,17 @@
             e.preventDefault();
             const form = e.target;
             const name = form.name.value.trim();
-            const id = form.id.value;
-            if (!name) return;
+            const id = document.getElementById('edit-permission-id').value;
+            
+            // Validasi
+            if (!name) {
+                showGlobalInvalid('Permission name tidak boleh kosong!');
+                return;
+            }
+            if (!id || id === '' || isNaN(id)) {
+                showGlobalInvalid('ID permission tidak valid!');
+                return;
+            }
 
             // Generate code baru dari name
             const code = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
@@ -284,31 +327,57 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success && data.permission) {
                     closeEditPermissionModal();
                     updatePermissionRow(data.permission);
                     showSuccessConfirm('Permission berhasil diupdate!');
                 } else {
-                    alert('Gagal update permission!');
+                    console.error('API returned success=false:', data);
+                    showGlobalInvalid('Gagal update permission!');
                 }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showGlobalInvalid('Gagal update permission: ' + error.message);
             });
         };
 
         // Buka modal delete
         let deletePermissionId = null;
         function deletePermission(id) {
+            if (!id || id === '' || isNaN(id)) {
+                console.error('Invalid permission ID:', id);
+                showGlobalInvalid('ID permission tidak valid!');
+                return;
+            }
+            
             fetch('<?= base_url('admin/get_permission') ?>?id=' + encodeURIComponent(id))
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.success) {
+                if (data.success && data.permission) {
                     deletePermissionId = id;
                     document.getElementById('delete-permission-name').innerText = data.permission.name;
                     document.getElementById('deletePermissionModal').style.display = 'flex';
                 } else {
-                    alert('Gagal mengambil data permission!');
+                    console.error('API returned success=false:', data);
+                    showGlobalInvalid('Gagal mengambil data permission!');
                 }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showGlobalInvalid('Gagal mengambil data permission: ' + error.message);
             });
         }
         function closeDeletePermissionModal() {
@@ -317,21 +386,35 @@
 
         // Confirm delete
         function confirmDeletePermission() {
-            if (!deletePermissionId) return;
+            if (!deletePermissionId || isNaN(deletePermissionId)) {
+                showGlobalInvalid('ID permission tidak valid!');
+                return;
+            }
+            
             fetch('<?= base_url('admin/delete_permission') ?>', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body: 'id=' + encodeURIComponent(deletePermissionId)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     closeDeletePermissionModal();
                     removePermissionRow(deletePermissionId);
                     showSuccessConfirm('Permission berhasil dihapus!');
                 } else {
-                    alert('Gagal menghapus permission!');
+                    console.error('API returned success=false:', data);
+                    showGlobalInvalid('Gagal menghapus permission!');
                 }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showGlobalInvalid('Gagal menghapus permission: ' + error.message);
             });
         }
 
@@ -355,7 +438,7 @@
         function closeAddPermissionModal() {
             document.getElementById('addPermissionModal').style.display = 'none';
         }
-        // Optional: close modal on outside click/Escape
+        // close modal pake esc
         window.onclick = function(event) {
             var modal = document.getElementById('addPermissionModal');
             if (event.target == modal) closeAddPermissionModal();
@@ -370,9 +453,13 @@
             e.preventDefault();
             const form = e.target;
             const name = form.name.value.trim();
-            if (!name) return;
+            
+            if (!name) {
+                showGlobalInvalid('Permission name tidak boleh kosong!');
+                return;
+            }
 
-            // Generate code: lowercase, replace space with underscore, remove non-alphanumeric
+            // untuk convert ke lowercase, replace space with underscore, remove non-alphanumeric
             const code = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
             const formData = new FormData();
@@ -383,15 +470,26 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success && data.permission) {
                     closeAddPermissionModal();
                     addPermissionRow(data.permission);
+                    form.reset();
                     showSuccessConfirm('Permission berhasil ditambahkan!');
                 } else {
-                    alert('Gagal menambah permission!');
+                    console.error('API returned success=false:', data);
+                    showGlobalInvalid('Gagal menambah permission!');
                 }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showGlobalInvalid('Gagal menambah permission: ' + error.message);
             });
         };
 
@@ -400,17 +498,30 @@
             const tbody = document.querySelector('.user-table-permissions tbody');
             if (!tbody) return;
             const tr = document.createElement('tr');
+            tr.setAttribute('data-permission-id', permission.id);
             tr.innerHTML = `
-                <td>${permission.code}</td>
-                <td>${permission.name}</td>
-                <td>${permission.created_by ?? '-'}</td>
-                <td>${permission.created_date ?? '-'}</td>
+                <td class="permission-code">${escapeHtml(permission.code || '')}</td>
+                <td class="permission-name">${escapeHtml(permission.name || '')}</td>
+                <td class="permission-created-by">${escapeHtml(permission.created_by || '-')}</td>
+                <td class="permission-created-date">${escapeHtml(permission.created_date || '-')}</td>
                 <td>
                     <button class="user-edit-btn" onclick="editPermission(${permission.id})">Edit</button>
                     <button class="user-delete-btn" onclick="deletePermission(${permission.id})">Delete</button>
                 </td>
             `;
             tbody.prepend(tr);
+        }
+        
+        // Escape HTML untuk prevent XSS
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
         }
         function showTab(idx) {
             let tabs = document.querySelectorAll('.settings-tab');
@@ -532,7 +643,19 @@
             e.preventDefault();
             const form = e.target;
             const formData = new FormData(form);
-
+            // Client-side password validation: if password provided, enforce rules
+            const pwd = form.password.value || '';
+            if (pwd) {
+                const pwdPattern = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':\\|,.<>\/~`]).{16,}$/;
+                if (!pwdPattern.test(pwd)) {
+                    if (typeof showGlobalError === 'function') {
+                        showGlobalError('Password harus minimal 16 karakter, mengandung setidaknya 1 huruf kapital dan 1 karakter spesial.');
+                    } else {
+                        alert('Password harus minimal 16 karakter, mengandung setidaknya 1 huruf kapital dan 1 karakter spesial.');
+                    }
+                    return;
+                }
+            }
             fetch('<?= base_url('admin/edit_user') ?>', {
                 method: 'POST',
                 body: formData
@@ -591,6 +714,16 @@
         document.getElementById('addUserForm').onsubmit = function(e) {
             e.preventDefault();
             const form = e.target;
+            const pwd = form.password.value || '';
+            const pwdPattern = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':\\|,.<>\/~`]).{16,}$/;
+            if (!pwdPattern.test(pwd)) {
+                if (typeof showGlobalError === 'function') {
+                    showGlobalError('Password harus minimal 16 karakter, mengandung setidaknya 1 huruf kapital dan 1 karakter spesial.');
+                } else {
+                    alert('Password harus minimal 16 karakter, mengandung setidaknya 1 huruf kapital dan 1 karakter spesial.');
+                }
+                return;
+            }
             const formData = new FormData(form);
 
             fetch('<?= base_url('admin/add_user') ?>', {
@@ -602,7 +735,9 @@
                 if (data.success) {
                     closeAddUserModal();
                     addUserRow(data.user); // Tambahkan user baru ke tabel
-                    showSuccessConfirm('User berhasil ditambahkan!');
+                    // Tampilkan generated UUID
+                    const message = 'User berhasil ditambahkan!\n\nGenerated UUID:\n' + data.user.generated_uuid + '\n\nUser dapat login dengan password yang telah diatur.';
+                    showSuccessConfirm(message);
                 } else {
                     alert('Gagal menambah user!');
                 }

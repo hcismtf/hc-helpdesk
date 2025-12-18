@@ -7,7 +7,7 @@ class RolePermissionsModel extends Model
     protected $table = 'role_permissions';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'role_id',
-        'permission_id'
+        'role_id', 'permission_id'
     ];
+    
 }

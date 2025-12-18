@@ -32,41 +32,70 @@
                     </div>
                 </div>
             </div>
-            <div id="ticketTableContainer">
-                <?php echo view('admin/ticket_table', [
-                    'tickets' => $tickets,
-                    'pager' => $pager,
-                    'perPage' => $perPage,
-                    'priority' => $priority,
-                    'start' => $start,
-                    'end' => $end,
-                    'totalTickets' => $totalTickets
-                ]); ?>
-            </div>
-            <div id="modalLoading" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:9999;">
-                <div style="
-                    position:absolute;
-                    top:50%; left:50%;
-                    transform:translate(-50%,-50%);
-                    background:#fff;
-                    padding:32px 48px;
-                    border-radius:18px;
-                    box-shadow:0 2px 16px rgba(0,0,0,0.12);
-                    text-align:center;
-                    font-size:20px;
-                    font-weight:600;
-                ">
-                    <div class="spinner" style="
-                        margin-bottom:18px;
-                        display:inline-block;
-                        width:40px; height:40px;
-                        border:4px solid #ccc;
-                        border-top:4px solid #3498db;
-                        border-radius:50%;
-                        animation: spin 1s linear infinite;
-                    "></div>
-                    <div>Please wait...</div>
-                </div>
+            <table class="tickets-table" id="ticketsTable">
+                <thead>
+                    <tr>
+                        <th>Ticket ID</th>
+                        <th>NIP</th>
+                        <th>Type</th>
+                        <th>Created Date</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if (!empty($tickets)): ?>
+                    <?php foreach ($tickets as $ticket): ?>
+                        <tr>
+                            <td><?= isset($ticket['id']) ? esc($ticket['id']) : '-' ?></td>
+                            <td><?= isset($ticket['emp_nip']) ? esc($ticket['emp_nip']) : '-' ?></td>
+                            <td><?= isset($ticket['req_type']) ? esc($ticket['req_type']) : '-' ?></td>
+                            <td>
+                                <?php
+                                    if (!empty($ticket['created_date'])) {
+                                        echo esc(date('d/m/Y H:i:s', strtotime($ticket['created_date'])));
+                                    } else {
+                                        echo '-';
+                                    }
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                    if (isset($ticket['ticket_status']) && $ticket['ticket_status'] == 'in_progress') {
+                                        echo 'In Progress';
+                                    } else {
+                                        echo isset($ticket['ticket_status']) ? esc($ticket['ticket_status']) : '-';
+                                    }
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                    $priority = isset($ticket['ticket_priority']) ? ucfirst($ticket['ticket_priority']) : '-';
+                                    if ($priority !== '-') {
+                                        echo '<span class="priority-badge priority-' . $priority . '">' . esc($priority) . '</span>';
+                                    } else {
+                                        echo '-';
+                                    }
+                                ?>
+                            </td>
+                            <td>
+                                <a href="<?= base_url('admin/Ticket_detail/' . esc($ticket['id'])) ?>">
+                                    <button class="btn-open">Open</button>
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endforeach ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="7" style="text-align:center;">No tickets found.</td>
+                    </tr>
+                <?php endif ?>
+                </tbody>
+            </table>
+            <!-- Pagination -->
+            <div class="pagination">
+                <?= isset($paginationHTML) ? $paginationHTML : '' ?>
             </div>
         </div>
     </div>
@@ -90,20 +119,18 @@
                             <option value="">All</option>
                             <option value="urgent" <?= isset($priority) && $priority=='urgent'?'selected':'' ?>>Urgent</option>
                             <option value="high" <?= isset($priority) && $priority=='high'?'selected':'' ?>>High</option>
-                            <option value="medium" <?= isset($priority) && $priority=='medium'?'selected':'' ?>>Medium</option><div class="pagination">
+                            <option value="medium" <?= isset($priority) && $priority=='medium'?'selected':'' ?>>Medium</option>
                             <option value="low" <?= isset($priority) && $priority=='low'?'selected':'' ?>>Low</option>
                         </select>
                     </div>
                 </div>
-                <div style="display:flex; gap:16px; margin-bottom:18px;">
-                    <div style="flex:1;">
-                        <label style="font-weight:500;">Start Date</label>
-                        <input type="date" id="filterStartDate" name="start" value="<?= esc($start ?? '') ?>" style="width:100%; padding:10px; border-radius:18px; border:1px solid #ccc;">
-                    </div>
-                    <div style="flex:1;">
-                        <label style="font-weight:500;">End Date</label>
-                        <input type="date" id="filterEndDate" name="end" value="<?= esc($end ?? '') ?>" style="width:100%; padding:10px; border-radius:18px; border:1px solid #ccc;">
-                    </div>
+                <div style="margin-bottom:18px;">
+                    <label style="font-weight:500;">Start Date</label>
+                    <input type="date" id="filterStartDate" name="start" value="<?= esc($start ?? '') ?>" style="width:100%; padding:10px; border-radius:18px; border:1px solid #ccc; margin-bottom:12px; font-size:14px;">
+                </div>
+                <div style="margin-bottom:18px;">
+                    <label style="font-weight:500;">End Date</label>
+                    <input type="date" id="filterEndDate" name="end" value="<?= esc($end ?? '') ?>" style="width:100%; padding:10px; border-radius:18px; border:1px solid #ccc; margin-bottom:12px; font-size:14px;">
                 </div>
                 <div style="display:flex; gap:18px; justify-content:center; margin-top:18px;">
                     <button type="submit" class="btn-filter">Apply Filter</button>
@@ -111,25 +138,8 @@
                 </div>
             </form>
         </div>
-    </div>
-    <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>   
+    </div>   
     <script>
-        function loadTicketTable(params) {
-            document.getElementById('modalLoading').style.display = 'block'; // Show modal loading
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', '<?= base_url('admin/ajax_ticket_table') ?>?' + params, true);
-            xhr.onload = function() {
-                document.getElementById('modalLoading').style.display = 'none'; // Hide modal loading
-                if (xhr.status === 200) {
-                    document.getElementById('ticketTableContainer').innerHTML = xhr.responseText;
-                    attachPaginationEvents();
-                }
-            };
-            xhr.onerror = function() {
-                document.getElementById('modalLoading').style.display = 'none'; // Hide modal loading on error
-            };
-            xhr.send();
-        }
         function searchTicketTable() {
             var input = document.getElementById("searchTicket");
             var filter = input.value.toUpperCase();
@@ -147,39 +157,32 @@
             }
         }
         function applyFilter() {
-            var params = [];
-            params.push('per_page=' + document.getElementById('perPage').value);
-            var priority = document.getElementById('filterPriority') ? document.getElementById('filterPriority').value : '';
-            var start = document.getElementById('filterStartDate') ? document.getElementById('filterStartDate').value : '';
-            var end = document.getElementById('filterEndDate') ? document.getElementById('filterEndDate').value : '';
-            if (priority) params.push('priority=' + priority);
-            if (start) params.push('start=' + start);
-            if (end) params.push('end=' + end);
-            loadTicketTable(params.join('&'));
+            // Preserve existing filters (start, end, priority, search) and set per_page + reset page for tickets
+            var url = new URL(window.location.href);
+            var params = url.searchParams;
+            // set per_page and reset pager group param for tickets
+            params.set('per_page', document.getElementById('perPage').value);
+            params.set('page_tickets', 1);
+            // remove generic page param to avoid confusion
+            params.delete('page');
+            window.location = url.pathname + '?' + params.toString();
         }
-        // Attach click event to pagination links (after AJAX load)
-        function attachPaginationEvents() {
-            var paginations = document.querySelectorAll('.pagination a');
-            paginations.forEach(function(link) {
-                link.onclick = function(e) {
-                    e.preventDefault();
-                    // Ambil semua parameter dari href pagination
-                    var url = new URL(link.href);
-                    loadTicketTable(url.searchParams.toString());
-                };
-            });
-        }
-
-        // Initial attach after page load
-        document.addEventListener('DOMContentLoaded', function() {
-            attachPaginationEvents();
-        });
         function openFilterModal() {
             document.getElementById('filterModal').style.display = 'block';
         }
         function closeFilterModal() {
             document.getElementById('filterModal').style.display = 'none';
         }
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                var modal = document.getElementById('filterModal');
+                if (modal && modal.style.display === 'block') {
+                    closeFilterModal();
+                }
+            }
+        });
         function resetFilter() {
             document.getElementById('filterForm').reset();
             document.getElementById('filterStartDate').value = '';

@@ -14,7 +14,13 @@ function searchTicketTable() {
                 tr[i].style.display = show ? "" : "none";
             }
         }
-       
+        function applyFilter() {
+            var url = new URL(window.location.href);
+            var params = url.searchParams;
+            params.set('per_page', document.getElementById('perPage').value);
+            params.set('page', 1);
+            window.location = url.pathname + '?' + params.toString();
+        }
         function openFilterModal() {
             // Implement modal if needed
         }

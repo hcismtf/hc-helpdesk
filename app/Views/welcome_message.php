@@ -328,6 +328,7 @@
         }
     }
 </script>
+<script src="<?= base_url('assets/js/device-security-check.js') ?>"></script>
 
 <!-- -->
 

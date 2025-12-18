@@ -51,7 +51,7 @@ function hasMenuAccess($menuName) {
                             <option>50</option>
                             <option>100</option>
                         </select>
-                        <button class="btn-add-faq">Add New FAQ</button>
+                        <button class="btn-add-faq" id="btn-add-faq">Add New FAQ</button>
                     </div>
                 </div>
                 <!-- Modal Add FAQ -->
@@ -147,32 +147,32 @@ function hasMenuAccess($menuName) {
                             <option>50</option>
                             <option>100</option>
                         </select>
-                        <button class="btn-add-faq" style="background:#234be7;">Add New User Role</button>
+                        <button class="btn-add-faq" style="background:#234be7;" id="btn-add-user-role">Add New User Role</button>
                     </div>
                     <!-- Modal Add User Role -->
                     <div id="userRoleModal" class="faq-modal-bg" style="display:none;">
-                        <div class="faq-modal" style="max-width:600px;">
+                        <div class="faq-modal">
                             <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
                                 <div style="font-size:20px; font-weight:600;">Add New User Role</div>
                                 <span onclick="closeUserRoleModal()" style="font-size:28px; font-weight:700; cursor:pointer;">&times;</span>
                             </div>
-                            <form id="user-role-form" style="display:flex; flex-direction:column; gap:14px; width:100%; padding-top:10px;">
+                            <form id="user-role-form" style="display:flex; flex-direction:column; align-items:flex-start; gap:10px; align-self:stretch; width:100%; padding-top:10px;">
                                 <label for="role-name" style="font-weight:500;">Role Name <span style="color:#FF474A">*</span></label>
-                                <input id="role-name" type="text" placeholder="Input Title Here" class="faq-input">
+                                <input id="role-name" type="text" placeholder="Input role name" class="faq-input">
 
-                                <label style="font-weight:500;">Permission</label>
-                                <div id="permission-container">
-                                    <div class="permission-row" style="display:flex; align-items:center; gap:8px;">
-                                        <select name="permissions[]" class="faq-input permission-select" style="flex:1; margin-bottom:8px;">
+                                <label style="font-weight:500;">Permission <span style="color:#FF474A">*</span></label>
+                                <div id="permission-container" style="width:100%;">
+                                    <div class="permission-row" style="display:flex; align-items:center; gap:8px; width:100%;">
+                                        <select name="permissions[]" class="faq-input permission-select" style="flex:1;">
                                             <option value="">Select Permission</option>
                                             <?php foreach ($permissions as $perm): ?>
                                                 <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
                                             <?php endforeach ?>
                                         </select>
-                                        <button type="button" class="remove-permission-btn" style="display:none; background:#bbb; color:#fff; border:none; border-radius:12px; padding:6px 12px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">-</button>
+                                        <button type="button" class="remove-permission-btn" style="display:none; background:#bbb; color:#fff; border:none; border-radius:12px; padding:6px 12px; font-size:15px; font-weight:600; cursor:pointer;">-</button>
                                     </div>
                                 </div>
-                                <button type="button" id="add-permission-btn" style="background:#eee; color:#222; border:none; border-radius:22px; padding:6px 18px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">
+                                <button type="button" id="add-permission-btn" style="background:#eee; color:#222; border:none; border-radius:22px; padding:6px 18px; font-size:15px; font-weight:600; cursor:pointer;">
                                     + Add Permission
                                 </button>
                                 <div style="width:100%; display:flex; justify-content:flex-end;">
@@ -183,18 +183,18 @@ function hasMenuAccess($menuName) {
                     </div>
                     <!-- Modal Edit User Role -->
                     <div id="userRoleEditModal" class="faq-modal-bg" style="display:none;">
-                        <div class="faq-modal" style="max-width:600px;">
+                        <div class="faq-modal">
                             <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
                                 <div style="font-size:20px; font-weight:600;">Edit User Role</div>
                                 <span onclick="closeUserRoleEditModal()" style="font-size:28px; font-weight:700; cursor:pointer;">&times;</span>
                             </div>
-                            <form id="user-role-edit-form" style="display:flex; flex-direction:column; gap:14px; width:100%; padding-top:10px;">
+                            <form id="user-role-edit-form" style="display:flex; flex-direction:column; align-items:flex-start; gap:10px; align-self:stretch; width:100%; padding-top:10px;">
                                 <input type="hidden" id="edit-role-id">
                                 <label for="edit-role-name" style="font-weight:500;">Role Name <span style="color:#FF474A">*</span></label>
                                 <input id="edit-role-name" type="text" class="faq-input">
-                                <label style="font-weight:500;">Permission</label>
-                                <div id="edit-permission-container"></div>
-                                <button type="button" id="add-edit-permission-btn" style="background:#eee; color:#222; border:none; border-radius:22px; padding:6px 18px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">
+                                <label style="font-weight:500;">Permission <span style="color:#FF474A">*</span></label>
+                                <div id="edit-permission-container" style="width:100%;"></div>
+                                <button type="button" id="add-edit-permission-btn" style="background:#eee; color:#222; border:none; border-radius:22px; padding:6px 18px; font-size:15px; font-weight:600; cursor:pointer;">
                                     + Add Permission
                                 </button>
                                 <div style="width:100%; display:flex; justify-content:flex-end;">
@@ -234,7 +234,7 @@ function hasMenuAccess($menuName) {
                             <option>50</option>
                             <option>100</option>
                         </select>
-                        <button class="btn-add-faq" style="background:#234be7;">Add New Request Type</button>
+                        <button class="btn-add-faq" style="background:#234be7;" id="btn-add-request-type">Add New Request Type</button>
                     </div>
                     <!-- Modal Add New Request Type -->
                     <div id="requestTypeModal" class="faq-modal-bg" style="display:none;">
@@ -329,7 +329,7 @@ function hasMenuAccess($menuName) {
                         <form id="sla-form" style="display:flex; flex-direction:column; gap:10px; width:100%; padding-top:10px;">
                             
                             <label for="sla-priority" style="font-weight:500;">Priority Level <span style="color:#FF474A">*</span></label>
-                            <select id="sla-priority" class="faq-input" required>
+                            <select id="sla-priority" class="faq-input">
                                 <option value="">Select Priority</option>
                                 <option value="Low">Low</option>
                                 <option value="Medium">Medium</option>
@@ -337,19 +337,13 @@ function hasMenuAccess($menuName) {
                                 <option value="Urgent">Urgent</option>
                             </select>
                             <label for="sla-response" style="font-weight:500;">Response Time (hours) <span style="color:#FF474A">*</span></label>
-                            <select id="sla-response" class="faq-input" required>
-                                <option value="">Select Response Time</option>
-                                <?php for($i=1; $i<=48; $i++): ?>
-                                    <option value="<?= $i ?>"><?= $i ?></option>
-                                <?php endfor ?>
-                            </select>
+                            <input id="sla-response" type="text" placeholder="Input response time (hours)" class="faq-input" 
+                                oninput="this.value = this.value.replace(/[^0-9]/g, ')">
+
                             <label for="sla-resolution" style="font-weight:500;">Resolution Time (hours) <span style="color:#FF474A">*</span></label>
-                            <select id="sla-resolution" class="faq-input" required>
-                                <option value="">Select Resolution Time</option>
-                                <?php for($i=1; $i<=168; $i++): ?>
-                                    <option value="<?= $i ?>"><?= $i ?></option>
-                                <?php endfor ?>
-                            </select>
+                            <input id="sla-resolution" type="text" placeholder="Input resolution time (hours)" class="faq-input" 
+                                oninput="this.value = this.value.replace(/[^0-9]/g, ')">
+
                             <div style="width:100%; display:flex; justify-content:flex-end;">
                                 <button type="submit" class="btn-submit-faq" style="background:#FCD116; color:#222;">Submit</button>
                             </div>
@@ -363,33 +357,33 @@ function hasMenuAccess($menuName) {
                             <div style="font-size:20px; font-weight:600;">Edit SLA</div>
                             <span onclick="closeSlaEditModal()" style="font-size:28px; font-weight:700; cursor:pointer;">&times;</span>
                         </div>
+
                         <form id="sla-edit-form" style="display:flex; flex-direction:column; gap:14px; width:100%; padding-top:10px;">
                             <input type="hidden" id="edit-sla-id">
+
                             <label for="edit-sla-priority" style="font-weight:500;">Priority Level <span style="color:#FF474A">*</span></label>
-                            <select id="edit-sla-priority" class="faq-input" required>
+                            <select id="edit-sla-priority" class="faq-input">
                                 <option value="Low">Low</option>
                                 <option value="Medium">Medium</option>
                                 <option value="High">High</option>
                                 <option value="Urgent">Urgent</option>
                             </select>
+
                             <label for="edit-sla-response" style="font-weight:500;">Response Time (hours) <span style="color:#FF474A">*</span></label>
-                            <select id="edit-sla-response" class="faq-input" required>
-                                <?php for($i=1; $i<=48; $i++): ?>
-                                    <option value="<?= $i ?>"><?= $i ?></option>
-                                <?php endfor ?>
-                            </select>
+                            <input id="edit-sla-response" type="text" placeholder="Input response time (hours)" class="faq-input"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, ')">
+
                             <label for="edit-sla-resolution" style="font-weight:500;">Resolution Time (hours) <span style="color:#FF474A">*</span></label>
-                            <select id="edit-sla-resolution" class="faq-input" required>
-                                <?php for($i=1; $i<=168; $i++): ?>
-                                    <option value="<?= $i ?>"><?= $i ?></option>
-                                <?php endfor ?>
-                            </select>
+                            <input id="edit-sla-resolution" type="text" placeholder="Input resolution time (hours)" class="faq-input"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, ')">
+
                             <div style="width:100%; display:flex; justify-content:flex-end;">
                                 <button type="submit" class="btn-submit-faq" style="background:#234be7;">Submit</button>
                             </div>
                         </form>
                     </div>
                 </div>
+
 
                 <!-- Modal Delete SLA -->
                 <div id="slaDeleteModal" class="faq-modal-bg" style="display:none;">
@@ -408,7 +402,6 @@ function hasMenuAccess($menuName) {
                 <div id="sla-list"></div>
             </div>
         </div>
-        <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>
         <script>
             function validateRoleForm(formId, nameId, permissionContainerId, submitBtnSelector) {
                 var name = document.getElementById(nameId).value.trim();
@@ -431,18 +424,6 @@ function hasMenuAccess($menuName) {
             }
 
             // Event listener untuk Add User Role
-            document.getElementById('role-name').addEventListener('input', function() {
-                validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
-            });
-            document.getElementById('permission-container').addEventListener('change', function() {
-                validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
-            });
-            document.getElementById('add-permission-btn').addEventListener('click', function() {
-                setTimeout(function() {
-                    validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
-                }, 100);
-            });
-
             // Event listener untuk Edit User Role
             document.getElementById('edit-role-name').addEventListener('input', function() {
                 validateRoleForm('user-role-edit-form', 'edit-role-name', 'edit-permission-container', '#user-role-edit-form .btn-submit-faq');
@@ -456,47 +437,6 @@ function hasMenuAccess($menuName) {
                 }, 100);
             });
 
-            // Validasi sebelum submit (Add)
-            document.getElementById('user-role-form').onsubmit = function(e) {
-                e.preventDefault();
-                var name = document.getElementById('role-name').value.trim();
-                var selects = document.querySelectorAll('#permission-container select');
-                var permissions = [];
-                selects.forEach(function(sel) {
-                    if (sel.value) permissions.push(sel.value);
-                });
-                var nameValid = /^[A-Za-z ]+$/.test(name);
-
-                if (!name || permissions.length === 0) {
-                    showGlobalWarning('Role name dan minimal satu permission wajib diisi!', null, null);
-                    return;
-                }
-                if (!nameValid) {
-                    showGlobalInvalid('Role Name hanya boleh huruf dan spasi!');
-                    return;
-                }
-
-                fetch('<?= base_url('admin/add_user_role') ?>', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: 'name=' + encodeURIComponent(name)
-                        + '&permissions[]=' + permissions.map(encodeURIComponent).join('&permissions[]=')
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.success) {
-                        document.getElementById('role-name').value = '';
-                        document.querySelectorAll('#permission-container select').forEach(function(sel, idx){
-                            if(idx === 0) sel.value = '';
-                            else sel.remove();
-                        });
-                        closeUserRoleModal();
-                        showGlobalSuccess('User Role berhasil ditambahkan!');
-                        loadRoleList();
-                    }
-                });
-            };
-
             // Validasi sebelum submit (Edit)
             document.getElementById('user-role-edit-form').onsubmit = function(e) {
                 e.preventDefault();
@@ -507,17 +447,16 @@ function hasMenuAccess($menuName) {
                 selects.forEach(function(sel) {
                     if (sel.value) permissions.push(sel.value);
                 });
-                var nameValid = /^[A-Za-z ]+$/.test(name);
 
-                if (!name || permissions.length === 0) {
-                    showGlobalWarning('Role name dan minimal satu permission wajib diisi!', null, null);
+                if (!name) {
+                    showGlobalInvalid('Role Name wajib diisi!');
                     return;
                 }
-                if (!nameValid) {
-                    showGlobalInvalid('Role Name hanya boleh huruf dan spasi!');
+                if (permissions.length === 0) {
+                    showGlobalInvalid('Minimal satu Permission wajib dipilih!');
                     return;
                 }
-
+                
                 fetch('<?= base_url('admin/edit_user_role') ?>', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -535,36 +474,79 @@ function hasMenuAccess($menuName) {
                 });
             };
 
-            // Inisialisasi validasi awal
-            validateRoleForm('user-role-form', 'role-name', 'permission-container', '#user-role-form .btn-submit-faq');
-            validateRoleForm('user-role-edit-form', 'edit-role-name', 'edit-permission-container', '#user-role-edit-form .btn-submit-faq');
+            // Wrapper function untuk get data dari button attributes
+            function openRoleEditModalFromButton(button) {
+                var id = button.getAttribute('data-id');
+                var name = button.getAttribute('data-name');
+                var permissionsJson = button.getAttribute('data-permissions');
+                var permissionIds = [];
+                
+                try {
+                    permissionIds = JSON.parse(permissionsJson || '[]');
+                } catch(e) {
+                    console.error('Error parsing permissions JSON:', permissionsJson, e);
+                    permissionIds = [];
+                }
+                
+                openRoleEditModal(id, name, permissionIds);
+            }
+
             // Open Edit Modal
-            function openRoleEditModal(id, name, permissionIdsRaw) {
-                var permissionIds = Array.isArray(permissionIdsRaw)
-                    ? permissionIdsRaw
-                    : (typeof permissionIdsRaw === 'string' && permissionIdsRaw.length > 0
-                        ? permissionIdsRaw.split(',').map(function(x){return x.trim();})
-                        : []);
+            function openRoleEditModal(id, name, permissionIds) {
+                console.log('Opening edit modal for role:', id, name, permissionIds);
+                
+                // Ensure permissionIds is an array
+                if (!Array.isArray(permissionIds)) {
+                    console.warn('permissionIds is not an array, converting...', typeof permissionIds);
+                    permissionIds = [];
+                }
+                
                 document.getElementById('edit-role-id').value = id;
                 document.getElementById('edit-role-name').value = name;
                 var container = document.getElementById('edit-permission-container');
                 container.innerHTML = '';
-                permissionIds.forEach(function(pId) {
+                
+                // Create select for each permission ID
+                permissionIds.forEach(function(pId, idx) {
                     var select = document.createElement('select');
                     select.name = "permissions[]";
                     select.className = "faq-input";
                     select.style.marginBottom = "8px";
+                    select.style.width = "100%";
+                    
+                    var optionHtml = '<option value="">Select Permission</option>';
+                    optionHtml += `
+                        <?php foreach ($permissions as $perm): ?>
+                            <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
+                        <?php endforeach ?>
+                    `;
+                    select.innerHTML = optionHtml;
+                    select.value = pId; // Set selected value
+                    
+                    container.appendChild(select);
+                    console.log('Added permission select for pId:', pId);
+                });
+                
+                // If no permissions, add one empty select
+                if (permissionIds.length === 0) {
+                    console.log('No permissions found, adding empty select');
+                    var select = document.createElement('select');
+                    select.name = "permissions[]";
+                    select.className = "faq-input";
+                    select.style.marginBottom = "8px";
+                    select.style.width = "100%";
                     select.innerHTML = `
                         <option value="">Select Permission</option>
                         <?php foreach ($permissions as $perm): ?>
-                            <option value="<?= esc($perm['id']) ?>" ${pId == <?= esc($perm['id']) ?> ? "selected" : ""}>
-                                <?= esc($perm['name']) ?>
-                            </option>
+                            <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
                         <?php endforeach ?>
                     `;
                     container.appendChild(select);
-                });
-                document.getElementById('userRoleEditModal').style.display = 'flex';
+                }
+                
+                var modal = document.getElementById('userRoleEditModal');
+                modal.style.display = 'flex';
+                console.log('Modal displayed');
             }
             document.getElementById('add-edit-permission-btn').onclick = function() {
                 var container = document.getElementById('edit-permission-container');
@@ -583,35 +565,15 @@ function hasMenuAccess($menuName) {
             function closeUserRoleEditModal() {
                 document.getElementById('userRoleEditModal').style.display = 'none';
             }
-            document.getElementById('user-role-edit-form').onsubmit = function(e) {
-                e.preventDefault();
-                var id = document.getElementById('edit-role-id').value;
-                var name = document.getElementById('edit-role-name').value;
-                var selects = document.querySelectorAll('#edit-permission-container select');
-                var permissions = [];
-                selects.forEach(function(sel) {
-                    if (sel.value) permissions.push(sel.value);
-                });
-                if (!name || permissions.length === 0) {
-                    showGlobalWarning('Role name dan minimal satu permission wajib diisi!', null, null);
-                    return;
+            
+            // Add real-time validation for Edit Role Name field
+            document.getElementById('edit-role-name').addEventListener('blur', function() {
+                var name = this.value.trim();
+                if (!name) {
+                    showGlobalInvalid('Role Name wajib diisi!');
                 }
-                fetch('<?= base_url('admin/edit_user_role') ?>', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: 'id=' + encodeURIComponent(id)
-                        + '&name=' + encodeURIComponent(name)
-                        + '&permissions[]=' + permissions.map(encodeURIComponent).join('&permissions[]=')
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.success) {
-                        closeUserRoleEditModal();
-                        showGlobalSuccess('User Role berhasil diupdate!');
-                        loadRoleList();
-                    }
-                });
-            };
+            });
+            
 
             // Open Delete Modal
             function openRoleDeleteModal(id) {
@@ -639,15 +601,19 @@ function hasMenuAccess($menuName) {
             }
             document.getElementById('user-role-form').onsubmit = function(e) {
                 e.preventDefault();
-                var name = document.getElementById('role-name').value;
+                var name = document.getElementById('role-name').value.trim();
                 var selects = document.querySelectorAll('#permission-container select');
                 var permissions = [];
                 selects.forEach(function(sel) {
                     if (sel.value) permissions.push(sel.value);
                 });
 
-                if (!name || permissions.length === 0) {
-                    showGlobalWarning('Role name dan minimal satu permission wajib diisi!', null, null);
+                if (!name) {
+                    showGlobalInvalid('Role Name wajib diisi!');
+                    return;
+                }
+                if (permissions.length === 0) {
+                    showGlobalInvalid('Minimal satu Permission wajib dipilih!');
                     return;
                 }
 
@@ -668,9 +634,15 @@ function hasMenuAccess($menuName) {
                         closeUserRoleModal();
                         showGlobalSuccess('User Role berhasil ditambahkan!');
                         loadRoleList();
+                    } else {
+                        showGlobalInvalid(data.message || 'Gagal menambah User Role!');
                     }
+                })
+                .catch(error => {
+                    showGlobalInvalid('Error: ' + error.message);
                 });
             };
+            
             document.getElementById('add-permission-btn').onclick = function() {
                 var container = document.getElementById('permission-container');
                 var div = document.createElement('div');
@@ -678,15 +650,39 @@ function hasMenuAccess($menuName) {
                 div.style.display = 'flex';
                 div.style.alignItems = 'center';
                 div.style.gap = '8px';
-                div.innerHTML = `
-                    <select name="permissions[]" class="faq-input permission-select" style="flex:1; margin-bottom:8px;">
-                        <option value="">Select Permission</option>
-                        <?php foreach ($permissions as $perm): ?>
-                            <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
-                        <?php endforeach ?>
-                    </select>
-                    <button type="button" class="remove-permission-btn" style="background:#bbb; color:#fff; border:none; border-radius:12px; padding:6px 12px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;">-</button>
+                var select = document.createElement('select');
+                select.name = "permissions[]";
+                select.className = "faq-input permission-select";
+                select.style.flex = '1';
+                select.style.marginBottom = '8px';
+                select.innerHTML = `
+                    <option value="">Select Permission</option>
+                    <?php foreach ($permissions as $perm): ?>
+                        <option value="<?= esc($perm['id']) ?>"><?= esc($perm['name']) ?></option>
+                    <?php endforeach ?>
                 `;
+                
+                var removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'remove-permission-btn';
+                removeBtn.textContent = '-';
+                removeBtn.style.background = '#bbb';
+                removeBtn.style.color = '#fff';
+                removeBtn.style.border = 'none';
+                removeBtn.style.borderRadius = '12px';
+                removeBtn.style.padding = '6px 12px';
+                removeBtn.style.fontSize = '15px';
+                removeBtn.style.fontWeight = '600';
+                removeBtn.style.cursor = 'pointer';
+                removeBtn.style.marginBottom = '8px';
+                removeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    div.remove();
+                    updatePermissionDropdowns();
+                });
+                
+                div.appendChild(select);
+                div.appendChild(removeBtn);
                 container.appendChild(div);
                 updatePermissionDropdowns();
             };
@@ -745,14 +741,42 @@ function hasMenuAccess($menuName) {
             }
             document.getElementById('sla-edit-form').onsubmit = function(e) {
                 e.preventDefault();
-                var id = document.getElementById('edit-sla-id').value;
-                var priority = document.getElementById('edit-sla-priority').value;
-                var response = document.getElementById('edit-sla-response').value;
-                var resolution = document.getElementById('edit-sla-resolution').value;
-                if (!priority || !response || !resolution) {
-                    showGlobalWarning('Semua field wajib diisi!', null, null);
+
+                var id = document.getElementById('edit-sla-id').value.trim();
+                var priority = document.getElementById('edit-sla-priority').value.trim();
+                var response = document.getElementById('edit-sla-response').value.trim();
+                var resolution = document.getElementById('edit-sla-resolution').value.trim();
+
+                if (!priority) {
+                    showGlobalInvalid('Priority Level wajib dipilih!');
                     return;
                 }
+                if (!response) {
+                    showGlobalInvalid('Response Time wajib diisi!');
+                    return;
+                }
+                if (!resolution) {
+                    showGlobalInvalid('Resolution Time wajib diisi!');
+                    return;
+                }
+
+                // Validasi integer (hanya angka)
+                if (!/^[0-9]+$/.test(response) || !/^[0-9]+$/.test(resolution)) {
+                    showGlobalInvalid('Response Time dan Resolution Time harus berupa angka bulat!');
+                    return;
+                }
+
+                // Konversi ke integer
+                response = parseInt(response);
+                resolution = parseInt(resolution);
+
+                // Validasi angka > 0
+                if (response <= 0 || resolution <= 0) {
+                    showGlobalInvalid('Nilai Response Time dan Resolution Time harus lebih dari 0!');
+                    return;
+                }
+
+                // Kirim data via fetch
                 fetch('<?= base_url('admin/edit_sla') ?>', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -763,13 +787,14 @@ function hasMenuAccess($menuName) {
                 })
                 .then(res => res.json())
                 .then(data => {
-                    if(data.success) {
+                    if (data.success) {
                         closeSlaEditModal();
                         showGlobalSuccess('SLA berhasil diupdate!');
                         loadSlaList();
                     }
                 });
             };
+
 
             // Delete SLA
             function openSlaDeleteModal(id) {
@@ -809,15 +834,46 @@ function hasMenuAccess($menuName) {
             function closeSlaModal() {
                 document.getElementById('slaModal').style.display = 'none';
             }
+            document.addEventListener('keydown', function(e){
+                if(e.key === "Escape") {
+                    closeSlaModal();
+                    closeSlaEditModal();
+                    closeSlaDeleteModal();
+                }
+            });
             document.getElementById('sla-form').onsubmit = function(e) {
                 e.preventDefault();
 
-                var priority = document.getElementById('sla-priority').value;
-                var response = document.getElementById('sla-response').value;
-                var resolution = document.getElementById('sla-resolution').value;
+                var priority = document.getElementById('sla-priority').value.trim();
+                var response = document.getElementById('sla-response').value.trim();
+                var resolution = document.getElementById('sla-resolution').value.trim();
 
-                if (!priority || !response || !resolution) {
-                    showGlobalWarning('Semua field wajib diisi!', null, null);
+                if (!priority) {
+                    showGlobalInvalid('Priority Level wajib dipilih!');
+                    return;
+                }
+                if (!response) {
+                    showGlobalInvalid('Response Time wajib diisi!');
+                    return;
+                }
+                if (!resolution) {
+                    showGlobalInvalid('Resolution Time wajib diisi!');
+                    return;
+                }
+
+                // Validasi integer
+                if (!/^[0-9]+$/.test(response) || !/^[0-9]+$/.test(resolution)) {
+                    showGlobalInvalid('Response Time dan Resolution Time harus berupa angka bulat!');
+                    return;
+                }
+
+                // Convert ke integer
+                response = parseInt(response);
+                resolution = parseInt(resolution);
+
+                // Validasi logika tambahan (misal > 0)
+                if (response <= 0 || resolution <= 0) {
+                    showGlobalInvalid('Nilai Response Time dan Resolution Time harus lebih dari 0!');
                     return;
                 }
 
@@ -830,7 +886,7 @@ function hasMenuAccess($menuName) {
                 })
                 .then(res => res.json())
                 .then(data => {
-                    if(data.success) {
+                    if (data.success) {
                         document.getElementById('sla-priority').value = '';
                         document.getElementById('sla-response').value = '';
                         document.getElementById('sla-resolution').value = '';
@@ -840,6 +896,7 @@ function hasMenuAccess($menuName) {
                     }
                 });
             };
+
             function moveSlider(idx) {
                 const tabs = document.querySelectorAll('.settings-tab');
                 tabs.forEach((tab, i) => tab.classList.toggle('active', i === idx));
@@ -861,22 +918,31 @@ function hasMenuAccess($menuName) {
                 // Panggil loader FAQ list
                 loadFaqList(1, 10);
             });
-            document.querySelector('.btn-add-faq').onclick = function() {
+            document.getElementById('btn-add-faq').onclick = function() {
                 document.getElementById('faqModal').style.display = 'flex';
             }
             function closeFaqModal() {
                 document.getElementById('faqModal').style.display = 'none';
             }
-            document.addEventListener('keydown', function(e){
-                if(e.key === "Escape") closeFaqModal();
-            });
             document.getElementById('faq-form').onsubmit = function(e) {
                 e.preventDefault();
+                var title = document.getElementById('faq-title').value.trim();
+                var desc = document.getElementById('faq-desc').value.trim();
+                
+                if (!title) {
+                    showGlobalInvalid('Title wajib diisi!');
+                    return;
+                }
+                if (!desc) {
+                    showGlobalInvalid('Description wajib diisi!');
+                    return;
+                }
+                
                 fetch('<?= base_url('admin/add_faq') ?>', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: 'question=' + encodeURIComponent(document.getElementById('faq-title').value)
-                        + '&answer=' + encodeURIComponent(document.getElementById('faq-desc').value)
+                    body: 'question=' + encodeURIComponent(title)
+                        + '&answer=' + encodeURIComponent(desc)
                 })
                 .then(res => res.json())
                 .then(data => {
@@ -889,6 +955,20 @@ function hasMenuAccess($menuName) {
                     }
                 });
             };
+            
+            // Add real-time validation for FAQ Title and Description
+            document.getElementById('faq-title').addEventListener('blur', function() {
+                var title = this.value.trim();
+                if (!title) {
+                    showGlobalInvalid('Title wajib diisi!');
+                }
+            });
+            document.getElementById('faq-desc').addEventListener('blur', function() {
+                var desc = this.value.trim();
+                if (!desc) {
+                    showGlobalInvalid('Description wajib diisi!');
+                }
+            });
             function showFaqSuccess() {
                 var el = document.getElementById('faq-success');
                 el.style.display = 'block';
@@ -940,12 +1020,24 @@ function hasMenuAccess($menuName) {
             }
             document.getElementById('faq-edit-form').onsubmit = function(e) {
                 e.preventDefault();
+                var title = document.getElementById('edit-faq-title').value.trim();
+                var desc = document.getElementById('edit-faq-desc').value.trim();
+                
+                if (!title) {
+                    showGlobalInvalid('Title wajib diisi!');
+                    return;
+                }
+                if (!desc) {
+                    showGlobalInvalid('Description wajib diisi!');
+                    return;
+                }
+                
                 fetch('<?= base_url('admin/edit_faq') ?>', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     body: 'id=' + encodeURIComponent(document.getElementById('edit-faq-id').value)
-                        + '&question=' + encodeURIComponent(document.getElementById('edit-faq-title').value)
-                        + '&answer=' + encodeURIComponent(document.getElementById('edit-faq-desc').value)
+                        + '&question=' + encodeURIComponent(title)
+                        + '&answer=' + encodeURIComponent(desc)
                 })
                 .then(res => res.json())
                 .then(data => {
@@ -956,6 +1048,20 @@ function hasMenuAccess($menuName) {
                     }
                 });
             };
+            
+            // Add real-time validation for Edit FAQ Title and Description
+            document.getElementById('edit-faq-title').addEventListener('blur', function() {
+                var title = this.value.trim();
+                if (!title) {
+                    showGlobalInvalid('Title wajib diisi!');
+                }
+            });
+            document.getElementById('edit-faq-desc').addEventListener('blur', function() {
+                var desc = this.value.trim();
+                if (!desc) {
+                    showGlobalInvalid('Description wajib diisi!');
+                }
+            });
             document.addEventListener('keydown', function(e){
                 if(e.key === "Escape") {
                     closeFaqModal();
@@ -970,14 +1076,18 @@ function hasMenuAccess($menuName) {
                     document.getElementById('user-role-list').innerHTML = html;
                 });
             }
-            document.querySelectorAll('.btn-add-faq')[1].onclick = function() {
+            document.getElementById('btn-add-user-role').onclick = function() {
                 document.getElementById('userRoleModal').style.display = 'flex';
             }
             function closeUserRoleModal() {
                 document.getElementById('userRoleModal').style.display = 'none';
             }
             document.addEventListener('keydown', function(e){
-                if(e.key === "Escape") closeUserRoleModal();
+                if(e.key === "Escape") {
+                    closeUserRoleModal();
+                    closeUserRoleEditModal();
+                    closeUserRoleDeleteModal();
+                }
             });
             function loadRequestTypeList(page = 1, perPage = 10) {
                 fetch('<?= base_url('admin/get_request_type_list') ?>?page=' + page + '&per_page=' + perPage)
@@ -986,21 +1096,32 @@ function hasMenuAccess($menuName) {
                     document.getElementById('request-type-list').innerHTML = html;
                 });
             }
-            document.querySelectorAll('.btn-add-faq')[2].onclick = function() {
+            document.getElementById('btn-add-request-type').onclick = function() {
                 document.getElementById('requestTypeModal').style.display = 'flex';
             }
             function closeRequestTypeModal() {
                 document.getElementById('requestTypeModal').style.display = 'none';
             }
             document.addEventListener('keydown', function(e){
-                if(e.key === "Escape") closeRequestTypeModal();
+                if(e.key === "Escape") {
+                    closeRequestTypeModal();
+                    closeRequestTypeEditModal();
+                    closeRequestTypeDeleteModal();
+                }
             });
             document.getElementById('request-type-form').onsubmit = function(e) {
                 e.preventDefault();
+                var name = document.getElementById('request-type-name').value.trim();
+                
+                if (!name) {
+                    showGlobalInvalid('Request Type Name wajib diisi!');
+                    return;
+                }
+                
                 fetch('<?= base_url('admin/add_request_type') ?>', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: 'name=' + encodeURIComponent(document.getElementById('request-type-name').value)
+                    body: 'name=' + encodeURIComponent(name)
                         + '&description=' + encodeURIComponent(document.getElementById('request-type-desc').value)
                         + '&status=' + encodeURIComponent(document.getElementById('request-type-status').value)
                 })
@@ -1016,6 +1137,14 @@ function hasMenuAccess($menuName) {
                     }
                 });
             };
+            
+            // Add real-time validation for Request Type Name
+            document.getElementById('request-type-name').addEventListener('blur', function() {
+                var name = this.value.trim();
+                if (!name) {
+                    showGlobalInvalid('Request Type Name wajib diisi!');
+                }
+            });
             function openRequestTypeEditModal(id, name, desc, status) {
                 document.getElementById('edit-request-type-id').value = id;
                 document.getElementById('edit-request-type-name').value = name;
@@ -1028,11 +1157,18 @@ function hasMenuAccess($menuName) {
             }
             document.getElementById('request-type-edit-form').onsubmit = function(e) {
                 e.preventDefault();
+                var name = document.getElementById('edit-request-type-name').value.trim();
+                
+                if (!name) {
+                    showGlobalInvalid('Request Type Name wajib diisi!');
+                    return;
+                }
+                
                 fetch('<?= base_url('admin/edit_request_type') ?>', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     body: 'id=' + encodeURIComponent(document.getElementById('edit-request-type-id').value)
-                        + '&name=' + encodeURIComponent(document.getElementById('edit-request-type-name').value)
+                        + '&name=' + encodeURIComponent(name)
                         + '&description=' + encodeURIComponent(document.getElementById('edit-request-type-desc').value)
                         + '&status=' + encodeURIComponent(document.getElementById('edit-request-type-status').value)
                 })
@@ -1045,6 +1181,14 @@ function hasMenuAccess($menuName) {
                     }
                 });
             };
+            
+            // Add real-time validation for Edit Request Type Name
+            document.getElementById('edit-request-type-name').addEventListener('blur', function() {
+                var name = this.value.trim();
+                if (!name) {
+                    showGlobalInvalid('Request Type Name wajib diisi!');
+                }
+            });
 
             function openRequestTypeDeleteModal(id) {
                 showGlobalWarning(
@@ -1072,6 +1216,8 @@ function hasMenuAccess($menuName) {
                     }
                 });
             }
+
+            
            
         </script>
         <script src="<?= base_url('assets/js/global_success.js') ?>"></script>

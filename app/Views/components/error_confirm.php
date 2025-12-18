@@ -1,4 +1,4 @@
-<div id="global-error-confirm" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; background:rgba(0,0,0,0.12); align-items:center; justify-content:center;">
+<div id="global-error-confirm" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:12000; background:rgba(0,0,0,0.12); align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:22px; box-shadow:0 2px 16px rgba(0,0,0,0.08); padding:38px 32px; min-width:320px; max-width:400px; display:flex; flex-direction:column; align-items:center;">
         <div style="font-size:22px; font-weight:600; margin-bottom:12px;">Error</div>
         <div style="margin-bottom:18px;">

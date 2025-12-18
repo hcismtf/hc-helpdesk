@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/report_user.css') ?>">
     <script src="<?= base_url('assets/js/admin/report_user.js') ?>" defer></script>
-    <script src="<?= base_url('assets/js/auto_logout.js') ?>"></script>
 
 </head>
 <body>
@@ -17,10 +16,10 @@
     <div class="main-content">
         <div class="container">
             <div class="page-title">Report</div>
-            <div class="breadcrumb">Home &gt; Report</div>
+            <div class="breadcrumb">Home &gt; Laporan</div>
             <div class="welcome-row">
                 <div class="welcome-user">Selamat datang, <?= esc($username) ?></div>
-                
+                <!-- <div class="welcome-role"><?= esc($role) ?></div> -->
             </div>
 
             <div class="report-card">
@@ -141,9 +140,14 @@
                                         style="display:inline;">
                                         <button type="button"
                                                 class="btn-report"
-                                                style="background:transparent; color:#ef4444; border:none; min-width:32px; font-size:22px; padding:0; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"
+                                                style="background:transparent; color:#ef4444; border:none; min-width:32px; padding:0; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"
                                                 title="Delete">
-                                            🗑️
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                                            </svg>
                                         </button>
                                     </form>
                                 </td>

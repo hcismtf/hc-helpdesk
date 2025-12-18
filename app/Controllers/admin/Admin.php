@@ -11,6 +11,9 @@ use PHPMailer\PHPMailer\Exception;
 use CodeIgniter\HTTP\CURLRequest;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use App\Models\ReportJobModel;
 use App\Models\TicketModel;
 use DateTime;
@@ -21,6 +24,94 @@ class Admin extends BaseController
     {
         date_default_timezone_set('Asia/Jakarta');
     }
+
+    /**
+     * Generate UUID v4 format
+     * Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+     * 
+     * @return string UUID v4
+     */
+    private function generateUUIDv4()
+    {
+        $data = random_bytes(16);
+        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40); // set version to 0100
+        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80); // set bits 6-7 to 10
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
+
+    /**
+     * Generate UUID v4 dari password input
+     * Menggunakan hash MD5 dari password untuk generate deterministic UUID
+     * 
+     * @param string $password Password input
+     * @return string UUID v4 format
+     */
+    private function generateUUIDFromPassword($password)
+    {
+        // Hash password dengan MD5 untuk generate deterministic UUID
+        $hash = md5($password, true);
+        
+        // Convert ke UUID v4 format
+        // Set version to 0100 (v4)
+        $hash[6] = chr((ord($hash[6]) & 0x0f) | 0x40);
+        $hash[8] = chr((ord($hash[8]) & 0x3f) | 0x80);
+        
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($hash), 4));
+    }
+
+    /**
+     * Apply orange header styling to Excel sheet
+     * 
+     * @param object $sheet PhpSpreadsheet sheet object
+     * @param int $columnCount Number of columns in header
+     * @return void
+     */
+    private function applyHeaderStyling($sheet, $columnCount)
+    {
+        // Calculate header range (A1:Z1 or similar based on column count)
+        $headerRange = 'A1:' . chr(64 + $columnCount) . '1';
+        
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FF9933'] // Orange color
+            ],
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'], // White text
+                'size' => 12
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true
+            ]
+        ]);
+    }
+
+    /**
+     * Get API Key from file
+     * Read from path specified in .env (report.keyPath)
+     * 
+     * @return string API key or empty string if not found
+     */
+    private function getApiKey()
+    {
+        // Get path from .env, default to Windows XAMPP path
+        $keyFilePath = getenv('report.keyPath') ?: 'D:/helpdeskkey/key';
+        
+        // Try to read from file
+        if (file_exists($keyFilePath)) {
+            $key = trim(file_get_contents($keyFilePath));
+            if (!empty($key)) {
+                return $key;
+            }
+        }
+        
+        // Return empty string jika tidak ditemukan
+        return '';
+    }
+
     public function login()
     {
         if (session('isLoggedIn')) {
@@ -33,6 +124,11 @@ class Admin extends BaseController
     {
         $username = $this->request->getPost('username');
         $password = $this->request->getPost('password');
+
+        // Validasi username dan password tidak kosong
+        if (empty($username) || empty($password)) {
+            return redirect()->back()->with('error', 'Username dan password tidak boleh kosong');
+        }
 
         // Superadmin login (config)
         $superadminConfig = new \Config\Superadmin();
@@ -56,33 +152,42 @@ class Admin extends BaseController
             ->orWhere('name', $username)
             ->first();
 
-        if ($user && password_verify($password, $user['password'])) {
-            // Ambil permission dari role
-            $roleDetailModel = new \App\Models\RoleDetailModel();
-            $rolePermissionsModel = new \App\Models\RolePermissionsModel();
-            $permissionsModel = new PermissionsModel();
+        // Debug: Log user lookup
+        log_message('info', 'Login attempt - Username: ' . $username . ', User found: ' . ($user ? 'YES' : 'NO'));
 
-            $roleDetail = $roleDetailModel->where('user_id', $user['id'])->first();
-            $roleId = $roleDetail['role_id'] ?? null;
+        if ($user) {
+            // Generate UUID dari password input dan bandingkan dengan UUID yang tersimpan di DB
+            $inputPasswordUUID = $this->generateUUIDFromPassword($password);
+            $passwordValid = ($inputPasswordUUID === $user['password']);
 
-            $rolePerms = $rolePermissionsModel->where('role_id', $roleId)->findAll();
-            $userPermissions = [];
-            foreach ($rolePerms as $rp) {
-                $perm = $permissionsModel->find($rp['permission_id']);
-                if ($perm) $userPermissions[] = $perm['code'];
+            if ($passwordValid) {
+                // Ambil permission dari role
+                $roleDetailModel = new \App\Models\RoleDetailModel();
+                $rolePermissionsModel = new \App\Models\RolePermissionsModel();
+                $permissionsModel = new PermissionsModel();
+
+                $roleDetail = $roleDetailModel->where('user_id', $user['id'])->first();
+                $roleId = $roleDetail['role_id'] ?? null;
+
+                $rolePerms = $rolePermissionsModel->where('role_id', $roleId)->findAll();
+                $userPermissions = [];
+                foreach ($rolePerms as $rp) {
+                    $perm = $permissionsModel->find($rp['permission_id']);
+                    if ($perm) $userPermissions[] = $perm['code'];
+                }
+
+                $userModel->update($user['id'], [
+                    'last_login_time' => date('Y-m-d H:i:s')
+                ]);
+                session()->set([
+                    'isLoggedIn' => true,
+                    'role' => 'user',
+                    'username' => $user['name'],
+                    'user_id' => $user['id'],
+                    'user_permissions' => $userPermissions
+                ]);
+                return redirect()->to('/admin/dashboard');
             }
-
-            $userModel->update($user['id'], [
-                'last_login_time' => date('Y-m-d H:i:s')
-            ]);
-            session()->set([
-                'isLoggedIn' => true,
-                'role' => 'user',
-                'username' => $user['name'],
-                'user_id' => $user['id'],
-                'user_permissions' => $userPermissions
-            ]);
-            return redirect()->to('/admin/dashboard');
         }
 
         // Jika gagal login
@@ -103,8 +208,10 @@ class Admin extends BaseController
         $type = $this->request->getGet('type');
         $start = $this->request->getGet('start');
         $end = $this->request->getGet('end');
-        $perPage = $this->request->getGet('per_page') ?? 10;
-        $page = $this->request->getGet('page') ?? 1;
+    $perPage = $this->request->getGet('per_page') ?? 10;
+    // Pager uses group-specific param like 'page_tickets' for the 'tickets' group.
+    // Accept either 'page_tickets' (from pager links) or generic 'page'.
+    $page = $this->request->getGet('page_tickets') ?? $this->request->getGet('page') ?? 1;
 
         // Query builder: ambil semua tiket yang status-nya bukan closed
         $builder = $ticketModel->where('ticket_status !=', 'closed');
@@ -175,17 +282,8 @@ class Admin extends BaseController
             if (!empty($t['finish_date']) && !empty($t['created_date'])) {
                 $resolutionTime = strtotime($t['finish_date']) - strtotime($t['created_date']);
                 $totalResolution += $resolutionTime;
-
-                // Ambil SLA dari tabel sla_configuration sesuai priority tiket
-                $sla = $slaModel->where('priority', $t['ticket_priority'])->first();
-                $slaHour = $sla ? (int)$sla['resolution_time'] : 24; // default 24 jam jika tidak ada
-
-                // Hitung batas waktu SLA
-                $createdDate = new DateTime($t['created_date']);
-                $slaDueDate = $createdDate->modify('+' . $slaHour . ' hours')->format('Y-m-d H:i:s');
-
-                // SLA Compliance: finish_date <= slaDueDate
-                if (strtotime($t['finish_date']) <= strtotime($slaDueDate)) {
+                // SLA Compliance: finish_date <= due_date
+                if (!empty($t['due_date']) && strtotime($t['finish_date']) <= strtotime($t['due_date'])) {
                     $slaCompliant++;
                 }
             }
@@ -200,15 +298,25 @@ class Admin extends BaseController
 
         // Helper untuk format detik ke d h m
         function formatDuration($seconds) {
+            $seconds = (int) round($seconds); // ← tambahkan ini biar aman
             $d = floor($seconds / 86400);
             $h = floor(($seconds % 86400) / 3600);
             $m = floor(($seconds % 3600) / 60);
             return sprintf('%02d d %02d h %02d m', $d, $h, $m);
         }
 
+
         $avgResponseStr = formatDuration($avgResponse);
         $avgResolutionStr = formatDuration($avgResolution);
 
+        // Generate pagination HTML
+        $totalRecords = $builder->countAllResults(false);
+        $totalPages = $perPage > 0 ? ceil($totalRecords / $perPage) : 1;
+        $additionalParams = '&per_page=' . $perPage;
+        if ($type) $additionalParams .= '&type=' . urlencode($type);
+        if ($start) $additionalParams .= '&start=' . urlencode($start);
+        if ($end) $additionalParams .= '&end=' . urlencode($end);
+        $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/dashboard'), $additionalParams);
 
         return view('admin/dashboard', [
             'openCount' => $openCount,
@@ -216,7 +324,7 @@ class Admin extends BaseController
             'doneCount' => $doneCount,
             'totalCount' => $totalCount,
             'openTickets' => $openTickets,
-            'pager' => $pager,
+            'paginationHTML' => $paginationHTML,
             'types' => $types,
             'perPage' => $perPage,
             'page' => $page,
@@ -234,22 +342,27 @@ class Admin extends BaseController
     public function Ticket_dashboard()
     {
         $model = new TicketModel();
-        $perPage = $this->request->getGet('per_page') ?? 10;
-        $page = $this->request->getGet('page') ?? 1;
+        $perPage = (int) ($this->request->getGet('per_page') ?? 10);
+        $page = (int) ($this->request->getGet('page') ?? 1);
         $start = $this->request->getGet('start');
         $end = $this->request->getGet('end');
         $priority = $this->request->getGet('priority');
 
-        $builder = $model;
-        if ($start) $builder = $builder->where('created_date >=', $start . ' 00:00:00');
-        if ($end) $builder = $builder->where('created_date <=', $end . ' 23:59:59');
-        if ($priority) $builder = $builder->where('ticket_priority', $priority);
+        // Ensure valid values
+        if ($perPage <= 0) $perPage = 10;
+        if ($page <= 0) $page = 1;
 
-        $ticketsRaw = $builder->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
-        $pager = $model->pager;
+        // Build query
+        $query = $model;
+        if ($start) $query = $query->where('created_date >=', $start . ' 00:00:00');
+        if ($end) $query = $query->where('created_date <=', $end . ' 23:59:59');
+        if ($priority) $query = $query->where('ticket_priority', $priority);
 
-        // Hitung total tickets dari pager
-        $totalTickets = $pager->getTotal('tickets');
+        // Get total count
+        $totalRecords = $query->countAllResults(false);
+        
+        // Get paginated data
+        $ticketsRaw = $query->orderBy('created_date', 'DESC')->limit($perPage)->offset(($page - 1) * $perPage)->get()->getResult('array');
 
         $encrypter = \Config\Services::encrypter();
         $tickets = [];
@@ -265,59 +378,28 @@ class Admin extends BaseController
             $ticket['emp_nip'] = $nip_decrypted;
             $tickets[] = $ticket;
         }
+
+        // Create pagination links using helper method
+        $totalPages = $perPage > 0 ? ceil($totalRecords / $perPage) : 1;
+        
+        // Preserve filter parameters
+        $additionalParams = '&per_page=' . $perPage;
+        if ($start) $additionalParams .= '&start=' . urlencode($start);
+        if ($end) $additionalParams .= '&end=' . urlencode($end);
+        if ($priority) $additionalParams .= '&priority=' . urlencode($priority);
+        
+        $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/Ticket_dashboard'), $additionalParams);
 
         return view('admin/Ticket_dashboard', [
             'tickets' => $tickets,
-            'pager' => $pager,
+            'paginationHTML' => $paginationHTML,
             'perPage' => $perPage,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
             'active' => 'tickets',
             'start' => $start,
             'end' => $end,
-            'priority' => $priority,
-            'totalTickets' => $totalTickets // <-- Tambahkan ini!
-        ]);
-    }
-    public function ajax_ticket_table()
-    {
-        $model = new TicketModel();
-        $perPage = $this->request->getGet('per_page') ?? 10;
-        $page = $this->request->getGet('page_tickets') ?? 1;
-        $start = $this->request->getGet('start');
-        $end = $this->request->getGet('end');
-        $priority = $this->request->getGet('priority');
-
-        $builder = $model;
-        if ($start) $builder = $builder->where('created_date >=', $start . ' 00:00:00');
-        if ($end) $builder = $builder->where('created_date <=', $end . ' 23:59:59');
-        if ($priority) $builder = $builder->where('ticket_priority', $priority);
-
-        $ticketsRaw = $builder->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
-        $pager = $model->pager;
-        $totalTickets = $pager->getTotal('tickets');
-
-        $encrypter = \Config\Services::encrypter();
-        $tickets = [];
-        foreach ($ticketsRaw as $ticket) {
-            $nip_decrypted = '';
-            if (!empty($ticket['nip_encrypted'])) {
-                try {
-                    $nip_decrypted = $encrypter->decrypt(hex2bin($ticket['nip_encrypted']));
-                } catch (\Exception $e) {
-                    $nip_decrypted = '[Invalid]';
-                }
-            }
-            $ticket['emp_nip'] = $nip_decrypted;
-            $tickets[] = $ticket;
-        }
-
-        return view('admin/ticket_table', [ // <-- Ganti dari 'admin/_ticket_table'
-            'tickets' => $tickets,
-            'pager' => $pager,
-            'perPage' => $perPage,
-            'priority' => $priority,
-            'start' => $start,
-            'end' => $end,
-            'totalTickets' => $totalTickets
+            'priority' => $priority
         ]);
     }
     public function Ticket_detail($id)
@@ -479,11 +561,15 @@ class Admin extends BaseController
         $faqs = $faqModel->orderBy('id', 'desc')->findAll($perPage, ($page-1)*$perPage);
         $totalPages = ceil($total / $perPage);
 
+        // Generate pagination HTML
+        $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/system_settings'), '&per_page=' . $perPage);
+
         return view('admin/faq_list', [
             'faqs' => $faqs,
             'page' => $page,
             'totalPages' => $totalPages,
-            'perPage' => $perPage
+            'perPage' => $perPage,
+            'paginationHTML' => $paginationHTML
         ]);
     }
     public function delete_faq()
@@ -501,31 +587,54 @@ class Admin extends BaseController
         $created_by = session('username') ?? 'admin';
         $created_date = date('Y-m-d H:i:s');
 
+        // Validasi name
+        if (!$name || empty(trim($name))) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Role Name wajib diisi!'
+            ]);
+        }
+
+        // Validasi permissions
+        if (!is_array($permissions) || count($permissions) === 0) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Minimal satu Permission wajib dipilih!'
+            ]);
+        }
+
         $roleModel = new \App\Models\RoleModel();
         $rolePermissionsModel = new \App\Models\RolePermissionsModel();
         $encrypter = \Config\Services::encrypter();
 
-        // Simpan role dulu
-        $roleId = $roleModel->insert([
-            'name' => $name,
-            'created_by' => $created_by,
-            'created_date' => $created_date
-        ]);
+        try {
+            // Simpan role dulu
+            $roleId = $roleModel->insert([
+                'name' => $name,
+                'created_by' => $created_by,
+                'created_date' => $created_date
+            ]);
 
-        // Simpan ke role_permissions (bisa banyak permission)
-        if (is_array($permissions)) {
-            foreach ($permissions as $permissionId) {
-                if ($permissionId) {
-                    // Simpan ID asli (integer), BUKAN hasil enkripsi!
-                    $rolePermissionsModel->insert([
-                        'role_id' => $roleId,
-                        'permission_id' => $permissionId
-                    ]);
+            // Simpan ke role_permissions (bisa banyak permission)
+            if (is_array($permissions)) {
+                foreach ($permissions as $permissionId) {
+                    if ($permissionId) {
+                        // Simpan ID asli (integer), BUKAN hasil enkripsi!
+                        $rolePermissionsModel->insert([
+                            'role_id' => $roleId,
+                            'permission_id' => $permissionId
+                        ]);
+                    }
                 }
             }
-        }
 
-        return $this->response->setJSON(['success' => true]);
+            return $this->response->setJSON(['success' => true]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Gagal menambah User Role: ' . $e->getMessage()
+            ]);
+        }
     }
     public function edit_user_role()
     {
@@ -596,18 +705,27 @@ class Admin extends BaseController
             // Ambil permission untuk role ini
             $rolePerms = $rolePermissionsModel->where('role_id', $role['id'])->findAll();
             $permNames = [];
+            $permIds = [];
             foreach ($rolePerms as $rp) {
                 $perm = $permissionsModel->find($rp['permission_id']);
-                if ($perm) $permNames[] = $perm['name'];
+                if ($perm) {
+                    $permNames[] = $perm['name'];
+                    $permIds[] = $rp['permission_id'];
+                }
             }
             $role['menu_access'] = implode(', ', $permNames);
+            $role['permission_ids'] = $permIds; // Tambahkan permission IDs untuk digunakan di JavaScript
         }
+
+        // Generate pagination HTML
+        $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/system_settings'), '&per_page=' . $perPage);
 
         return view('admin/user_role_list', [
             'roles' => $roles,
             'page' => $page,
             'totalPages' => $totalPages,
-            'perPage' => $perPage
+            'perPage' => $perPage,
+            'paginationHTML' => $paginationHTML
         ]);
     }
     public function get_request_type_list()
@@ -620,11 +738,15 @@ class Admin extends BaseController
         $types = $requestTypeModel->orderBy('id', 'desc')->findAll($perPage, ($page-1)*$perPage);
         $totalPages = ceil($total / $perPage);
 
+        // Generate pagination HTML
+        $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/system_settings'), '&per_page=' . $perPage);
+
         return view('admin/request_type', [
             'types' => $types,
             'page' => $page,
             'totalPages' => $totalPages,
-            'perPage' => $perPage
+            'perPage' => $perPage,
+            'paginationHTML' => $paginationHTML
         ]);
     }
     public function get_request_type_detail($id)
@@ -808,12 +930,18 @@ class Admin extends BaseController
         $userModel = new \App\Models\UserModel();
         $roleDetailModel = new \App\Models\RoleDetailModel();
 
+        $password = $this->request->getPost('password');
+        
+        // Generate UUID dari password input menggunakan hash
+        // Ini memastikan setiap password yang sama menghasilkan UUID yang sama
+        $passwordUUID = $this->generateUUIDFromPassword($password);
+
         $userData = [
             'name'        => $this->request->getPost('name'),
             'email'       => $this->request->getPost('email'),
-            'password'    => password_hash($this->request->getPost('password'), PASSWORD_DEFAULT),
+            'password'    => $passwordUUID, // Simpan UUID yang di-generate dari password
             'status'      => $this->request->getPost('status'),
-            'role_id'     => $this->request->getPost('role'), // simpan role_id langsung di tabel users
+            'role_id'     => $this->request->getPost('role'),
             'created_by'  => session('username') ?? 'system',
             'created_date'=> date('Y-m-d H:i:s'),
         ];
@@ -833,6 +961,9 @@ class Admin extends BaseController
 
         // Ambil data user baru untuk update list di frontend
         $user = $userModel->find($userId);
+        
+        // Return UUID yang di-generate dari password
+        $user['generated_uuid'] = $passwordUUID;
 
         return $this->response->setJSON(['success' => true, 'user' => $user]);
     }
@@ -1023,25 +1154,23 @@ class Admin extends BaseController
     }
 
     // Submit job export ke DB, worker di Report-Helpdesk akan proses
-    public function submit_report_job()
+     public function submit_report_job()
     {
         $userId = session('user_id');
         $reportType = $this->request->getPost('report_type');
         $filterParams = $this->request->getPost();
 
-        // Ambil konfigurasi dari .env
-        $uploadPath = env('report.uploadPath', 'D:/uploads/');
-        $apiKey = env('report.apiKey');
-        $endpoint = env('report.endpoint', 'http://localhost:9000');
-
-        // Buat nama file unik
+        // Buat nama file unik di D:/uploads
         $fileName = 'report_' . $reportType . '_' . date('Ymd_His') . '_' . uniqid() . '.xlsx';
-        $filePath = $uploadPath . $fileName;
+        $filePath = 'D:/uploads/' . $fileName;
 
+        // Ambil data dari API Report-Helpdesk
         $client = \Config\Services::curlrequest();
+        $reportBaseURL = getenv('report.baseURL') ?: 'http://localhost/Report-HC_Helpdesk/public/';
+        $apiKey = $this->getApiKey(); // Read from D:/helpdeskkey/key file or fallback to env
 
         if ($reportType == 'Report Ticket Detail') {
-            $response = $client->get($endpoint . '/report/ticket-detail', [
+            $response = $client->get($reportBaseURL . 'report/ticket-detail', [
                 'headers' => [
                     'X-API-KEY' => $apiKey
                 ],
@@ -1053,62 +1182,39 @@ class Admin extends BaseController
                 ]
             ]);
             $data = json_decode($response->getBody(), true);
-
-            // HEADER SESUAI URUTAN YANG DIMINTA
             $headers = [
-                'Nomor Tiket',         // ID
-                'Employee ID',         // NIP (decrypted)
-                'Nama',
-                'Email',
-                'No Whatsapp',
-                'Request Type',
-                'Priority',
-                'Subject',
-                'Message',
-                'Status',
-                'Due Date',
-                'First Response',
-                'Finish Date',
-                'Waktu Pengerjaan (menit)'
+                'ID', 'Nama', 'Email', 'WA', 'Request Type', 'Subject', 'Status', 'Prioritas',
+                'Dibuat Oleh', 'Tanggal Dibuat', 'Tanggal Diubah', 'Due Date', 'First Response', 'Finish Date'
             ];
 
+            // Generate Excel
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->fromArray($headers, null, 'A1');
+            
+            // Apply orange header styling
+            $this->applyHeaderStyling($sheet, count($headers));
+            
             $rowNum = 2;
-
-            $encrypter = \Config\Services::encrypter();
-
             foreach ($data as $row) {
-                // Ambil NIP hasil decrypt dari API
-                $emp_nip = $row['nip'] ?? '-';
-
-                // Hitung waktu pengerjaan (menit)
-                $waktuPengerjaan = '-';
-                if (!empty($row['first_response_at']) && !empty($row['finish_date'])) {
-                    $start = strtotime($row['first_response_at']);
-                    $end = strtotime($row['finish_date']);
-                    if ($end > $start) {
-                        $waktuPengerjaan = round(($end - $start) / 60);
-                    }
-                }
-
-                $sheet->fromArray([
-                    $row['id'] ?? '-',
-                    $emp_nip,
-                    $row['emp_name'] ?? '-',
-                    $row['email'] ?? '-',
-                    $row['wa_no'] ?? '-',
-                    $row['req_type'] ?? '-',
-                    ucfirst($row['ticket_priority'] ?? '-'),
-                    $row['subject'] ?? '-',
-                    $row['message'] ?? '-',
-                    $row['ticket_status'] ?? '-',
-                    $row['due_date'] ?? '-',
-                    $row['first_response_at'] ?? '-',
-                    $row['finish_date'] ?? '-',
-                    $waktuPengerjaan
-                ], null, 'A' . $rowNum);
+                // Map field API ke urutan header
+                $excelRow = [
+                    $row['id'],                         // ID
+                    $row['emp_name'],                   // Nama ← GANTI dari emp_id ke emp_name
+                    $row['email'],                      // Email
+                    $row['wa_no'],                      // WA
+                    $row['req_type'],                   // Request Type
+                    $row['subject'],                    // Subject
+                    $row['ticket_status'],              // Status
+                    $row['ticket_priority'],            // Prioritas
+                    $row['created_by'],                 // Dibuat Oleh
+                    $row['created_date'],               // Tanggal Dibuat
+                    $row['modified_date'],              // Tanggal Diubah
+                    $row['due_date'],                   // Due Date
+                    $row['first_response_at'],          // First Response
+                    $row['finish_date']                 // Finish Date
+                ];
+                $sheet->fromArray($excelRow, null, 'A' . $rowNum);
                 $rowNum++;
             }
             foreach (range('A', $sheet->getHighestColumn()) as $col) {
@@ -1116,9 +1222,10 @@ class Admin extends BaseController
             }
             $writer = new Xlsx($spreadsheet);
             $writer->save($filePath);
-        } else if ($reportType == 'Report SLA') {
+        } 
+        else if ($reportType == 'Report SLA') {
             // Ambil detail SLA
-            $slaDetailRes = $client->get($endpoint . '/report/sla-detail', [
+            $slaDetailRes = $client->get($reportBaseURL . 'report/sla-detail', [
                 'headers' => ['X-API-KEY' => $apiKey],
                 'query' => [
                     'start_date' => $filterParams['start_date_sla'] ?? '',
@@ -1129,7 +1236,7 @@ class Admin extends BaseController
             $slaDetails = json_decode($slaDetailRes->getBody(), true);
 
             // Ambil comparison response time
-            $responseCompRes = $client->get($endpoint . '/report/sla-response-comparison', [
+            $responseCompRes = $client->get($reportBaseURL . 'report/sla-response-comparison', [
                 'headers' => ['X-API-KEY' => $apiKey],
                 'query' => [
                     'start_date' => $filterParams['start_date_sla'] ?? '',
@@ -1139,7 +1246,7 @@ class Admin extends BaseController
             $responseComp = json_decode($responseCompRes->getBody(), true);
 
             // Ambil comparison resolution time
-            $resolutionCompRes = $client->get($endpoint . '/report/sla-resolution-comparison', [
+            $resolutionCompRes = $client->get($reportBaseURL . 'report/sla-resolution-comparison', [
                 'headers' => ['X-API-KEY' => $apiKey],
                 'query' => [
                     'start_date' => $filterParams['start_date_sla'] ?? '',
@@ -1202,6 +1309,10 @@ class Admin extends BaseController
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->fromArray($headers, null, 'A1');
+            
+            // Apply orange header styling
+            $this->applyHeaderStyling($sheet, count($headers));
+            
             $rowNum = 2;
             foreach ($excelRows as $row) {
                 $sheet->fromArray(array_values($row), null, 'A' . $rowNum);
@@ -1361,37 +1472,120 @@ class Admin extends BaseController
         // Template email
         if ($status === 'closed') {
             $emailBody = "
-                Dear, {$ticket['emp_name']}<br><br>
-                Terima kasih telah menunggu, tiket anda telah <b>selesai</b> dikerjakan, berikut adalah detail ticket anda:<br><br>
-                <b>Request Type:</b> {$ticket['req_type']}<br>
-                <b>Original Message:</b> {$ticket['message']}<br>
-                <b>Feedback Admin:</b> {$replyText}<br><br>
-                Jika masih ada yang ingin ditanyakan, silakan hubungi kami melalui email <b>muhammad.farras@mtf.co.id</b>.<br><br>
-                Hormat kami,<br>
-                Human Capital Division
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                        .content { line-height: 1.6; color: #333; }
+                        .ticket-info { background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 15px 0; }
+                        .ticket-info p { margin: 8px 0; }
+                        .label { font-weight: bold; color: #555; }
+                        .status-closed { color: #22c55e; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='header'>
+                            <h2>Ticket Closed - Resolution Complete</h2>
+                        </div>
+                        <div class='content'>
+                            <p>Dear <strong>{$ticket['emp_name']}</strong>,</p>
+                            <p>Terima kasih telah menunggu. Tiket Anda telah <span class='status-closed'>SELESAI</span> dikerjakan.</p>
+                            
+                            <div class='ticket-info'>
+                                <p><span class='label'>Ticket ID:</span> {$ticketId}</p>
+                                <p><span class='label'>Request Type:</span> {$ticket['req_type']}</p>
+                                <p><span class='label'>Subject:</span> {$ticket['subject']}</p>
+                                <p><span class='label'>Status:</span> <span class='status-closed'>Closed</span></p>
+                                <p><span class='label'>Admin Feedback:</span></p>
+                                <p style='margin-left: 15px; font-style: italic;'>{$replyText}</p>
+                            </div>
+                            
+                            <p>Jika masih ada pertanyaan atau membutuhkan bantuan lebih lanjut, silakan hubungi kami melalui email atau submit ticket baru.</p>
+                            
+                            <br>
+                            <p>Hormat kami,<br>
+                            <strong>Human Capital Division</strong>
+                        </div>
+                    </div>
+                </body>
+                </html>
             ";
         } else {
             $emailBody = "
-                Dear, {$ticket['emp_name']}<br><br>
-                Terima kasih telah mengajukan ticket di HC Helpdesk, berikut adalah detail ticket anda:<br><br>
-                <b>Request Type:</b> {$ticket['req_type']}<br>
-                <b>Original Message:</b> {$ticket['message']}<br>
-                <b>Feedback Admin:</b> {$replyText}<br><br>
-                Ticket anda telah di assign kepada <b>{$assignedName}</b>. Mohon ditunggu untuk update berikutnya.<br><br>
-                Hormat kami,<br>
-                Human Capital Division
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                        .content { line-height: 1.6; color: #333; }
+                        .ticket-info { background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 15px 0; }
+                        .ticket-info p { margin: 8px 0; }
+                        .label { font-weight: bold; color: #555; }
+                        .status-progress { color: #0091ffff; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='header'>
+                            <h2>Ticket Update - In Progress</h2>
+                        </div>
+                        <div class='content'>
+                            <p>Dear <strong>{$ticket['emp_name']}</strong>,</p>
+                            <p>Terima kasih telah mengajukan ticket di HC Helpdesk. Tiket Anda sedang dalam proses penanganan.</p>
+                            
+                            <div class='ticket-info'>
+                                <p><span class='label'>Ticket ID:</span> {$ticketId}</p>
+                                <p><span class='label'>Request Type:</span> {$ticket['req_type']}</p>
+                                <p><span class='label'>Subject:</span> {$ticket['subject']}</p>
+                                <p><span class='label'>Status:</span> <span class='status-progress'>In Progress</span></p>
+                                <p><span class='label'>Assigned To:</span> {$assignedName}</p>
+                                <p><span class='label'>Admin Update:</span></p>
+                                <p style='margin-left: 15px; font-style: italic;'>{$replyText}</p>
+                            </div>
+                            
+                            <p>Tim support kami akan segera menyelesaikan request Anda. Mohon ditunggu untuk update berikutnya.</p>
+                            
+                            <br>
+                            <p>Hormat kami,<br>
+                            <strong>Human Capital Division</strong>
+                        </div>
+                    </div>
+                </body>
+                </html>
             ";
         }
 
         $toEmail = $ticket['email'] ?? '';
         if ($toEmail) {
-            $email = \Config\Services::email();
-            $email->setTo($toEmail);
-            $email->setSubject("Ticket #{$ticketId} - HC Helpdesk");
-            $email->setMessage($emailBody);
-            $email->setMailType('html');
-            if (!$email->send()) {
-                log_message('error', $email->printDebugger(['headers']));
+            // Pastikan PHPMailer sudah diinstall via composer
+            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/PHPMailer.php');
+            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/Exception.php');
+            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/SMTP.php');
+
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host = getenv('email.SMTPHost') ?: 'smtp-mail.outlook.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = getenv('email.SMTPUser') ?: 'support@example.com';
+                $mail->Password = getenv('email.SMTPPass') ?: '';
+                $mail->SMTPSecure = getenv('email.SMTPCrypto') ?: 'tls';
+                $mail->Port = getenv('email.SMTPPort') ?: 587;
+
+                $mail->setFrom(getenv('email.fromEmail') ?: 'support@example.com', getenv('email.fromName') ?: 'HC Helpdesk');
+                $mail->addAddress($toEmail);
+
+                $mail->Subject = "Ticket #" . $ticketId . " - HC Helpdesk";
+                $mail->isHTML(true);
+                $mail->Body = $emailBody;
+
+                $mail->send();
+            } catch (Exception $e) {
+                // error_log('Mailer Error: ' . $mail->ErrorInfo);
             }
         }
 
@@ -1399,7 +1593,7 @@ class Admin extends BaseController
     }
     public function view($filename)
     {
-        $basePath = 'D:/uploads/images/'; // Folder penyimpanan
+        $basePath = 'D:/uploads/images/';
         $filePath = realpath($basePath . $filename);
 
         // Validasi path biar nggak bisa akses sembarangan file (directory traversal attack)
