@@ -94,34 +94,65 @@
 
         @media (max-width: 900px) {
     .sidebar {
-        width: 0;
-        min-width: 0;
+        width: 70px;
+        min-width: 70px;
         overflow-x: hidden;
         box-shadow: none;
         z-index: 1001;
-        background: rgba(255,255,255,0.98);
-        transition: width 0.2s;
+        background: #fff;
+        transition: width 0.3s ease;
     }
     .sidebar.open {
         width: 220px;
         min-width: 220px;
-        box-shadow: 2px 0 8px rgba(0,0,0,0.10);
+        box-shadow: 2px 0 12px rgba(0,0,0,0.15);
     }
     .sidebar .toggle-btn {
-        position: absolute;
-        left: 10px;
-        top: 18px;
+        position: relative;
+        left: auto;
+        top: auto;
         z-index: 1100;
+        margin: 18px 0 30px 0;
+        font-size: 24px;
+        color: #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+    .sidebar .toggle-btn:hover {
+        background: #f0f0f0;
     }
     /* Overlay background when sidebar open */
     body.sidebar-open::before {
         content: "";
         position: fixed;
-        left: 0; top: 0;
-        width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.15);
-        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.2);
+        z-index: 999;
         pointer-events: auto;
+    }
+    /* Hide nav icons by default on mobile */
+    .sidebar .nav-icons {
+        display: none;
+    }
+    /* Show nav icons when sidebar open */
+    .sidebar.open .nav-icons {
+        display: flex;
+        margin-top: 10px;
+    }
+    .sidebar .bottom-btn {
+        display: none;
+    }
+    .sidebar.open .bottom-btn {
+        display: block;
+        margin-top: auto;
     }
 }
 

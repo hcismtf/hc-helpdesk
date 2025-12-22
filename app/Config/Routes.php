@@ -20,6 +20,7 @@ $routes->get('admin/login', 'admin\Admin::login');
 $routes->post('admin/authenticate', 'admin\Admin::authenticate');
 $routes->get('admin/dashboard', 'admin\Admin::dashboard');
 $routes->get('admin/logout', 'admin\Admin::logout');
+$routes->get('admin/forbidden', 'admin\Admin::forbidden');
 
 // dboard
 $routes->get('admin/dashboard', 'admin\Admin::dashboard');
@@ -78,24 +79,24 @@ $routes->get('assets/ticket_js', 'Assets::ticket_js');
 //view images
 $routes->get('admin/view/(:any)', 'admin\Admin::view/$1');
 
-//Report Routes 
+// Internal Report Routes (sudah terintegrasi, tidak perlu API eksternal)
 $routes->get('admin/report', 'ReportController::index');
 $routes->get('admin/report/ticket-detail', 'ReportController::ticketDetail');
 $routes->get('admin/report/sla-detail', 'ReportController::slaDetail');
 $routes->get('admin/report/sla-response', 'ReportController::slaResponseComparison');
 $routes->get('admin/report/sla-resolution', 'ReportController::slaResolutionComparison');
 
-
-// $routes->get('api/report/ticket-detail', 'ReportApiController::ticketDetail');
-// $routes->get('api/report/sla-detail', 'ReportApiController::slaDetail');
-// $routes->get('api/report/sla-response', 'ReportApiController::slaResponseComparison');
-// $routes->get('api/report/sla-resolution', 'ReportApiController::slaResolutionComparison');
+// Internal Report API Routes (optional - untuk JSON response)
+$routes->get('api/report/ticket-detail', 'ReportApiController::ticketDetail');
+$routes->get('api/report/sla-detail', 'ReportApiController::slaDetail');
+$routes->get('api/report/sla-response', 'ReportApiController::slaResponseComparison');
+$routes->get('api/report/sla-resolution', 'ReportApiController::slaResolutionComparison');
 
 // report user
 $routes->get('admin/report_user', 'admin\Admin::report_user');
 $routes->post('admin/submit_report_job', 'admin\Admin::submit_report_job');
-$routes->get('admin/download_report/(:num)', 'admin\Admin::download_report/$1');
-$routes->post('admin/delete_report_job/(:num)', 'admin\Admin::delete_report_job/$1');
+$routes->get('admin/download_report/(:any)', 'admin\Admin::download_report/$1');
+$routes->post('admin/delete_report_job/(:any)', 'admin\Admin::delete_report_job/$1');
 
 $routes->get('admin/developer-options', 'admin\DeveloperOptions::index');
 

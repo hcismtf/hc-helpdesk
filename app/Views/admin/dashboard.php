@@ -88,7 +88,7 @@
                             <select name="type">
                                 <option value="">Select</option>
                                 <?php foreach($types as $t): ?>
-                                    <option value="<?= esc($t['req_type']) ?>" <?= $type==$t['req_type']?'selected':'' ?>><?= esc($t['req_type']) ?></option>
+                                    <option value="<?= esc($t['req_type']) ?>" <?= $type==$t['req_type']?'selected':'' ?>><?= esc($t['name'] ?? $t['req_type']) ?></option>
                                 <?php endforeach ?>
                             </select>
                         </div>
@@ -126,7 +126,7 @@
                 <?php foreach ($openTickets as $ticket): ?>
                 <tr>
                     <td><?= esc($ticket['emp_name']) ?></td>
-                    <td><?= esc($ticket['req_type']) ?></td>
+                    <td><?= esc($ticket['req_type_name'] ?? $ticket['req_type']) ?></td>
                     <td><?= esc($ticket['created_date']) ?></td>
                     <td>
                         <?php if (!empty($ticket['due_date'])): ?>

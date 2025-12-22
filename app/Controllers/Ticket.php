@@ -45,19 +45,27 @@ class Ticket extends Controller
         $encrypter = \Config\Services::encrypter();
         $nip_encrypted = bin2hex($encrypter->encrypt($nip_asli));
 
+        // Lookup request_type UUID dari name
+        $reqTypeName = $this->request->getPost('req_type');
+        $requestTypeModel = new \App\Models\RequestTypeModel();
+        $requestType = $requestTypeModel->where('name', $reqTypeName)->first();
+        $reqTypeId = $requestType ? $requestType['id'] : null;
+
+        $empName = $this->request->getPost('emp_name');
+
         $data = [
             'emp_id'        => $emp_id,
             'nip_encrypted' => $nip_encrypted,
-            'emp_name'      => $this->request->getPost('emp_name'),
+            'emp_name'      => $empName,
             'email'         => $this->request->getPost('email'),
             'wa_no'         => $this->request->getPost('wa_no'),
-            'req_type'      => $this->request->getPost('req_type'),
+            'req_type'      => $reqTypeId,
             'subject'       => $this->request->getPost('subject'),
             'message'       => $this->request->getPost('message'),
             'ticket_status' => 'open',
             'ticket_priority' => null,
             'due_date'      => null,
-            'created_by'    => $this->request->getPost('emp_name'),
+            'created_by'    => $empName,
             'created_date'  => date('Y-m-d H:i:s'),
         ];
 
@@ -115,7 +123,7 @@ class Ticket extends Controller
     }
 
     /**
-     * Kirim email konfirmasi ticket
+     * Kirim email konfirmasi ticket (langsung via PHPMailer)
      * 
      * @param string $emp_name Nama karyawan
      * @param string $email Email karyawan
@@ -128,6 +136,31 @@ class Ticket extends Controller
         if (empty($email)) {
             return;
         }
+
+        $emailBody = "
+            <html>
+            <body style='font-family: Arial, sans-serif; color: #333; line-height: 1.6;'>
+                <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                    <h2 style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>Ticket Confirmation</h2>
+                    
+                    <p>Dear <strong>{$emp_name}</strong>,</p>
+                    <p>Terima kasih telah mengajukan ticket. Kami telah menerima permintaan Anda dan akan segera ditangani oleh tim kami.</p>
+                    
+                    <div style='background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 15px 0;'>
+                        <p><strong>Ticket ID:</strong> {$ticketId}</p>
+                        <p><strong>Subject:</strong> {$subject}</p>
+                        <p><strong>Status:</strong> <span style='background-color: #fbbf24; color: #78350f; padding: 4px 8px; border-radius: 3px; display: inline-block;'>Open</span></p>
+                        <p><strong>Submitted Date:</strong> " . date('d-m-Y H:i:s') . "</p>
+                    </div>
+                    
+                    <p>Tim support kami akan meninjau dan memberikan update tentang ticket Anda segera.</p>
+                    <p>Jika ada pertanyaan, silakan hubungi kami.</p>
+                    
+                    <p style='margin-top: 20px;'>Hormat kami,<br><strong>Human Capital Division</strong></p>
+                </div>
+            </body>
+            </html>
+        ";
 
         require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/PHPMailer.php');
         require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/Exception.php');
@@ -148,34 +181,21 @@ class Ticket extends Controller
 
             $mail->Subject = "Ticket Confirmation - " . $subject;
             $mail->isHTML(true);
-
-            $emailBody = "
-                <html>
-                <body style='font-family: Arial, sans-serif; color: #333; line-height: 1.6;'>
-                    <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                        <h2 style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>Ticket Confirmation</h2>
-                        
-                        <p>Dear <strong>{$emp_name}</strong>,</p>
-                        <p>Terima kasih telah mengajukan ticket. Kami telah menerima permintaan Anda dan akan segera ditangani oleh tim kami.</p>
-                        
-                        <div style='background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 15px 0;'>
-                            <p><strong>Ticket ID:</strong> {$ticketId}</p>
-                            <p><strong>Subject:</strong> {$subject}</p>
-                            <p><strong>Status:</strong> <span style='background-color: #fbbf24; color: #78350f; padding: 4px 8px; border-radius: 3px; display: inline-block;'>Open</span></p>
-                            <p><strong>Submitted Date:</strong> " . date('d-m-Y H:i:s') . "</p>
-                        </div>
-                        
-                        <p>Tim support kami akan meninjau dan memberikan update tentang ticket Anda segera.</p>
-                        <p>Jika ada pertanyaan, silakan hubungi kami.</p>
-                        
-                        <p style='margin-top: 20px;'>Hormat kami,<br><strong>Human Capital Division</strong></p>
-                    </div>
-                </body>
-                </html>
-            ";
-
             $mail->Body = $emailBody;
+
             $mail->send();
+            
+            // Insert ke email_jobs untuk record
+            $emailJobModel = new \App\Models\EmailJobModel();
+            $emailJobModel->insert([
+                'ticket_id'       => $ticketId,
+                'recipient_email' => $email,
+                'subject'         => "Ticket Confirmation - " . $subject,
+                'body'            => $emailBody,
+                'status'          => 'sent',
+                'sent_at'         => date('Y-m-d H:i:s'),
+                'created_at'      => date('Y-m-d H:i:s')
+            ]);
             
             log_message('info', 'Ticket confirmation email sent to: ' . $email . ' for ticket ID: ' . $ticketId);
         } catch (Exception $e) {

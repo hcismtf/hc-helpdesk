@@ -50,6 +50,53 @@ $userPermissions = session('user_permissions') ?? [];
     </div>
 </div>
 <script>
+    // Initialize sidebar interactions
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.querySelector('.toggle-btn');
+
+        if (!sidebar || !toggleBtn) return;
+
+        // Toggle sidebar on button click
+        toggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            sidebar.classList.toggle('open');
+            document.body.classList.toggle('sidebar-open');
+        });
+
+        // Close sidebar when clicking nav links (mobile only)
+        const navLinks = document.querySelectorAll('.sidebar .nav-icons a, .sidebar .bottom-btn a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                // Only close on mobile (max-width 900px)
+                if (window.innerWidth <= 900) {
+                    sidebar.classList.remove('open');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+        });
+
+        
+        document.addEventListener('click', function(e) {
+            // Cek jika ada overlay (sidebar open dan mobile)
+            if (sidebar.classList.contains('open') && window.innerWidth <= 900) {
+                // Jangan close jika klik di sidebar atau toggle button
+                if (!sidebar.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                    document.body.classList.remove('sidebar-open');
+                }
+            }
+        });
+
+        // Handle window resize - close sidebar if resizing to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 900) {
+                sidebar.classList.remove('open');
+                document.body.classList.remove('sidebar-open');
+            }
+        });
+    });
+
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         sidebar.classList.toggle('open');

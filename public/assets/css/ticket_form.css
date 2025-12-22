@@ -3,8 +3,8 @@
 }
 
 body {
-  background: #fff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f5f6fa;
+  font-family: Montserrat, sans-serif;
   margin: 0;
   padding: 0;
 }
@@ -76,11 +76,11 @@ body {
 }
 
 .card {
-  border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
-  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 0 50px 10px rgba(0, 0, 0, 0.40);
+  padding: 30px;
   margin: 0 auto;
-  background: #f9f9f9;
+  background: #FFF;
   width: 100%;
 }
 
@@ -107,11 +107,12 @@ body {
 }
 
 label {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
-  color: #333;
-  margin-bottom: 8px;
+  color: #000;
+  margin-bottom: 10px;
   display: block;
+  font-family: Montserrat, sans-serif;
 }
 
 label span {
@@ -127,11 +128,12 @@ label .note {
 .form-control,
 .form-select {
   width: 100%;
-  border-radius: 8px;
-  padding: 12px 16px;
-  border: 1px solid #ddd;
+  border-radius: 30px;
+  padding: 10px 15px;
+  border: 1px solid #82868C;
   font-size: 14px;
-  font-family: inherit;
+  font-family: Montserrat, sans-serif;
+  background: #FFF;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   appearance: none;
 }
@@ -139,8 +141,8 @@ label .note {
 .form-control:focus,
 .form-select:focus {
   outline: none;
-  border-color: #0036FF;
-  box-shadow: 0 0 0 3px rgba(0, 54, 255, 0.1);
+  border-color: #2940D3;
+  box-shadow: 0 0 0 3px rgba(41, 64, 211, 0.1);
 }
 
 textarea.form-control {
@@ -157,21 +159,22 @@ textarea.form-control {
 }
 
 .btn-submit {
-  background: #0036FF;
-  color: #fff;
-  border-radius: 8px;
-  padding: 12px 24px;
+  background: #2940D3;
+  color: #FFF;
+  border-radius: 40px;
+  padding: 15px 25px;
   font-weight: 600;
   width: 100%;
   border: none;
-  font-size: 15px;
+  font-size: 13px;
   cursor: pointer;
-  transition: background 0.3s ease;
-  margin-top: 10px;
+  transition: background 0.3s ease, color 0.3s ease;
+  margin-top: 40px;
+  font-family: Montserrat, sans-serif;
 }
 
 .btn-submit:hover {
-  background: #0025b3;
+  background: #1f30a6;
 }
 
 /* Responsive Design */
@@ -181,7 +184,7 @@ textarea.form-control {
   }
 
   .card {
-    padding: 24px;
+    padding: 25px;
   }
 
   .header-section {
@@ -197,6 +200,49 @@ textarea.form-control {
 
   .nav-toggle {
     flex-wrap: wrap;
+  }
+
+  .form-control,
+  .form-select {
+    padding: 12px 15px;
+  }
+
+  .btn-submit {
+    padding: 12px 20px;
+    margin-top: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 20px;
+    margin: 30px auto;
+    box-shadow: 0 0 30px 5px rgba(0, 0, 0, 0.2);
+  }
+
+  .header-text h3 {
+    font-size: 22px;
+  }
+
+  .card h5 {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-control,
+  .form-select {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  label {
+    font-size: 13px;
+  }
+
+  .btn-submit {
+    padding: 12px 15px;
+    font-size: 12px;
+    margin-top: 20px;
   }
 }
 

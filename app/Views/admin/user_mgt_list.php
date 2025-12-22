@@ -28,14 +28,8 @@ if (!empty($roles)) {
                     <td class="user-status"><?= esc($user['status']) ?></td>
                     <td class="user-last-login"><?= esc($user['last_login_time'] ?? '-') ?></td>
                     <td>
-                        <button class="user-edit-btn" onclick="openEditUserModal(
-                            <?= $user['id'] ?>,
-                            '<?= esc($user['name'], 'js') ?>',
-                            '<?= esc($user['email'], 'js') ?>',
-                            '<?= esc($user['role_id'] ?? '', 'js') ?>',
-                            '<?= esc($user['status'], 'js') ?>'
-                        )">Edit</button>
-                        <button class="user-delete-btn" onclick="deleteUser(<?= $user['id'] ?>)">Delete</button>
+                        <button class="user-edit-btn" onclick="openEditUserModal('<?= esc($user['id'], 'js') ?>')">Edit</button>
+                        <button class="user-delete-btn" onclick="deleteUser('<?= esc($user['id'], 'js') ?>')">Delete</button>
                     </td>
                 </tr>
             <?php endforeach; ?>

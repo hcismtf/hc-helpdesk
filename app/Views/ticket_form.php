@@ -121,6 +121,42 @@
       height: auto;
       display: block;
     }
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      left: -9999px;
+    }
+    .file-input-label {
+      display: inline-block;
+      background: #2940D3;
+      color: #FFF;
+      border-radius: 40px;
+      padding: 6px 12px;
+      font-weight: 600;
+      border: none;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      font-family: Montserrat, sans-serif;
+      flex-shrink: 0;
+    }
+    .file-input-label:hover {
+      background: #1f30a6;
+    }
+    .file-name-display {
+      font-size: 12px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -198,8 +234,12 @@
           </div>
           
           <div class="form-group">
-            <label for="attachment">Lampiran File <span class="note">(.jpg, .pdf, .docx) - MAX 5MB</span></label>
-            <input type="file" name="attachment" id="attachment" class="form-control" accept=".jpg,.jpeg,.pdf,.docx">
+            <label>Lampirkan File <span>*</span> <span class="note">(.jpg, .pdf, .docx) - MAX 5MB</span></label>
+            <div class="file-input-wrapper">
+              <input type="file" name="attachment" id="attachment" accept=".jpg,.jpeg,.pdf,.docx" required>
+              <label for="attachment" class="file-input-label">Upload</label>
+              <span class="file-name-display" id="fileNameDisplay"></span>
+            </div>
           </div>
           
           <button type="button" class="btn-submit" id="confirmBtn">Submit Ticket</button>
@@ -277,6 +317,16 @@
     function hideLoadingModal() {
       document.getElementById('loadingModal').style.display = 'none';
     }
+
+    // Handle file input change
+    document.getElementById('attachment').addEventListener('change', function(e) {
+      const fileNameDisplay = document.getElementById('fileNameDisplay');
+      if (this.files && this.files[0]) {
+        fileNameDisplay.textContent = 'File dipilih: ' + this.files[0].name;
+      } else {
+        fileNameDisplay.textContent = '';
+      }
+    });
   </script>
 </body>
 </html>

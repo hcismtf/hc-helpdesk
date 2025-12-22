@@ -8,6 +8,8 @@
     <title>Report User</title>
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/report_user.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/report_user_loading.css') ?>">
+    <script src="<?= base_url('assets/js/admin/report_user_loading.js') ?>" defer></script>
     <script src="<?= base_url('assets/js/admin/report_user.js') ?>" defer></script>
 
 </head>
@@ -41,7 +43,7 @@
                                 <option value="">-- Pilih Request Type --</option>
                                 <?php foreach ($requestTypes ?? [] as $rt): ?>
                                     <option value="<?= esc($rt['req_type']) ?>" <?= ($requestType ?? '')==$rt['req_type']?'selected':'' ?>>
-                                        <?= esc($rt['req_type']) ?>
+                                        <?= esc($rt['req_type_name']) ?>
                                     </option>
                                 <?php endforeach ?>
                             </select>
@@ -158,5 +160,15 @@
             </div>
         </div>
     </div>
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="loading-modal-bg">
+        <div class="loading-modal">
+            <div class="spinner"></div>
+            <div class="loading-text">Memproses laporan Anda...</div>
+            <div style="font-size: 13px; color: #999; margin-top: 10px;">Silakan tunggu sebentar</div>
+        </div>
+    </div>
+
 </body>
 </html>

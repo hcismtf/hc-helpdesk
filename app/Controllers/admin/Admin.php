@@ -236,8 +236,19 @@ class Admin extends BaseController
             $slaMap[$sla['priority']] = $sla;
         }
 
-        // Inject SLA ke tiket dan hitung due_date jika belum ada
+        // Ambil semua request types untuk mapping
+        $requestTypeModel = new \App\Models\RequestTypeModel();
+        $requestTypes = $requestTypeModel->findAll();
+        $requestTypeMap = [];
+        foreach ($requestTypes as $rt) {
+            $requestTypeMap[$rt['id']] = $rt['name'];
+        }
+
+        // Inject SLA dan request_type name ke tiket dan hitung due_date jika belum ada
         foreach ($openTickets as &$ticket) {
+            // Inject request_type name
+            $ticket['req_type_name'] = $requestTypeMap[$ticket['req_type']] ?? $ticket['req_type'];
+            
             $priority = $ticket['ticket_priority'];
             $sla = $slaMap[$priority] ?? null;
             if ($sla) {
@@ -261,8 +272,14 @@ class Admin extends BaseController
         }
         unset($ticket);
 
-        // Untuk dropdown type
-        $types = $ticketModel->select('req_type')->distinct()->findAll();
+        // Untuk dropdown type - join dengan request_type untuk ambil name
+        $db = \Config\Database::connect();
+        $types = $db->table('tiket_trx tt')
+                   ->select('rt.id as req_type, rt.name')
+                   ->join('request_type rt', 'tt.req_type = rt.id', 'left')
+                   ->distinct()
+                   ->get()
+                   ->getResultArray();
 
         // Ambil semua tiket yang sudah closed untuk statistik
         $closedTickets = $ticketModel->where('ticket_status', 'closed')->findAll();
@@ -339,6 +356,11 @@ class Admin extends BaseController
         ]);
     }
 
+    public function forbidden()
+    {
+        return view('admin/forbidden');
+    }
+
     public function Ticket_dashboard()
     {
         $model = new TicketModel();
@@ -378,6 +400,20 @@ class Admin extends BaseController
             $ticket['emp_nip'] = $nip_decrypted;
             $tickets[] = $ticket;
         }
+
+        // Ambil request types untuk mapping
+        $requestTypeModel = new \App\Models\RequestTypeModel();
+        $requestTypes = $requestTypeModel->findAll();
+        $requestTypeMap = [];
+        foreach ($requestTypes as $rt) {
+            $requestTypeMap[$rt['id']] = $rt['name'];
+        }
+
+        // Inject request_type name ke setiap ticket
+        foreach ($tickets as &$ticket) {
+            $ticket['req_type_name'] = $requestTypeMap[$ticket['req_type']] ?? $ticket['req_type'];
+        }
+        unset($ticket);
 
         // Create pagination links using helper method
         $totalPages = $perPage > 0 ? ceil($totalRecords / $perPage) : 1;
@@ -421,6 +457,13 @@ class Admin extends BaseController
             } catch (\Exception $e) {
                 $ticket['emp_nip'] = '[Invalid]';
             }
+        }
+
+        // Lookup request_type name
+        $requestTypeModel = new \App\Models\RequestTypeModel();
+        if (!empty($ticket['req_type'])) {
+            $requestType = $requestTypeModel->find($ticket['req_type']);
+            $ticket['req_type_name'] = $requestType ? $requestType['name'] : $ticket['req_type'];
         }
 
         foreach ($attachmentsRaw as $att) {
@@ -525,8 +568,12 @@ class Admin extends BaseController
         $answer = $this->request->getPost('answer');
         $created_by = session('username') ?? 'admin';
 
+        // Generate UUID untuk FAQ ID
+        $faqId = $this->generateUUIDv4();
+
         $faqModel = new \App\Models\FaqModel();
         $faqModel->insert([
+            'id' => $faqId,
             'question' => $question,
             'answer' => $answer,
             'created_by' => $created_by,
@@ -608,8 +655,12 @@ class Admin extends BaseController
         $encrypter = \Config\Services::encrypter();
 
         try {
+            // Generate UUID v4 untuk role ID
+            $roleId = $this->generateUUIDv4();
+            
             // Simpan role dulu
-            $roleId = $roleModel->insert([
+            $roleModel->insert([
+                'id' => $roleId,
                 'name' => $name,
                 'created_by' => $created_by,
                 'created_date' => $created_date
@@ -642,6 +693,14 @@ class Admin extends BaseController
         $name = $this->request->getPost('name');
         $permissions = $this->request->getPost('permissions'); // array of permission_id
 
+        // Validasi UUID format
+        if (!$id || !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Role ID tidak valid!'
+            ]);
+        }
+
         $roleModel = new \App\Models\RoleModel();
         $rolePermissionsModel = new \App\Models\RolePermissionsModel();
 
@@ -673,6 +732,15 @@ class Admin extends BaseController
     public function delete_user_role()
     {
         $id = $this->request->getPost('id');
+        
+        // Validasi UUID format
+        if (!$id || !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Role ID tidak valid!'
+            ]);
+        }
+        
         $roleModel = new \App\Models\RoleModel();
         $rolePermissionsModel = new \App\Models\RolePermissionsModel();
 
@@ -769,6 +837,7 @@ class Admin extends BaseController
 
         $requestTypeModel = new RequestTypeModel;
         $requestTypeModel->insert([
+            'id' => $this->generateUUIDv4(),
             'name' => $name,
             'description' => $description,
             'status' => $status, // enum: 'Active' atau 'In Active'
@@ -840,16 +909,19 @@ class Admin extends BaseController
         $priority = $this->request->getPost('priority');
         $response_time = $this->request->getPost('response_time');
         $resolution_time = $this->request->getPost('resolution_time');
-        $created_by = session('username') ?? 'admin';
+        
+        $slaId = $this->generateUUIDv4();
+        $userId = session('user_id');
         $created_date = date('Y-m-d H:i:s');
 
-        $slaModel = new \App\Models\SlaModel();
+        $slaModel = new \App\Models\SlaConfigurationModel();
         $slaModel->insert([
+            'id' => $slaId,
             // 'request_type_id' => $request_type_id,
             'priority' => $priority,
             'response_time' => $response_time,
             'resolution_time' => $resolution_time,
-            'created_by' => $created_by,
+            'created_by' => $userId,
             'created_date' => $created_date
         ]);
         return $this->response->setJSON(['success' => true]);
@@ -858,9 +930,22 @@ class Admin extends BaseController
     {
         $page = $this->request->getGet('page') ?? 1;
         $perPage = $this->request->getGet('per_page') ?? 10;
-        $slaModel = new \App\Models\SlaModel();
+        $slaModel = new \App\Models\SlaConfigurationModel();
         $slas = $slaModel->paginate($perPage, 'default', $page);
         $totalPages = $slaModel->pager->getPageCount();
+
+        // Inject user names untuk created_by dan modified_by
+        $userModel = new \App\Models\UserModel();
+        foreach ($slas as &$sla) {
+            if (!empty($sla['created_by'])) {
+                $user = $userModel->find($sla['created_by']);
+                $sla['created_by_name'] = $user ? $user['name'] : $sla['created_by'];
+            }
+            if (!empty($sla['modified_by'])) {
+                $user = $userModel->find($sla['modified_by']);
+                $sla['modified_by_name'] = $user ? $user['name'] : $sla['modified_by'];
+            }
+        }
 
         return view('admin/sla_settings', [
             'slas' => $slas,
@@ -875,15 +960,16 @@ class Admin extends BaseController
         $priority = $this->request->getPost('priority');
         $response_time = $this->request->getPost('response_time');
         $resolution_time = $this->request->getPost('resolution_time');
-        $modified_by = session('username') ?? 'admin';
+        
+        $userId = session('user_id');
         $modified_date = date('Y-m-d H:i:s');
 
-        $slaModel = new \App\Models\SlaModel();
+        $slaModel = new \App\Models\SlaConfigurationModel();
         $slaModel->update($id, [
             'priority' => $priority,
             'response_time' => $response_time,
             'resolution_time' => $resolution_time,
-            'modified_by' => $modified_by,
+            'modified_by' => $userId,
             'modified_date' => $modified_date
         ]);
         return $this->response->setJSON(['success' => true]);
@@ -909,11 +995,15 @@ class Admin extends BaseController
         $roles = $roleModel->findAll();
 
         $userModel = new \App\Models\UserModel();
+        $currentUserId = session('user_id');
+        
         // JOIN ke role_detail dan role untuk dapat nama role
+        // EXCLUDE user yang sedang login
         $users = $userModel
             ->select('users.*, role.name as role_name')
             ->join('role_detail', 'role_detail.user_id = users.id', 'left')
             ->join('role', 'role.id = role_detail.role_id', 'left')
+            ->where('users.id !=', $currentUserId)
             ->findAll();
         
         $permissionsModel = new PermissionsModel();
@@ -932,11 +1022,14 @@ class Admin extends BaseController
 
         $password = $this->request->getPost('password');
         
-        // Generate UUID dari password input menggunakan hash
-        // Ini memastikan setiap password yang sama menghasilkan UUID yang sama
+        // Generate UUID untuk user ID (random UUID)
+        $userId = $this->generateUUIDv4();
+        
+        // Generate UUID dari password
         $passwordUUID = $this->generateUUIDFromPassword($password);
 
         $userData = [
+            'id'          => $userId,
             'name'        => $this->request->getPost('name'),
             'email'       => $this->request->getPost('email'),
             'password'    => $passwordUUID, // Simpan UUID yang di-generate dari password
@@ -946,7 +1039,7 @@ class Admin extends BaseController
             'created_date'=> date('Y-m-d H:i:s'),
         ];
 
-        $userId = $userModel->insert($userData);
+        $userModel->insert($userData);
 
         // Simpan ke role_detail
         $roleId = $this->request->getPost('role');
@@ -961,9 +1054,6 @@ class Admin extends BaseController
 
         // Ambil data user baru untuk update list di frontend
         $user = $userModel->find($userId);
-        
-        // Return UUID yang di-generate dari password
-        $user['generated_uuid'] = $passwordUUID;
 
         return $this->response->setJSON(['success' => true, 'user' => $user]);
     }
@@ -973,18 +1063,40 @@ class Admin extends BaseController
         $userModel = new \App\Models\UserModel();
         $roleDetailModel = new \App\Models\RoleDetailModel();
 
-        // Hapus role_detail dulu
-        $roleDetailModel->where('user_id', $id)->delete();
+        try {
+            // Validate UUID format
+            if (empty($id) || !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id)) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Invalid user ID format']);
+            }
 
-        // Hapus user
-        $userModel->delete($id);
+            // Hapus role_detail dulu
+            $roleDetailModel->where('user_id', $id)->delete();
 
-        return $this->response->setJSON(['success' => true]);
+            // Hapus user
+            $userModel->delete($id);
+
+            return $this->response->setJSON(['success' => true]);
+        } catch (\Throwable $e) {
+            // Check if error is related to foreign key constraint
+            if (strpos($e->getMessage(), 'foreign key constraint') !== false) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'error' => 'User sedang digunakan di ticket transactions dan tidak dapat dihapus. Silakan periksa ticket yang assigned ke user ini terlebih dahulu.',
+                    'message' => 'User sedang digunakan di ticket transactions dan tidak dapat dihapus. Silakan periksa ticket yang assigned ke user ini terlebih dahulu.'
+                ]);
+            }
+            
+            // Generic error message
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Gagal menghapus user. ' . $e->getMessage(),
+                'message' => 'Gagal menghapus user. ' . $e->getMessage()
+            ]);
+        }
     }
     public function edit_user()
     {
         $id = $this->request->getPost('id');
-        $username = $this->request->getPost('username');
         $name = $this->request->getPost('name');
         $email = $this->request->getPost('email');
         $roleId = $this->request->getPost('role');
@@ -994,18 +1106,23 @@ class Admin extends BaseController
         $userModel = new \App\Models\UserModel();
         $roleDetailModel = new \App\Models\RoleDetailModel();
 
+        // Validate UUID format
+        if (empty($id) || !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid user ID format']);
+        }
+
         $updateData = [
             'name' => $name,
             'email' => $email,
+            'role_id' => $roleId,
             'status' => $status,
             'modified_by' => session('username') ?? 'system',
             'modified_date' => date('Y-m-d H:i:s'),
         ];
+        
+        // If password provided, generate UUID from it
         if (!empty($password)) {
-            $updateData['password'] = password_hash($password, PASSWORD_DEFAULT);
-        }
-        if (!empty($username)) {
-            $updateData['username'] = $username;
+            $updateData['password'] = $this->generateUUIDFromPassword($password);
         }
 
         $userModel->update($id, $updateData);
@@ -1128,7 +1245,19 @@ class Admin extends BaseController
 
         // Dropdown dari DB lokal
         $ticketModel = new TicketModel();
-        $requestTypes = $ticketModel->select('req_type')->distinct()->where('req_type IS NOT NULL')->where('req_type !=', '')->findAll();
+        $requestTypesRaw = $ticketModel->select('req_type')->distinct()->where('req_type IS NOT NULL')->where('req_type !=', '')->findAll();
+        
+        // Inject request_type names dari UUID
+        $requestTypeModel = new \App\Models\RequestTypeModel();
+        $requestTypes = [];
+        foreach ($requestTypesRaw as $rt) {
+            $typeData = $requestTypeModel->find($rt['req_type']);
+            $requestTypes[] = [
+                'req_type' => $rt['req_type'],
+                'req_type_name' => $typeData ? $typeData['name'] : $rt['req_type']
+            ];
+        }
+        
         $priorities = $ticketModel->select('ticket_priority')->distinct()->where('ticket_priority IS NOT NULL')->where('ticket_priority !=', '')->findAll();
 
         // Ambil list job export dari DB
@@ -1182,9 +1311,23 @@ class Admin extends BaseController
                 ]
             ]);
             $data = json_decode($response->getBody(), true);
+            
+            // Lookup request_type names dari UUID
+            $requestTypeModel = new \App\Models\RequestTypeModel();
+            $requestTypeMap = [];
+            foreach ($requestTypeModel->findAll() as $rt) {
+                $requestTypeMap[$rt['id']] = $rt['name'];
+            }
+            
+            // Inject request_type names ke data
+            foreach ($data as &$row) {
+                $row['req_type_name'] = $requestTypeMap[$row['req_type']] ?? $row['req_type'];
+            }
+            unset($row);
+            
             $headers = [
                 'ID', 'Nama', 'Email', 'WA', 'Request Type', 'Subject', 'Status', 'Prioritas',
-                'Dibuat Oleh', 'Tanggal Dibuat', 'Tanggal Diubah', 'Due Date', 'First Response', 'Finish Date'
+                'Tanggal Dibuat', 'Tanggal Diubah', 'Due Date', 'First Response', 'Finish Date'
             ];
 
             // Generate Excel
@@ -1200,14 +1343,13 @@ class Admin extends BaseController
                 // Map field API ke urutan header
                 $excelRow = [
                     $row['id'],                         // ID
-                    $row['emp_name'],                   // Nama ← GANTI dari emp_id ke emp_name
+                    $row['emp_name'],                   // Nama
                     $row['email'],                      // Email
                     $row['wa_no'],                      // WA
-                    $row['req_type'],                   // Request Type
+                    $row['req_type_name'],              // Request Type (nama, bukan UUID)
                     $row['subject'],                    // Subject
                     $row['ticket_status'],              // Status
                     $row['ticket_priority'],            // Prioritas
-                    $row['created_by'],                 // Dibuat Oleh
                     $row['created_date'],               // Tanggal Dibuat
                     $row['modified_date'],              // Tanggal Diubah
                     $row['due_date'],                   // Due Date
@@ -1331,7 +1473,9 @@ class Admin extends BaseController
         $filePathEnc = bin2hex($encrypter->encrypt($filePath));
 
         $jobModel = new ReportJobModel();
-        $jobId = $jobModel->insert([
+        $jobId = $this->generateUUIDv4();
+        $jobModel->insert([
+            'id'            => $jobId,
             'report_type'   => $reportType,
             'filter_params' => $filterParamsEnc,
             'file_path'     => $filePathEnc,
@@ -1402,10 +1546,11 @@ class Admin extends BaseController
         $role     = session('role');
         $username = session('username') ?? 'system';
 
-        if ($role === 'superadmin') {
-            $userId = 9999;
-            $username = 'superadmin';
-        }
+        // Note: userId harus sudah UUID dari session, jangan hardcode nilai
+        // Jika perlu special handling untuk superadmin, lakukan logic lain
+        // if ($role === 'superadmin') {
+        //     // Gunakan user_id dari session yang sudah UUID
+        // }
 
         // Ambil SLA sesuai priority
         $slaModel = new \App\Models\SlaModel();
@@ -1453,7 +1598,7 @@ class Admin extends BaseController
             'due_date'          => $dueDate,
             'first_response_at' => $firstResponseAt,
             'modified_date'     => date('Y-m-d H:i:s'),
-            'modified_by'       => $username
+            'modified_by'       => $userId
         ];
         if ($finishDate) {
             $updateData['finish_date'] = $finishDate;
@@ -1467,6 +1612,14 @@ class Admin extends BaseController
             $userModel = new \App\Models\UserModel();
             $assignedUser = $userModel->find($assignedTo);
             if ($assignedUser) $assignedName = $assignedUser['name'];
+        }
+
+        // Ambil request_type name
+        $requestTypeName = $ticket['req_type'];
+        if (!empty($ticket['req_type'])) {
+            $requestTypeModel = new \App\Models\RequestTypeModel();
+            $requestType = $requestTypeModel->find($ticket['req_type']);
+            if ($requestType) $requestTypeName = $requestType['name'];
         }
 
         // Template email
@@ -1496,7 +1649,7 @@ class Admin extends BaseController
                             
                             <div class='ticket-info'>
                                 <p><span class='label'>Ticket ID:</span> {$ticketId}</p>
-                                <p><span class='label'>Request Type:</span> {$ticket['req_type']}</p>
+                                <p><span class='label'>Request Type:</span> {$requestTypeName}</p>
                                 <p><span class='label'>Subject:</span> {$ticket['subject']}</p>
                                 <p><span class='label'>Status:</span> <span class='status-closed'>Closed</span></p>
                                 <p><span class='label'>Admin Feedback:</span></p>
@@ -1539,7 +1692,7 @@ class Admin extends BaseController
                             
                             <div class='ticket-info'>
                                 <p><span class='label'>Ticket ID:</span> {$ticketId}</p>
-                                <p><span class='label'>Request Type:</span> {$ticket['req_type']}</p>
+                                <p><span class='label'>Request Type:</span> {$requestTypeName}</p>
                                 <p><span class='label'>Subject:</span> {$ticket['subject']}</p>
                                 <p><span class='label'>Status:</span> <span class='status-progress'>In Progress</span></p>
                                 <p><span class='label'>Assigned To:</span> {$assignedName}</p>
@@ -1561,12 +1714,12 @@ class Admin extends BaseController
 
         $toEmail = $ticket['email'] ?? '';
         if ($toEmail) {
-            // Pastikan PHPMailer sudah diinstall via composer
+            // Kirim email langsung via PHPMailer
             require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/PHPMailer.php');
             require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/Exception.php');
             require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/SMTP.php');
 
-            $mail = new PHPMailer(true);
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
             try {
                 $mail->isSMTP();
                 $mail->Host = getenv('email.SMTPHost') ?: 'smtp-mail.outlook.com';
@@ -1584,8 +1737,20 @@ class Admin extends BaseController
                 $mail->Body = $emailBody;
 
                 $mail->send();
-            } catch (Exception $e) {
-                // error_log('Mailer Error: ' . $mail->ErrorInfo);
+                
+                // Insert ke email_jobs untuk record
+                $emailJobModel = new \App\Models\EmailJobModel();
+                $emailJobModel->insert([
+                    'ticket_id'       => $ticketId,
+                    'recipient_email' => $toEmail,
+                    'subject'         => "Ticket #" . $ticketId . " - HC Helpdesk",
+                    'body'            => $emailBody,
+                    'status'          => 'sent',
+                    'sent_at'         => date('Y-m-d H:i:s'),
+                    'created_at'      => date('Y-m-d H:i:s')
+                ]);
+            } catch (\PHPMailer\PHPMailer\Exception $e) {
+                log_message('error', 'Failed to send ticket update email: ' . $mail->ErrorInfo);
             }
         }
 

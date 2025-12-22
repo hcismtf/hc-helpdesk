@@ -46,9 +46,6 @@ body {
 
 /* --- Analytics --- */
 .analytics-box {
-    position: absolute;
-    right: 40px;
-    top: 30px;
     text-align: right;
 }
 .analytics-title { font-weight: bold; }

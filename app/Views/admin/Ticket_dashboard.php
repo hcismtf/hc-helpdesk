@@ -50,7 +50,7 @@
                         <tr>
                             <td><?= isset($ticket['id']) ? esc($ticket['id']) : '-' ?></td>
                             <td><?= isset($ticket['emp_nip']) ? esc($ticket['emp_nip']) : '-' ?></td>
-                            <td><?= isset($ticket['req_type']) ? esc($ticket['req_type']) : '-' ?></td>
+                            <td><?= isset($ticket['req_type_name']) ? esc($ticket['req_type_name']) : esc($ticket['req_type'] ?? '-') ?></td>
                             <td>
                                 <?php
                                     if (!empty($ticket['created_date'])) {

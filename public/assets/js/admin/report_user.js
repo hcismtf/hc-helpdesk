@@ -25,16 +25,26 @@ function onReportTypeChange() {
                     e.preventDefault();
                     var form = e.target;
                     var formData = new FormData(form);
+                    
+                    // Tampilkan loading modal
+                    showLoadingModal();
+                    
                     fetch(form.action, {
                         method: 'POST',
                         body: formData
                     })
                     .then(res => res.json())
                     .then(data => {
+                        // Tutup loading modal terlebih dahulu
+                        hideLoadingModal();
+                        
                         if (data.success) {
+                            // Tampilkan success modal setelah loading tertutup
                             document.getElementById('global-success-message').innerText = 'Export job berhasil ditambahkan! Silakan cek daftar di bawah.';
                             document.getElementById('global-success-confirm-bg').style.display = 'block';
                             document.getElementById('global-success-confirm').style.display = 'block';
+                            
+                            // Reload halaman setelah 1.5 detik
                             setTimeout(function() {
                                 document.getElementById('global-success-confirm-bg').style.display = 'none';
                                 document.getElementById('global-success-confirm').style.display = 'none';
@@ -45,6 +55,8 @@ function onReportTypeChange() {
                         }
                     })
                     .catch(function() {
+                        // Tutup loading modal jika error
+                        hideLoadingModal();
                         showGlobalError('Gagal submit export job.');
                     });
                 });
@@ -53,6 +65,9 @@ function onReportTypeChange() {
 
             // Success modal function
             function showSuccessModal(msg) {
+                // Tutup loading modal terlebih dahulu
+                hideLoadingModal();
+                
                 document.getElementById('global-success-message').innerText = msg;
                 document.getElementById('global-success-confirm-bg').style.display = 'block';
                 document.getElementById('global-success-confirm').style.display = 'block';
@@ -65,6 +80,9 @@ function onReportTypeChange() {
 
             // Warning modal function
             function showWarningModal(msg, onOk) {
+                // Tutup loading modal terlebih dahulu
+                hideLoadingModal();
+                
                 document.getElementById('global-warning-message').innerText = msg;
                 document.getElementById('global-warning-confirm-bg').style.display = 'block';
                 document.getElementById('global-warning-confirm').style.display = 'block';
@@ -83,16 +101,16 @@ function onReportTypeChange() {
             document.querySelectorAll('.delete-job-form').forEach(function(form) {
                 var btn = form.querySelector('button[type="button"]');
                 btn.addEventListener('click', function(e) {
-                    showWarningModal('Yakin hapus job ini?', function() {
+                    showWarningModal('Yakin hapus Report ini?', function() {
                         // Submit via AJAX
                         var xhr = new XMLHttpRequest();
                         xhr.open('POST', form.action, true);
                         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
                         xhr.onload = function() {
                             if (xhr.status === 200) {
-                                showSuccessModal('Job berhasil dihapus!');
+                                showSuccessModal('Report berhasil dihapus!');
                             } else {
-                                showGlobalError('Gagal menghapus job.');
+                                showGlobalError('Gagal menghapus Report.');
                             }
                         };
                         xhr.send(new FormData(form));

@@ -106,7 +106,7 @@
                 </div>
                 <div class="ticket-info-col">
                     <div class="ticket-info-title">Ticket Information</div>
-                    <div class="ticket-info-list">Request type: <?= esc($ticket['req_type'] ?? '') ?></div>
+                    <div class="ticket-info-list">Request type: <?= esc($ticket['req_type_name'] ?? $ticket['req_type'] ?? '') ?></div>
                     <div class="ticket-info-list">Created Date: <?= !empty($ticket['created_date']) ? esc(date('d/m/Y H:i:s', strtotime($ticket['created_date']))) : '' ?></div>
                     <div class="ticket-info-list">Assigned To: <?= esc($assignedName) ?></div>               
                 </div>
