@@ -455,6 +455,7 @@ class Admin extends BaseController
         // Ambil semua replies
         $repliesRaw = $trxModel->where('tiket_trx_id', $id)->orderBy('created_at', 'asc')->findAll();
         $originalMessage = '';
+        $replies = [];
 
         foreach ($repliesRaw as $r) {
             $author = '';
