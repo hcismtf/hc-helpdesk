@@ -34,16 +34,36 @@ class Ticket extends Controller
             'faqs' => $faqs
         ]);
     }
+    public function monitoringTicket($unique_url)
+    {
+        $ticketModel = new TicketModel();
+        $chatModel = new \App\Models\ConversationModel();
 
+        $ticket = $ticketModel->like('monitoring_url', $unique_url)->first();
+
+        if(!$ticket){
+            return view('errors/custom_ticket_not_found');
+        }
+
+        $chatMessages = $chatModel->where('ticket_trx_id', $ticket['id'])->orderBy('created_date', 'asc')->findAll();
+
+        return view('chat_conversation', [
+            'ticket' => $ticket,
+            'chatMessages' => $chatMessages
+        ]);
+    }
     public function store()
     {
         $ticketModel = new TicketModel();
         $ticketAttModel = new TicketAttModel();
+        $chatModel = new \App\Models\ConversationModel();
 
         $emp_id = $this->generateUUIDv4();
         $nip_asli = $this->request->getPost('emp_id');
         $encrypter = \Config\Services::encrypter();
         $nip_encrypted = bin2hex($encrypter->encrypt($nip_asli));
+
+        $monitoring_url = base_url('Ticket-detail/' . $this->generateUUIDv4());
 
         $data = [
             'emp_id'        => $emp_id,
@@ -54,6 +74,7 @@ class Ticket extends Controller
             'req_type'      => $this->request->getPost('req_type'),
             'subject'       => $this->request->getPost('subject'),
             'message'       => $this->request->getPost('message'),
+            'monitoring_url'=> $monitoring_url, #data url unik hasil generating
             'ticket_status' => 'open',
             'ticket_priority' => null,
             'due_date'      => null,
@@ -65,14 +86,25 @@ class Ticket extends Controller
 
         // kalau ada file upload
         $file = $this->request->getFile('attachment');
+        $ticket_att_id = null;
         if ($file && $file->isValid() && !$file->hasMoved()) {
             $maxSize = 1024 * 1024; // 1MB
             $newName = $file->getRandomName();
+
+            // Tentukan folder tujuan (Gunakan FCPATH untuk folder public, atau WRITEPATH untuk folder writable)
+            $uploadPath = FCPATH . 'uploads/images-attachment/'; 
+            
+            // PENTING: Cek apakah folder ada, jika tidak buat folder tersebut
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
             // Jika file > 1MB dan tipe gambar, compress
             if ($file->getSize() > $maxSize && strpos($file->getMimeType(), 'image/') === 0) {
                 $imageType = $file->getMimeType();
                 $srcPath = $file->getTempName();
-                $dstPath = 'D:/uploads/images/' . $newName;
+                // $dstPath = 'D:/uploads/images-attachment/' . $newName;
+                $dstPath = $uploadPath . $newName;
 
                 // Kompres gambar (JPEG/PNG)
                 if ($imageType === 'image/jpeg') {
@@ -85,11 +117,11 @@ class Ticket extends Controller
                     imagedestroy($image);
                 } else {
                     // Jika bukan jpeg/png, tetap move tanpa compress
-                    $file->move('D:/uploads/images', $newName);
+                    $file->move($uploadPath, $newName);
                 }
             } else {
                 // File <= 1MB atau bukan gambar, langsung move
-                $file->move('D:/uploads/images', $newName);
+                $file->move($uploadPath, $newName);
             }
 
             // Enkripsi file_name dan file_path
@@ -103,7 +135,27 @@ class Ticket extends Controller
                 'created_by'   => $this->request->getPost('emp_name'),
                 'created_date' => date('Y-m-d H:i:s'),
             ]);
+
+            $ticket_att_id = $ticketAttModel->getInsertID();
         }
+
+        // Simpan chat ke database
+        $chatModel->insert([
+            'ticket_trx_id' => $ticketId,
+            'ticket_att_id' => $ticket_att_id,
+            'ticket_status' => 'Open',
+            'ticket_priority' => 'High',
+            'nip_encrypted' => $nip_encrypted,
+            'emp_name' => $this->request->getPost('emp_name'),
+            'email' => $this->request->getPost('email'),
+            'wa_no' => $this->request->getPost('wa_no'),
+            'message' => $this->request->getPost('message'),
+            'created_date' => date('Y-m-d H:i:s'),
+            'modified_date' => date('Y-m-d H:i:s'),
+            'last_response' => date('Y-m-d H:i:s'),
+            'reply_by' => $this->request->getPost('emp_name'),
+            'file_attachment' => $this->request->getPost('file_path'),
+        ]);
 
         // Kirim email konfirmasi
         $emp_name = $this->request->getPost('emp_name');

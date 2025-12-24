@@ -35,7 +35,6 @@
             </div>
             
             <!-- Modal Reply Status -->
-            <!-- Modal Reply Status -->
             <div id="replyStatusModal" class="modal-user" style="display:none;">
                 <div class="modal-user-content modal-user-frame">
                     <div class="modal-user-header" style="width:100%; display:flex; justify-content:space-between; align-items:center;">
@@ -109,23 +108,24 @@
                     <div class="ticket-info-list">Request type: <?= esc($ticket['req_type'] ?? '') ?></div>
                     <div class="ticket-info-list">Created Date: <?= !empty($ticket['created_date']) ? esc(date('d/m/Y H:i:s', strtotime($ticket['created_date']))) : '' ?></div>
                     <div class="ticket-info-list">Assigned To: <?= esc($assignedName) ?></div>               
+                    <div class="ticket-info-list">Monitoring URL: <a href="<?= base_url('admin/Ticket-detail/' . basename(esc($ticket['monitoring_url'] ?? ''))) ?>"  style="color:#234be7; font-weight:bold;"><?= esc($ticket['monitoring_url'] ?? '-') ?></a></div>          
                 </div>
             </div>
             <div class="ticket-section-title">Original Message</div>
-            <div class="ticket-message-box"><?= esc($ticket['message'] ?? '') ?></div>
+            <div class="ticket-message-box"><?= nl2br(esc($originalMessage)) ?></div>
             <?php if (!empty($attachments)): ?>
                 <div class="ticket-section-title" style="margin-top:18px;">Attachment</div>
                 <div class="ticket-attachment-list" style="display:flex; gap:18px; flex-wrap:wrap;">
                     <?php foreach ($attachments as $att): ?>
                         <div class="ticket-attachment-item" style="text-align:center;">
-                            <a href="javascript:void(0);" onclick="showAttachmentModal('<?= base_url('admin/view/' . esc($att['file_path'])) ?>')">
-                                <img src="<?= base_url('admin/view/' . esc($att['file_path'])) ?>" alt="Attachment" style="max-width:80px; max-height:80px; border-radius:8px; border:1px solid #eee; box-shadow:0 2px 8px #eee;">
+                            <a href="javascript:void(0);" onclick="showAttachmentModal('<?= base_url('uploads/images-attachment/' . $att['file_path']) ?>')">
+                                <img src="<?= base_url('uploads/images-attachment/' . $att['file_path']) ?>" alt="Attachment" style="max-width:80px; max-height:80px; border-radius:8px; border:1px solid #eee; box-shadow:0 2px 8px #eee;">
                             </a>
                             <div style="font-size:13px; margin-top:4px;"><?= esc($att['file_name']) ?></div>
                         </div>
                     <?php endforeach ?>
                 </div>
-            <?php endif; ?>
+            <?php endif; ?> 
 
             <!-- Modal Popup Attachment -->
             <div id="attachmentModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:9999; align-items:center; justify-content:center;">

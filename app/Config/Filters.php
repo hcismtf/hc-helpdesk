@@ -112,7 +112,10 @@ class Filters extends BaseFilters
                 'ticket/create',
                 'admin/developer-options',
                 // 'admin/view',
-                // 'admin/view/*'
+                // 'admin/view/*',
+                'Ticket-detail/*',
+                'Ticket-detail',
+                'send-message',
                 // Tambahkan endpoint lain yang dipakai AJAX
             ]],
         ],

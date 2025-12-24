@@ -365,6 +365,7 @@ class Admin extends BaseController
         $ticketsRaw = $query->orderBy('created_date', 'DESC')->limit($perPage)->offset(($page - 1) * $perPage)->get()->getResult('array');
 
         $encrypter = \Config\Services::encrypter();
+
         $tickets = [];
         foreach ($ticketsRaw as $ticket) {
             $nip_decrypted = '';
@@ -453,7 +454,8 @@ class Admin extends BaseController
 
         // Ambil semua replies
         $repliesRaw = $trxModel->where('tiket_trx_id', $id)->orderBy('created_at', 'asc')->findAll();
-        $replies = [];
+        $originalMessage = '';
+
         foreach ($repliesRaw as $r) {
             $author = '';
             foreach ($users as $u) {
@@ -462,6 +464,7 @@ class Admin extends BaseController
                     break;
                 }
             }
+            
             $replies[] = [
                 'author'     => $author ?: 'User',
                 'created_at' => $r['created_at'],
@@ -476,7 +479,8 @@ class Admin extends BaseController
             'replies'      => $replies,
             'attachments'  => $attachments,
             'hasReply'     => $hasReply,
-            'assignedName' => $assignedName // <-- dari tiket_transactions terakhir
+            'assignedName' => $assignedName, // <-- dari tiket_transactions terakhir
+            'originalMessage' => $originalMessage
         ]);
     }
     public function system_settings()
@@ -930,6 +934,7 @@ class Admin extends BaseController
         $userModel = new \App\Models\UserModel();
         $roleDetailModel = new \App\Models\RoleDetailModel();
 
+        $newUserId = $this->generateUUIDv4();
         $password = $this->request->getPost('password');
         
         // Generate UUID dari password input menggunakan hash
@@ -937,6 +942,7 @@ class Admin extends BaseController
         $passwordUUID = $this->generateUUIDFromPassword($password);
 
         $userData = [
+            'id'          => $newUserId,
             'name'        => $this->request->getPost('name'),
             'email'       => $this->request->getPost('email'),
             'password'    => $passwordUUID, // Simpan UUID yang di-generate dari password
@@ -953,7 +959,7 @@ class Admin extends BaseController
         if ($roleId) {
             $roleDetailModel->insert([
                 'role_id' => $roleId,
-                'user_id' => $userId,
+                'user_id' => $newUserId,
                 'created_by' => session('username') ?? 'system',
                 'created_date' => date('Y-m-d H:i:s')
             ]);
@@ -995,11 +1001,14 @@ class Admin extends BaseController
         $roleDetailModel = new \App\Models\RoleDetailModel();
 
         $updateData = [
-            'name' => $name,
-            'email' => $email,
-            'status' => $status,
-            'modified_by' => session('username') ?? 'system',
-            'modified_date' => date('Y-m-d H:i:s'),
+            'ticket_status'     => $status,
+            'ticket_priority'   => $priority,
+            'assigned_to'       => $assignedTo,
+            'due_date'          => $dueDate,
+            'first_response_at' => $firstResponseAt,
+            'modified_date'     => date('Y-m-d H:i:s'),
+            'modified_by'       => $username,
+            'finish_date'       => $finishDate
         ];
         if (!empty($password)) {
             $updateData['password'] = password_hash($password, PASSWORD_DEFAULT);
@@ -1386,9 +1395,16 @@ class Admin extends BaseController
     }
     public function send_reply($ticketId)
     {
+        // Ambil ticket lamage
+        $ticketModel = new TicketModel();
+        $chatModel = new \App\Models\ConversationModel();
+        $ticket = $ticketModel->find($ticketId);
+
         $replyText   = $this->request->getPost('reply');
-        $status      = $this->request->getPost('status');
-        $priority    = $this->request->getPost('priority');
+        $inputStatus = $this->request->getPost('status');
+        $status     = !empty($inputStatus) ? $inputStatus : $ticket['ticket_status'];
+        $inputPriority = $this->request->getPost('priority');
+        $priority    = !empty($inputPriority) ? $inputPriority : $ticket['ticket_priority'];
         $assignedTo  = $this->request->getPost('assigned_to');
 
         // Jika assigned_to tidak dikirim dari form, ambil dari transaksi terakhir
@@ -1412,9 +1428,7 @@ class Admin extends BaseController
         $sla = $slaModel->where('priority', $priority)->first();
         $resolutionTime = $sla ? (int)$sla['resolution_time'] : 24; // default 24 jam jika tidak ada
 
-        // Ambil ticket lamage
-        $ticketModel = new TicketModel();
-        $ticket = $ticketModel->find($ticketId);
+        
 
         // Hitung due_date baru
         $createdDate = $ticket['created_date'] ?? date('Y-m-d H:i:s');
@@ -1460,7 +1474,24 @@ class Admin extends BaseController
         }
         $ticketModel->update($ticketId, $updateData);
 
+        
+        $chatModel->insert([
+            'ticket_trx_id'   => $ticketId,
+            'message'         => $replyText,
+            'reply_by'        => 'Admin', // Penanda pengirim
+            'ticket_status'   => $status,
+            'ticket_priority' => $priority,
+            'created_date'    => date('Y-m-d H:i:s'),
+            'emp_name'        => $ticket['emp_name'],
+            'email'           => $ticket['email'],
+            'nip_encrypted'   => $ticket['nip_encrypted'] ?? ''
+        ]);
+
         // --- KIRIM EMAIL ---
+        //Generate public URL untuk USER
+        $uuid = basename($ticket['monitoring_url'] ?? '');
+        $publicConversationURL = base_url('Ticket-detail/' . $uuid);
+
         // Ambil nama assigned_to
         $assignedName = '-';
         if ($assignedTo) {
@@ -1548,6 +1579,7 @@ class Admin extends BaseController
                             </div>
                             
                             <p>Tim support kami akan segera menyelesaikan request Anda. Mohon ditunggu untuk update berikutnya.</p>
+                            <p> Anda juga dapat mengunjungi link berikut untuk menghubungi admin : <a href='{$publicConversationURL}'></a></p>
                             
                             <br>
                             <p>Hormat kami,<br>
@@ -1569,7 +1601,7 @@ class Admin extends BaseController
             $mail = new PHPMailer(true);
             try {
                 $mail->isSMTP();
-                $mail->Host = getenv('email.SMTPHost') ?: 'smtp-mail.outlook.com';
+                $mail->Host = getenv('email.SMTPHost') ?: 'smtp.office365.com';
                 $mail->SMTPAuth = true;
                 $mail->Username = getenv('email.SMTPUser') ?: 'support@example.com';
                 $mail->Password = getenv('email.SMTPPass') ?: '';
@@ -1589,11 +1621,12 @@ class Admin extends BaseController
             }
         }
 
-        return redirect()->to('admin/Ticket_detail/' . $ticketId);
+        // return redirect()->to('admin/Ticket_detail/' . $ticketId);
+        return redirect()->back();
     }
     public function view($filename)
     {
-        $basePath = 'D:/uploads/images/';
+        $basePath = 'D:/uploads/images-attachment/';
         $filePath = realpath($basePath . $filename);
 
         // Validasi path biar nggak bisa akses sembarangan file (directory traversal attack)
@@ -1609,6 +1642,34 @@ class Admin extends BaseController
             ->setHeader('Content-Type', $mimeType)
             ->setHeader('Content-Disposition', 'inline; filename="' . basename($filePath) . '"')
             ->setBody(file_get_contents($filePath));
+    }
+
+    public function ConversationAsAdmin($uuid)
+    {
+        $ticketModel = new TicketModel();
+        
+        // Gunakan fully qualified namespace jika belum di-use di atas
+        $chatModel = new \App\Models\ConversationModel();
+        
+        // 1. Cari tiket berdasarkan UUID (dari monitoring_url)
+        // Gunakan 'like' karena monitoring_url mungkin berisi full URL
+        $ticket = $ticketModel->like('monitoring_url', $uuid)->first();
+
+        // if (!$ticket) {
+        //     throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Tiket tidak ditemukan.");
+        // }
+
+        // 3. Ambil riwayat chat
+        $chatMessages = $chatModel->where('ticket_trx_id', $ticket['id'])
+                                  ->orderBy('created_date', 'asc')
+                                  ->findAll();
+
+        // 4. Tampilkan view chat_conversation
+        return view('chat_conversation', [
+            'ticket'        => $ticket,
+            'chatMessages'  => $chatMessages,
+            'isAdminAccess' => true // Flag penting untuk membedakan tampilan Admin
+        ]);
     }
 
 }

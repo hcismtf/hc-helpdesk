@@ -9,7 +9,7 @@ use Config\Superadmin;
 class PermissionFilter implements FilterInterface
 {
     protected $permissionFileMap = [
-        'tickets'         => ['ticket_dashboard', 'ticket_detail', 'get_ticket_list', 'send_reply'],
+        'tickets'         => ['ticket_dashboard', 'ticket_detail', 'get_ticket_list', 'send_reply', 'ticket-detail'],
         'dashboard'       => ['dashboard'],
         'user_management' => [
             'user_mgt', 'get_user_list',

@@ -101,3 +101,8 @@ $routes->get('admin/developer-options', 'admin\DeveloperOptions::index');
 
 //pusat bantuan
 $routes->get('pusat-bantuan', 'PusatBantuan::pusat_bantuan');
+
+// monitoring report tiket
+$routes->get('Ticket-detail/(:segment)', 'Ticket::monitoringTicket/$1');
+$routes->get('admin/Ticket-detail/(:segment)', 'admin\Admin::ConversationAsAdmin/$1');
+$routes->post('send-message', 'ConversationController::send_message');
