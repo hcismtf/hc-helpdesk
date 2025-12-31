@@ -81,6 +81,7 @@ class Filters extends BaseFilters
             'devicesecurity' => ['except' => [
                 'admin/*',
                 'pusat_bantuan',
+                'ticket/detail/*'
             ]],
             'permission' => ['except' => [
                 'admin/login',
@@ -114,8 +115,10 @@ class Filters extends BaseFilters
                 // 'admin/view',
                 // 'admin/view/*',
                 'Ticket-detail/*',
+                'ticket/detail/*',
                 'Ticket-detail',
                 'send-message',
+                'admin/send_reply/*'
                 // Tambahkan endpoint lain yang dipakai AJAX
             ]],
         ],

@@ -7,8 +7,15 @@
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>">
 </head>
 <body>
-    <?php $active = 'tickets'; include('navbar.php'); ?>
+    <?php 
+        // Hanya tampilkan navbar jika sudah login
+        if (session('isLoggedIn')) {
+            $active = 'tickets'; 
+            include('navbar.php'); 
+        }
+    ?>
     <div class="main-content" id="main-content">
+        <?php if (session('isLoggedIn')): ?>
         <div class="page-title">Ticket</div>
         <div class="breadcrumb">
             <a href="<?= base_url('admin/dashboard') ?>" style="color:#234be7;text-decoration:none;">Home</a> &gt;
@@ -16,6 +23,7 @@
             <span style="color:#222;"><?= esc($ticket['id']) ?></span>
         </div>
         <button class="btn-back" onclick="window.location.href='<?= base_url('admin/Ticket_dashboard') ?>'">Back to Tickets</button>
+        <?php endif; ?>
         <div class="ticket-detail-box">
             <div class="header-row">
                 <div>
@@ -41,50 +49,58 @@
                         <span class="modal-user-title">Update Status</span>
                         <span class="modal-user-close" onclick="closeReplyStatusModal()" style="font-size:2rem; cursor:pointer;">&times;</span>
                     </div>
+
                     <form id="replyStatusForm" method="post" action="<?= base_url('admin/send_reply/' . esc($ticket['id'])) ?>">
-                        <div class="modal-form-group">
-                            <label class="modal-label">Status <span style="color:red">*</span></label>
-                            <select name="status" class="modal-input modal-textbox" required>
-                                <option value="">Select Ticket Status</option>
-                                <option value="open">Open</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="closed">Closed</option>
-                            </select>
-                        </div>
-                        <?php if (empty($ticket['ticket_priority'])): ?>
-                        <div class="modal-form-group">
-                            <label class="modal-label">Priority <span style="color:red">*</span></label>
-                            <select name="priority" class="modal-input modal-textbox" required>
-                                <option value="">Select Ticket Priority</option>
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                            </select>
-                        </div>
-                        <?php endif; ?>
-                        <?php if (!$hasReply): ?>
-                        <div class="modal-form-group">
-                            <label class="modal-label">Assigned To <span style="color:red">*</span></label>
-                            <select name="assigned_to" class="modal-input modal-textbox" required>
-                                <option value="">Select User</option>
-                                <?php foreach ($users as $user): ?>
-                                    <option value="<?= esc($user['id']) ?>"><?= esc($user['name']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <?php endif; ?>
-                        <div class="modal-form-group">
-                            <label class="modal-label">Add Reply <span style="color:red">*</span></label>
-                            <textarea name="reply" class="modal-input modal-textbox" style="height:100px;" required placeholder="Text Area"></textarea>
-                        </div>
-                        <div class="modal-user-footer" style="width:100%; display:flex; justify-content:center;">
-                            <button type="submit" class="modal-user-submit">Submit Status</button>
-                        </div>
-                        <?php if (!empty($ticket['ticket_priority'])): ?>
+                        
+                        <?php if (session('isLoggedIn')): ?>
+                            <div class="modal-form-group">
+                                <label class="modal-label">Status <span style="color:red">*</span></label>
+                                <select name="status" class="modal-input modal-textbox" required>
+                                    <option value="">Select Ticket Status</option>
+                                    <option value="open" <?= $ticket['ticket_status'] == 'open' ? 'selected' : '' ?>>Open</option>
+                                    <option value="in_progress" <?= $ticket['ticket_status'] == 'in_progress' ? 'selected' : '' ?>>In Progress</option>
+                                    <option value="closed" <?= $ticket['ticket_status'] == 'closed' ? 'selected' : '' ?>>Closed</option>
+                                </select>
+                            </div>
+
+                            <div class="modal-form-group">
+                                <label class="modal-label">Priority <span style="color:red">*</span></label>
+                                <select name="priority" class="modal-input modal-textbox" required>
+                                    <option value="">Select Ticket Priority</option>
+                                    <option value="low" <?= $ticket['ticket_priority'] == 'low' ? 'selected' : '' ?>>Low</option>
+                                    <option value="medium" <?= $ticket['ticket_priority'] == 'medium' ? 'selected' : '' ?>>Medium</option>
+                                    <option value="high" <?= $ticket['ticket_priority'] == 'high' ? 'selected' : '' ?>>High</option>
+                                    <option value="urgent" <?= $ticket['ticket_priority'] == 'urgent' ? 'selected' : '' ?>>Urgent</option>
+                                </select>
+                            </div>
+
+                            <?php if (!$hasReply || empty($ticket['assigned_to'])): ?>
+                            <div class="modal-form-group">
+                                <label class="modal-label">Assigned To <span style="color:red">*</span></label>
+                                <select name="assigned_to" class="modal-input modal-textbox" required>
+                                    <option value="">Select User</option>
+                                    <?php foreach ($users as $user): ?>
+                                        <option value="<?= esc($user['id']) ?>" <?= (isset($assignedName) && $user['name'] == $assignedName) ? 'selected' : '' ?>><?= esc($user['name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <?php endif; ?>
+
+                        <?php else: ?>
+                            <input type="hidden" name="status" value="<?= esc($ticket['ticket_status']) ?>">
                             <input type="hidden" name="priority" value="<?= esc($ticket['ticket_priority']) ?>">
-                        <?php endif; ?>
+                            <?php endif; ?>
+
+                        <div class="modal-form-group">
+                            <label class="modal-label">Message <span style="color:red">*</span></label>
+                            <textarea name="reply" class="modal-input modal-textbox" style="height:100px;" required placeholder="Type your message here..."></textarea>
+                        </div>
+
+                        <div class="modal-user-footer" style="width:100%; display:flex; justify-content:center;">
+                            <button type="submit" class="modal-user-submit">Send Reply</button>
+                        </div>
                     </form>
+
                 </div>
             </div>
             <div class="ticket-subject"><?= esc($ticket['subject'] ?? '') ?></div>
@@ -107,12 +123,30 @@
                     <div class="ticket-info-title">Ticket Information</div>
                     <div class="ticket-info-list">Request type: <?= esc($ticket['req_type'] ?? '') ?></div>
                     <div class="ticket-info-list">Created Date: <?= !empty($ticket['created_date']) ? esc(date('d/m/Y H:i:s', strtotime($ticket['created_date']))) : '' ?></div>
-                    <div class="ticket-info-list">Assigned To: <?= esc($assignedName) ?></div>               
-                    <div class="ticket-info-list">Monitoring URL: <a href="<?= base_url('admin/Ticket-detail/' . basename(esc($ticket['monitoring_url'] ?? ''))) ?>"  style="color:#234be7; font-weight:bold;"><?= esc($ticket['monitoring_url'] ?? '-') ?></a></div>          
+                    <div class="ticket-info-list">Assigned To: <?= esc($assignedName) ?></div>                         
                 </div>
             </div>
             <div class="ticket-section-title">Original Message</div>
-            <div class="ticket-message-box"><?= nl2br(esc($originalMessage)) ?></div>
+            <div class="reply-list">
+                <?php if (!empty($replies)):
+                    foreach ($replies as $reply):
+                        if ($reply['is_user']): // HANYA USER 
+                ?>
+                            <div class="reply-item">
+                                <div>
+                                    <strong><?= esc($reply['author']) ?> (User)</strong>
+                                    <span class="reply-date"><?= esc(date('d/m/Y H:i:s', strtotime($reply['created_at']))) ?></span>
+                                </div>
+                                <div class="reply-text">
+                                    <?= nl2br(esc($reply['text'])) ?>
+                                </div>
+                            </div>
+                        <?php 
+                        endif;
+                    endforeach;
+                endif; 
+                ?>
+            </div>
             <?php if (!empty($attachments)): ?>
                 <div class="ticket-section-title" style="margin-top:18px;">Attachment</div>
                 <div class="ticket-attachment-list" style="display:flex; gap:18px; flex-wrap:wrap;">
@@ -135,25 +169,37 @@
                     <div id="attachmentModalFilename" style="margin-top:12px; font-size:15px; color:#222;"></div>
                 </div>
             </div>
+
             <hr class="divider">
             <div class="ticket-section-title">Replies</div>
             <div class="reply-list">
-                <?php if (!empty($replies)): ?>
-                    <?php foreach ($replies as $reply): ?>
-                        <div class="reply-item">
-                            <div>
-                                <span class="reply-author"><?= esc($reply['author']) ?></span>
-                                <span class="reply-date"><?= esc(date('d/m/Y H:i:s', strtotime($reply['created_at']))) ?></span>
-                            </div>
-                            <div class="reply-text"><?= esc($reply['text']) ?></div>
+                <?php 
+                    $hasAdminReply = false;
+                    if (!empty($replies)): 
+                        foreach ($replies as $reply): 
+                            if (!$reply['is_user']): // HANYA ADMIN
+                                $hasAdminReply = true;
+                ?>
+                    <div class="reply-item">
+                        <div>
+                            <span class="reply-author"><?= esc($reply['author']) ?> (Admin)</span>
+                            <span class="reply-date"><?= esc(date('d/m/Y H:i:s', strtotime($reply['created_at']))) ?></span>
                         </div>
-                    <?php endforeach ?>
-                <?php else: ?>
-                    <div class="reply-item" style="color:#888;">No replies yet.</div>
-                <?php endif ?>
+                        <div class="reply-text"><?= esc($reply['text']) ?></div>
+                    </div>
+                <?php 
+                            endif; 
+                        endforeach; 
+                    endif; 
+                
+                if (!$hasAdminReply):
+                ?>
+                <div class="reply-item" style="color:#888;">No admin responses yet.</div>
+                <?php endif; ?>
             </div>
             
             <!-- <div class="ticket-section-title">Add Reply</div> -->
+             
             <div class="add-reply-box">
                 <form action="#" method="post">
                     <!-- <textarea class="add-reply-textarea" name="reply" placeholder="Text Area"></textarea> -->

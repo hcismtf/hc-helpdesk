@@ -443,31 +443,47 @@ class Admin extends BaseController
         $lastTrx = $trxModel->where('tiket_trx_id', $id)->orderBy('created_at', 'desc')->first();
 
         $assignedName = '-';
-        if (!empty($lastTrx['assigned_to'])) {
-            foreach ($users as $u) {
-                if ($u['id'] == $lastTrx['assigned_to']) {
-                    $assignedName = $u['name'];
-                    break;
-                }
+        if (!empty($ticket['assigned_to'])) {
+            $assignedUser = $userModel->find($ticket['assigned_to']);
+            if ($assignedUser) {
+                $assignedName = $assignedUser['name'];
             }
+            // foreach ($users as $u) {
+            //     if ($u['id'] == $lastTrx['assigned_to']) {
+            //         $assignedName = $u['name'];
+            //         break;
+            //     }
+            // }
         }
 
+        
         // Ambil semua replies
         $repliesRaw = $trxModel->where('tiket_trx_id', $id)->orderBy('created_at', 'asc')->findAll();
         $originalMessage = '';
         $replies = [];
 
         foreach ($repliesRaw as $r) {
-            $author = '';
-            foreach ($users as $u) {
-                if ($u['id'] == $r['user_id']) {
-                    $author = $u['name'];
-                    break;
-                }
+            $isUser = ($r['submitted_by'] === 'user' || $r['submitted_by'] == $ticket['emp_id']);
+            if ($isUser){
+                $authorName = $ticket['emp_name'];
             }
+            else {
+                // Jika Admin: Cari nama admin berdasarkan ID yang tersimpan di submitted_by
+                $adminUser = $userModel->find($r['submitted_by']);
+                // Jika ketemu gunakan namanya, jika tidak (misal data lama) gunakan assigned name atau default 'Admin'
+                $authorName = $adminUser ? $adminUser['name'] : ($assignedName !== '-' ? $assignedName : 'Admin');
+            }
+            // $author = '';
+            // foreach ($users as $u) {
+            //     if ($u['id'] == $r['user_id']) {
+            //         $author = $u['name'];
+            //         break;
+            //     }
+            // }
             
             $replies[] = [
-                'author'     => $author ?: 'User',
+                'is_user'     => $isUser,
+                'author'     => $authorName ?: 'User',
                 'created_at' => $r['created_at'],
                 'text'       => $r['reply']
             ];
@@ -1398,30 +1414,49 @@ class Admin extends BaseController
     {
         // Ambil ticket lamage
         $ticketModel = new TicketModel();
-        $chatModel = new \App\Models\ConversationModel();
+        // $chatModel = new \App\Models\ConversationModel();
         $ticket = $ticketModel->find($ticketId);
 
         $replyText   = $this->request->getPost('reply');
         $inputStatus = $this->request->getPost('status');
-        $status     = !empty($inputStatus) ? $inputStatus : $ticket['ticket_status'];
+        
         $inputPriority = $this->request->getPost('priority');
-        $priority    = !empty($inputPriority) ? $inputPriority : $ticket['ticket_priority'];
+        
         $assignedTo  = $this->request->getPost('assigned_to');
 
         // Jika assigned_to tidak dikirim dari form, ambil dari transaksi terakhir
         if (empty($assignedTo)) {
             $trxModel = new TiketTransactionsModel();
             $lastTrx = $trxModel->where('tiket_trx_id', $ticketId)->orderBy('created_at', 'desc')->first();
-            $assignedTo = !empty($lastTrx['assigned_to']) ? $lastTrx['assigned_to'] : null;
+            
         }
 
-        $userId   = session('user_id');
-        $role     = session('role');
-        $username = session('username') ?? 'system';
+        if (session('isLoggedIn')) {
 
-        if ($role === 'superadmin') {
-            $userId = 9999;
-            $username = 'superadmin';
+            $userId   = session('user_id');
+            $role     = session('role');
+            $username = session('username') ?? 'system';
+
+            if ($role === 'superadmin') {
+                $userId = 9999;
+                $username = 'superadmin';
+            }
+            $status     = !empty($inputStatus) ? $inputStatus : $ticket['ticket_status'];
+            $priority    = !empty($inputPriority) ? $inputPriority : $ticket['ticket_priority'];
+            $assignedTo = !empty($lastTrx['assigned_to']) ? $lastTrx['assigned_to'] : null;
+
+            // Jika assigned_to kosong, pertahankan yang lama
+            if (empty($assignedTo)) {
+                $assignedTo = $ticket['assigned_to'];
+            }
+        }else{
+            $userId = $ticket['emp_id'];
+            $submittedBy = 'user';
+            $username = $ticket['emp_name'];
+
+            $status = $ticket['ticket_status']; 
+            $priority = $ticket['ticket_priority'];
+            $assignedTo = $ticket['assigned_to'];
         }
 
         // Ambil SLA sesuai priority
@@ -1474,19 +1509,6 @@ class Admin extends BaseController
             $updateData['finish_date'] = $finishDate;
         }
         $ticketModel->update($ticketId, $updateData);
-
-        
-        $chatModel->insert([
-            'ticket_trx_id'   => $ticketId,
-            'message'         => $replyText,
-            'reply_by'        => 'Admin', // Penanda pengirim
-            'ticket_status'   => $status,
-            'ticket_priority' => $priority,
-            'created_date'    => date('Y-m-d H:i:s'),
-            'emp_name'        => $ticket['emp_name'],
-            'email'           => $ticket['email'],
-            'nip_encrypted'   => $ticket['nip_encrypted'] ?? ''
-        ]);
 
         // --- KIRIM EMAIL ---
         //Generate public URL untuk USER
@@ -1580,7 +1602,7 @@ class Admin extends BaseController
                             </div>
                             
                             <p>Tim support kami akan segera menyelesaikan request Anda. Mohon ditunggu untuk update berikutnya.</p>
-                            <p> Anda juga dapat mengunjungi link berikut untuk menghubungi admin : <a href='{$publicConversationURL}'></a></p>
+                            <p> Anda juga dapat mengunjungi link berikut untuk menghubungi admin : <a href='{$publicConversationURL}'>{$publicConversationURL}</a></p>
                             
                             <br>
                             <p>Hormat kami,<br>
@@ -1645,32 +1667,6 @@ class Admin extends BaseController
             ->setBody(file_get_contents($filePath));
     }
 
-    public function ConversationAsAdmin($uuid)
-    {
-        $ticketModel = new TicketModel();
-        
-        // Gunakan fully qualified namespace jika belum di-use di atas
-        $chatModel = new \App\Models\ConversationModel();
-        
-        // 1. Cari tiket berdasarkan UUID (dari monitoring_url)
-        // Gunakan 'like' karena monitoring_url mungkin berisi full URL
-        $ticket = $ticketModel->like('monitoring_url', $uuid)->first();
-
-        // if (!$ticket) {
-        //     throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Tiket tidak ditemukan.");
-        // }
-
-        // 3. Ambil riwayat chat
-        $chatMessages = $chatModel->where('ticket_trx_id', $ticket['id'])
-                                  ->orderBy('created_date', 'asc')
-                                  ->findAll();
-
-        // 4. Tampilkan view chat_conversation
-        return view('chat_conversation', [
-            'ticket'        => $ticket,
-            'chatMessages'  => $chatMessages,
-            'isAdminAccess' => true // Flag penting untuk membedakan tampilan Admin
-        ]);
-    }
+    
 
 }
