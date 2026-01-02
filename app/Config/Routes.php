@@ -26,9 +26,9 @@ $routes->get('admin/dashboard', 'admin\Admin::dashboard');
 $routes->get('admin/Ticket_dashboard', 'admin\Admin::Ticket_dashboard');
 
 // tickets_db
-$routes->get('admin/Ticket_detail/(:num)', 'admin\Admin::Ticket_detail/$1');
-$routes->post('admin/send_reply/(:num)', 'admin\Admin::send_reply/$1');
-$routes->get('ticket/detail/(:num)', 'admin\Admin::Ticket_detail/$1'); // <-- Public URL
+$routes->get('admin/Ticket_detail/(:segment)', 'admin\Admin::Ticket_detail/$1');
+$routes->post('admin/send_reply/(:segment)', 'admin\Admin::send_reply/$1');
+$routes->get('ticket/detail/(:segment)', 'admin\Admin::Ticket_detail/$1'); // <-- Public URL
 
 //system settings
 $routes->get('admin/system_settings', 'admin\Admin::system_settings');

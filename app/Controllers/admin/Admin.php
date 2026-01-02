@@ -406,7 +406,7 @@ class Admin extends BaseController
     public function Ticket_detail($id)
     {
         $model = new TicketModel();
-        $ticket = $model->find($id);
+        $ticket = null;
         $userModel = new \App\Models\UserModel();
         $users = $userModel->where('status', 'active')->findAll();
         // Ticket Attachment
@@ -422,6 +422,20 @@ class Admin extends BaseController
             } catch (\Exception $e) {
                 $ticket['emp_nip'] = '[Invalid]';
             }
+        }
+
+        if(!session('isLoggedIn') && is_numeric($id)){
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Ticket not found");
+        }
+
+        if(is_numeric($id)){
+            $ticket = $model->find($id);
+        }
+        if(!$ticket){
+            $ticket = $model->where('emp_id', $id)->first();
+        }
+        if(!$ticket){
+            return redirect()->to('/admin/Ticket_dashboard')->with('error', 'Ticket not found');
         }
 
         foreach ($attachmentsRaw as $att) {
@@ -458,7 +472,8 @@ class Admin extends BaseController
 
         
         // Ambil semua replies
-        $repliesRaw = $trxModel->where('tiket_trx_id', $id)->orderBy('created_at', 'asc')->findAll();
+        $ticketId = $ticket['id'];
+        $repliesRaw = $trxModel->where('tiket_trx_id', $ticketId)->orderBy('created_at', 'asc')->findAll();
         $originalMessage = '';
         $replies = [];
 
@@ -1410,12 +1425,12 @@ class Admin extends BaseController
         }
         return redirect()->to(base_url('admin/report_user'));
     }
-    public function send_reply($ticketId)
+    public function send_reply($id)
     {
         // Ambil ticket lamage
         $ticketModel = new TicketModel();
         // $chatModel = new \App\Models\ConversationModel();
-        $ticket = $ticketModel->find($ticketId);
+        $ticket = null;
 
         $replyText   = $this->request->getPost('reply');
         $inputStatus = $this->request->getPost('status');
@@ -1424,12 +1439,28 @@ class Admin extends BaseController
         
         $assignedTo  = $this->request->getPost('assigned_to');
 
+        if(!session('isLoggedIn') && is_numeric($id)){
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Ticket not found");
+        }
+
+        if(is_numeric($id)){
+            $ticket = $ticketModel->find($id);
+        }
+        if(!$ticket){
+            $ticket = $ticketModel->where('emp_id', $id)->first();
+        }
+        if(!$ticket){
+            return redirect()->back()->with('error', 'Ticket not found.');
+        }
+
         // Jika assigned_to tidak dikirim dari form, ambil dari transaksi terakhir
         if (empty($assignedTo)) {
             $trxModel = new TiketTransactionsModel();
-            $lastTrx = $trxModel->where('tiket_trx_id', $ticketId)->orderBy('created_at', 'desc')->first();
+            $lastTrx = $trxModel->where('tiket_trx_id', $id)->orderBy('created_at', 'desc')->first();
             
         }
+
+        $ticketId = $ticket['id'];
 
         if (session('isLoggedIn')) {
 
@@ -1443,11 +1474,16 @@ class Admin extends BaseController
             }
             $status     = !empty($inputStatus) ? $inputStatus : $ticket['ticket_status'];
             $priority    = !empty($inputPriority) ? $inputPriority : $ticket['ticket_priority'];
-            $assignedTo = !empty($lastTrx['assigned_to']) ? $lastTrx['assigned_to'] : null;
 
             // Jika assigned_to kosong, pertahankan yang lama
             if (empty($assignedTo)) {
-                $assignedTo = $ticket['assigned_to'];
+                // Coba ambil dari transaksi terakhir
+                if (!empty($lastTrx['assigned_to'])) {
+                    $assignedTo = $lastTrx['assigned_to'];
+                } else {
+                    // Jika tidak ada di transaksi, gunakan dari data tiket saat ini
+                    $assignedTo = $ticket['assigned_to'];
+                }
             }
         }else{
             $userId = $ticket['emp_id'];
@@ -1508,140 +1544,226 @@ class Admin extends BaseController
         if ($finishDate) {
             $updateData['finish_date'] = $finishDate;
         }
-        $ticketModel->update($ticketId, $updateData);
+        $ticketModel->update($ticketId, [
+            'ticket_status' => $status,
+            'ticket_priority' => $priority,
+            'assigned_to' => $assignedTo,
+            'modified_date' => date('Y-m-d H:i:s'),
+        ]);
 
         // --- KIRIM EMAIL ---
-        //Generate public URL untuk USER
-        $uuid = basename($ticket['monitoring_url'] ?? '');
-        $publicConversationURL = base_url('Ticket-detail/' . $uuid);
+        if(session('isLoggedIn')){
+            $uuid = $ticket['emp_id'];
+            $publicURL = base_url('ticket/detail/' . $uuid); 
+            
 
-        // Ambil nama assigned_to
-        $assignedName = '-';
-        if ($assignedTo) {
-            $userModel = new \App\Models\UserModel();
-            $assignedUser = $userModel->find($assignedTo);
-            if ($assignedUser) $assignedName = $assignedUser['name'];
-        }
-
-        // Template email
-        if ($status === 'closed') {
-            $emailBody = "
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .header { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-                        .content { line-height: 1.6; color: #333; }
-                        .ticket-info { background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 15px 0; }
-                        .ticket-info p { margin: 8px 0; }
-                        .label { font-weight: bold; color: #555; }
-                        .status-closed { color: #22c55e; font-weight: bold; }
-                    </style>
-                </head>
-                <body>
-                    <div class='container'>
-                        <div class='header'>
-                            <h2>Ticket Closed - Resolution Complete</h2>
-                        </div>
-                        <div class='content'>
-                            <p>Dear <strong>{$ticket['emp_name']}</strong>,</p>
-                            <p>Terima kasih telah menunggu. Tiket Anda telah <span class='status-closed'>SELESAI</span> dikerjakan.</p>
-                            
-                            <div class='ticket-info'>
-                                <p><span class='label'>Ticket ID:</span> {$ticketId}</p>
-                                <p><span class='label'>Request Type:</span> {$ticket['req_type']}</p>
-                                <p><span class='label'>Subject:</span> {$ticket['subject']}</p>
-                                <p><span class='label'>Status:</span> <span class='status-closed'>Closed</span></p>
-                                <p><span class='label'>Admin Feedback:</span></p>
-                                <p style='margin-left: 15px; font-style: italic;'>{$replyText}</p>
-                            </div>
-                            
-                            <p>Jika masih ada pertanyaan atau membutuhkan bantuan lebih lanjut, silakan hubungi kami melalui email atau submit ticket baru.</p>
-                            
-                            <br>
-                            <p>Hormat kami,<br>
-                            <strong>Human Capital Division</strong>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            ";
-        } else {
-            $emailBody = "
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .header { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-                        .content { line-height: 1.6; color: #333; }
-                        .ticket-info { background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 15px 0; }
-                        .ticket-info p { margin: 8px 0; }
-                        .label { font-weight: bold; color: #555; }
-                        .status-progress { color: #0091ffff; font-weight: bold; }
-                    </style>
-                </head>
-                <body>
-                    <div class='container'>
-                        <div class='header'>
-                            <h2>Ticket Update - In Progress</h2>
-                        </div>
-                        <div class='content'>
-                            <p>Dear <strong>{$ticket['emp_name']}</strong>,</p>
-                            <p>Terima kasih telah mengajukan ticket di HC Helpdesk. Tiket Anda sedang dalam proses penanganan.</p>
-                            
-                            <div class='ticket-info'>
-                                <p><span class='label'>Ticket ID:</span> {$ticketId}</p>
-                                <p><span class='label'>Request Type:</span> {$ticket['req_type']}</p>
-                                <p><span class='label'>Subject:</span> {$ticket['subject']}</p>
-                                <p><span class='label'>Status:</span> <span class='status-progress'>In Progress</span></p>
-                                <p><span class='label'>Assigned To:</span> {$assignedName}</p>
-                                <p><span class='label'>Admin Update:</span></p>
-                                <p style='margin-left: 15px; font-style: italic;'>{$replyText}</p>
-                            </div>
-                            
-                            <p>Tim support kami akan segera menyelesaikan request Anda. Mohon ditunggu untuk update berikutnya.</p>
-                            <p> Anda juga dapat mengunjungi link berikut untuk menghubungi admin : <a href='{$publicConversationURL}'>{$publicConversationURL}</a></p>
-                            
-                            <br>
-                            <p>Hormat kami,<br>
-                            <strong>Human Capital Division</strong>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            ";
-        }
-
-        $toEmail = $ticket['email'] ?? '';
-        if ($toEmail) {
-            // Pastikan PHPMailer sudah diinstall via composer
-            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/PHPMailer.php');
-            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/Exception.php');
-            require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/SMTP.php');
-
-            $mail = new PHPMailer(true);
-            try {
-                $mail->isSMTP();
-                $mail->Host = getenv('email.SMTPHost') ?: 'smtp.office365.com';
-                $mail->SMTPAuth = true;
-                $mail->Username = getenv('email.SMTPUser') ?: 'support@example.com';
-                $mail->Password = getenv('email.SMTPPass') ?: '';
-                $mail->SMTPSecure = getenv('email.SMTPCrypto') ?: 'tls';
-                $mail->Port = getenv('email.SMTPPort') ?: 587;
-
-                $mail->setFrom(getenv('email.fromEmail') ?: 'support@example.com', getenv('email.fromName') ?: 'HC Helpdesk');
-                $mail->addAddress($toEmail);
-
-                $mail->Subject = "Ticket #" . $ticketId . " - HC Helpdesk";
-                $mail->isHTML(true);
-                $mail->Body = $emailBody;
-
-                $mail->send();
-            } catch (Exception $e) {
-                // error_log('Mailer Error: ' . $mail->ErrorInfo);
+            // Ambil nama assigned_to
+            $assignedName = '-';
+            if ($assignedTo) {
+                $userModel = new \App\Models\UserModel();
+                $assignedUser = $userModel->find($assignedTo);
+                if ($assignedUser) $assignedName = $assignedUser['name'];
             }
+
+            // Template email
+            if ($status === 'closed') {
+                $emailBody = "
+                    <html>
+                    <head>
+                        <style>
+                            body { font-family: Arial, sans-serif; }
+                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                            .header { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                            .content { line-height: 1.6; color: #333; }
+                            .ticket-info { background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 15px 0; }
+                            .ticket-info p { margin: 8px 0; }
+                            .label { font-weight: bold; color: #555; }
+                            .status-closed { color: #22c55e; font-weight: bold; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='header'>
+                                <h2>Ticket Closed - Resolution Complete</h2>
+                            </div>
+                            <div class='content'>
+                                <p>Dear <strong>{$ticket['emp_name']}</strong>,</p>
+                                <p>Terima kasih telah menunggu. Tiket Anda telah <span class='status-closed'>SELESAI</span> dikerjakan.</p>
+                                
+                                <div class='ticket-info'>
+                                    <p><span class='label'>Ticket ID:</span> {$ticketId}</p>
+                                    <p><span class='label'>Request Type:</span> {$ticket['req_type']}</p>
+                                    <p><span class='label'>Subject:</span> {$ticket['subject']}</p>
+                                    <p><span class='label'>Status:</span> <span class='status-closed'>Closed</span></p>
+                                    <p><span class='label'>Admin Feedback:</span></p>
+                                    <p style='margin-left: 15px; font-style: italic;'>{$replyText}</p>
+                                </div>
+                                
+                                <p>Jika masih ada pertanyaan atau membutuhkan bantuan lebih lanjut, silakan hubungi kami melalui email atau submit ticket baru.</p>
+                                
+                                <br>
+                                <p>Hormat kami,<br>
+                                <strong>Human Capital Division</strong>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                ";
+            } else {
+                $emailBody = "
+                    <html>
+                    <head>
+                        <style>
+                            body { font-family: Arial, sans-serif; }
+                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                            .header { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                            .content { line-height: 1.6; color: #333; }
+                            .ticket-info { background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 15px 0; }
+                            .ticket-info p { margin: 8px 0; }
+                            .label { font-weight: bold; color: #555; }
+                            .status-progress { color: #0091ffff; font-weight: bold; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='header'>
+                                <h2>Ticket Update - In Progress</h2>
+                            </div>
+                            <div class='content'>
+                                <p>Dear <strong>{$ticket['emp_name']}</strong>,</p>
+                                <p>Terima kasih telah mengajukan ticket di HC Helpdesk. Tiket Anda sedang dalam proses penanganan.</p>
+                                
+                                <div class='ticket-info'>
+                                    <p><span class='label'>Ticket ID:</span> {$ticketId}</p>
+                                    <p><span class='label'>Request Type:</span> {$ticket['req_type']}</p>
+                                    <p><span class='label'>Subject:</span> {$ticket['subject']}</p>
+                                    <p><span class='label'>Status:</span> <span class='status-progress'>In Progress</span></p>
+                                    <p><span class='label'>Assigned To:</span> {$assignedName}</p>
+                                    <p><span class='label'>Admin Update:</span></p>
+                                    <p style='margin-left: 15px; font-style: italic;'>{$replyText}</p>
+                                </div>
+                                
+                                <p>Tim support kami akan segera menyelesaikan request Anda. Mohon ditunggu untuk update berikutnya.</p>
+                                <p> Anda juga dapat mengunjungi link berikut untuk menghubungi admin : <a href='{$publicURL}'>{$publicURL}</a></p>
+                                
+                                <br>
+                                <p>Hormat kami,<br>
+                                <strong>Human Capital Division</strong>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                ";
+            }
+        
+
+            $toEmail = $ticket['email'] ?? '';
+            if ($toEmail) {
+                // Pastikan PHPMailer sudah diinstall via composer
+                require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/PHPMailer.php');
+                require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/Exception.php');
+                require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/SMTP.php');
+
+                $mail = new PHPMailer(true);
+                try {
+                    $mail->isSMTP();
+                    $mail->Host = getenv('email.SMTPHost') ?: 'smtp.office365.com';
+                    $mail->SMTPAuth = true;
+                    $mail->Username = getenv('email.SMTPUser') ?: 'support@example.com';
+                    $mail->Password = getenv('email.SMTPPass') ?: '';
+                    $mail->SMTPSecure = getenv('email.SMTPCrypto') ?: 'tls';
+                    $mail->Port = getenv('email.SMTPPort') ?: 587;
+
+                    $mail->setFrom(getenv('email.fromEmail') ?: 'support@example.com', getenv('email.fromName') ?: 'HC Helpdesk');
+                    $mail->addAddress($toEmail);
+
+                    $mail->Subject = "Ticket #" . $ticketId . " - HC Helpdesk";
+                    $mail->isHTML(true);
+                    $mail->Body = $emailBody;
+
+                    $mail->send();
+                } catch (Exception $e) {
+                    // error_log('Mailer Error: ' . $mail->ErrorInfo);
+                }
+            }
+        } else{
+            if (!empty($assignedTo)) {
+                $userModel = new \App\Models\UserModel();
+                $adminUser = $userModel->find($assignedTo);
+
+                // Cek jika admin ditemukan dan punya email
+                if ($adminUser && !empty($adminUser['email'])) {
+                    require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/PHPMailer.php');
+                    require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/Exception.php');
+                    require_once(ROOTPATH . 'vendor/phpmailer/phpmailer/src/SMTP.php');
+
+                    $mail = new PHPMailer(true);
+                    try {
+                        $mail->isSMTP();
+                        $mail->Host = getenv('email.SMTPHost') ?: 'smtp.office365.com';
+                        $mail->SMTPAuth = true;
+                        $mail->Username = getenv('email.SMTPUser') ?: 'support@example.com';
+                        $mail->Password = getenv('email.SMTPPass') ?: '';
+                        $mail->SMTPSecure = getenv('email.SMTPCrypto') ?: 'tls';
+                        $mail->Port = getenv('email.SMTPPort') ?: 587;
+
+                        $mail->setFrom(getenv('email.fromEmail') ?: 'support@example.com', getenv('email.fromName') ?: 'HC Helpdesk');
+                        $mail->addAddress($adminUser['email']); // Kirim ke email Admin
+
+                        $mail->Subject = "Ticket Update - User Reply - Ticket #" . $ticketId;
+                        $mail->isHTML(true);
+
+                        $emailBody = "
+                            <html>
+                            <head>
+                                <style>
+                                    body { font-family: Arial, sans-serif; }
+                                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                                    .header { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                                    .content { line-height: 1.6; color: #333; }
+                                    .ticket-info { background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 15px 0; }
+                                    .ticket-info p { margin: 8px 0; }
+                                    .label { font-weight: bold; color: #555; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class='container'>
+                                    <div class='header'>
+                                        <h2>New User Reply</h2>
+                                    </div>
+                                    <div class='content'>
+                                        <p>Dear <strong>{$adminUser['name']}</strong>,</p>
+                                        <p>User <strong>{$ticket['emp_name']}</strong> telah mengirim balasan baru untuk ticket #{$ticketId}.</p>
+                                        
+                                        <div class='ticket-info'>
+                                            <p><span class='label'>Ticket ID:</span> {$ticketId}</p>
+                                            <p><span class='label'>Request Type:</span> {$ticket['req_type']}</p>
+                                            <p><span class='label'>Subject:</span> {$ticket['subject']}</p>
+                                            <p><span class='label'>Status:</span> {$ticket['ticket_status']}</p>
+                                            <p><span class='label'>User Message:</span></p>
+                                            <p style='margin-left: 15px; font-style: italic;'>{$replyText}</p>
+                                        </div>
+                                        
+                                        <p>Silakan login ke dashboard admin untuk merespon ticket ini.</p>
+                                        
+                                        <br>
+                                        <p>Hormat kami,<br>
+                                        <strong>System Notification</strong>
+                                    </div>
+                                </div>
+                            </body>
+                            </html>
+                        ";
+
+                        $mail->Body = $emailBody;
+                        $mail->send();
+                        log_message('info', 'Notifikasi reply user dikirim ke admin: ' . $adminUser['email']);
+                    } catch (Exception $e) {
+                        log_message('error', 'Gagal mengirim email notifikasi ke admin: ' . $mail->ErrorInfo);
+                    }
+                }
+            }
+        
         }
 
         // return redirect()->to('admin/Ticket_detail/' . $ticketId);

@@ -13,6 +13,8 @@
             $active = 'tickets'; 
             include('navbar.php'); 
         }
+
+        $uniqueUrl = basename(current_url());
     ?>
     <div class="main-content" id="main-content">
         <?php if (session('isLoggedIn')): ?>
@@ -50,7 +52,7 @@
                         <span class="modal-user-close" onclick="closeReplyStatusModal()" style="font-size:2rem; cursor:pointer;">&times;</span>
                     </div>
 
-                    <form id="replyStatusForm" method="post" action="<?= base_url('admin/send_reply/' . esc($ticket['id'])) ?>">
+                    <form id="replyStatusForm" method="post" action="<?= base_url('admin/send_reply/' . $uniqueUrl) ?>">
                         
                         <?php if (session('isLoggedIn')): ?>
                             <div class="modal-form-group">
@@ -200,6 +202,17 @@
             
             <!-- <div class="ticket-section-title">Add Reply</div> -->
              
+        <?php 
+            $isClosed = ($ticket['ticket_status'] == 'closed');
+            $isAdmin = session('isLoggedIn');
+        ?>
+
+        <?php if ($isClosed && !$isAdmin): ?>
+            <div class="add-reply-box" style="text-align:center; background-color:#f8d7da; color:#721c24; border:1px solid #f5c6cb; padding:15px; border-radius:8px;">
+                <strong>Ticket Closed.</strong><br>
+                This conversation has been closed. You cannot send further replies.
+            </div>
+        <?php else: ?>
             <div class="add-reply-box">
                 <form action="#" method="post">
                     <!-- <textarea class="add-reply-textarea" name="reply" placeholder="Text Area"></textarea> -->
@@ -207,54 +220,18 @@
                 </form>
             </div>
         </div>
+        <?php endif; ?>
+        
+        <!-- Loading Modal -->
+        </div> <div id="loadingModal" class="loading-modal-bg" style="display:none;">
+            <div class="loading-modal">
+                <div class="spinner"></div>
+                <div class="loading-text">Mengirim Pesan Anda...</div>
+                <div style="font-size: 13px; color: #999; margin-top: 10px;">Silakan tunggu sebentar</div>
+            </div>
+        </div>
     </div>
-    <script>
-        function showAttachmentModal(url) {
-            document.getElementById('attachmentModalImg').src = url;
-            // Ambil nama file dari url
-            var filename = url.split('/').pop();
-            document.getElementById('attachmentModalFilename').textContent = filename;
-            document.getElementById('attachmentModal').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            document.addEventListener('keydown', escCloseAttachmentModal);
-        }
-        function closeAttachmentModal() {
-            document.getElementById('attachmentModal').style.display = 'none';
-            document.getElementById('attachmentModalImg').src = '';
-            document.body.style.overflow = '';
-            document.removeEventListener('keydown', escCloseAttachmentModal);
-        }
-        function escCloseAttachmentModal(e) {
-            if (e.key === "Escape") {
-                closeAttachmentModal();
-            }
-        }
-    function showStatusModal() {
-        document.getElementById('statusModal').style.display = 'flex';
-        document.addEventListener('keydown', escCloseModal);
-    }
-    function closeStatusModal() {
-        document.getElementById('statusModal').style.display = 'none';
-        document.removeEventListener('keydown', escCloseModal);
-    }
-    function escCloseModal(e) {
-        if (e.key === "Escape") {
-            closeStatusModal();
-        }
-    }
-    function showReplyStatusModal() {
-        document.getElementById('replyStatusModal').style.display = 'flex';
-        document.addEventListener('keydown', escCloseReplyModal);
-    }
-    function closeReplyStatusModal() {
-        document.getElementById('replyStatusModal').style.display = 'none';
-        document.removeEventListener('keydown', escCloseReplyModal);
-    }
-    function escCloseReplyModal(e) {
-        if (e.key === "Escape") {
-            closeReplyStatusModal();
-        }
-    }
-    </script>
+    
+    <script src="<?= base_url('assets/js/Admin/Ticket_detail.js') ?>"></script>
 </body>
 </html>
