@@ -17,21 +17,21 @@ function hasMenuAccess($menuName) {
 <head>
     <meta charset="UTF-8">
     <title>System Settings</title>
-    <link rel="stylesheet" href="<?= base_url('assets/css/admin/dashboard.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/css/admin/system_settings.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/dashboard.css') ?>?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/system_settings.css') ?>?v=<?= time() ?>">
 </head>
 <body>
     <?php $active = 'settings'; include('navbar.php'); ?>
     <div class="main-content">
-        <div class="page-title">System Settings</div>
-        <div class="breadcrumb">Home &gt; System Settings</div>
-        <div class="settings-header-row">
-            <div></div>
-            <div>
-                <div class="settings-welcome">Welcome, <?= esc(session('username')) ?></div>
-            </div>
-        </div>
+        <!-- Top Header Component -->
+        <?= view('components/admin_header', [
+            'breadcrumbRoot'   => 'Helpdesk Admin',
+            'breadcrumbActive' => 'System Settings',
+            'pageTitle'        => 'System Settings',
+            'showCreateTicket' => false,
+            'showNotif'        => true,
+        ]) ?>
         <div class="settings-tabs" id="settingsTabs">
             <div class="settings-slider" id="settingsSlider"></div>
             <button class="settings-tab active" onclick="moveSlider(0)">FAQ Management</button>

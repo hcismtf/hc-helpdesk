@@ -39,67 +39,97 @@ class Ticket extends Controller
         $ticketModel = new TicketModel();
         $ticketAttModel = new TicketAttModel();
 
+        $emp_name = trim($this->request->getPost('emp_name') ?? '');
+        $nip_asli = trim($this->request->getPost('emp_id') ?? '');
+        $email    = trim($this->request->getPost('email') ?? '');
+        $wa_no    = trim($this->request->getPost('wa_no') ?? '');
+        $req_type = trim($this->request->getPost('req_type') ?? '');
+        $subject  = trim($this->request->getPost('subject') ?? '');
+        $message  = trim($this->request->getPost('message') ?? '');
+        $priority = trim($this->request->getPost('ticket_priority') ?? '');
+
+        $isAjax = $this->request->isAJAX() || $this->request->getPost('is_ajax');
+
+        // Validation
+        if (empty($emp_name) || empty($nip_asli) || empty($email) || empty($wa_no) || empty($req_type) || empty($subject)) {
+            if ($isAjax) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => 'error',
+                    'message' => 'Harap lengkapi semua kolom bertanda bintang (*).'
+                ]);
+            }
+            return redirect()->back()->withInput()->with('error', 'Harap lengkapi semua kolom bertanda bintang (*).');
+        }
+
         $emp_id = $this->generateUUIDv4();
-        $nip_asli = $this->request->getPost('emp_id');
         $encrypter = \Config\Services::encrypter();
         $nip_encrypted = bin2hex($encrypter->encrypt($nip_asli));
 
+        $ticketId = $this->generateUUIDv4();
+
+        // Calculate due_date based on SLA if priority is provided
+        $dueDate = null;
+        if (!empty($priority)) {
+            try {
+                $slaModel = new \App\Models\SlaModel();
+                $sla = $slaModel->where('priority', $priority)->first();
+                if ($sla && !empty($sla['duration'])) {
+                    $dueDate = date('Y-m-d H:i:s', strtotime("+{$sla['duration']} hours"));
+                }
+            } catch (\Throwable $e) {
+                $dueDate = null;
+            }
+        }
 
         $data = [
-            'emp_id'        => $emp_id,
-            'nip_encrypted' => $nip_encrypted,
-            'emp_name'      => $this->request->getPost('emp_name'),
-            'email'         => $this->request->getPost('email'),
-            'wa_no'         => $this->request->getPost('wa_no'),
-            'req_type'      => $this->request->getPost('req_type'),
-            'subject'       => $this->request->getPost('subject'),
-            'message'       => $this->request->getPost('message'),
-            'ticket_status' => 'open',
-            'ticket_priority' => null,
-            'due_date'      => null,
-            'created_by'    => $this->request->getPost('emp_name'),
-            'created_date'  => date('Y-m-d H:i:s'),
+            'id'              => $ticketId,
+            'emp_id'          => $emp_id,
+            'nip_encrypted'   => $nip_encrypted,
+            'emp_name'        => $emp_name,
+            'email'           => $email,
+            'wa_no'           => $wa_no,
+            'req_type'        => $req_type,
+            'subject'         => $subject,
+            'message'         => $message,
+            'ticket_status'   => 'open',
+            'ticket_priority' => !empty($priority) ? $priority : null,
+            'due_date'        => $dueDate,
+            'created_by'      => $emp_name,
+            'created_date'    => date('Y-m-d H:i:s'),
         ];
 
-        $ticketId = $ticketModel->insert($data);
+        $ticketModel->insert($data);
 
         // kalau ada file upload
         $file = $this->request->getFile('attachment');
         $ticket_att_id = null;
         if ($file && $file->isValid() && !$file->hasMoved()) {
-            $maxSize = 1024 * 1024; // 1MB
+            $maxSize = 5 * 1024 * 1024; // 5MB
             $newName = $file->getRandomName();
 
-            // Tentukan folder tujuan (Gunakan FCPATH untuk folder public, atau WRITEPATH untuk folder writable)
             $uploadPath = FCPATH . 'uploads/images-attachment/'; 
-            
-            // PENTING: Cek apakah folder ada, jika tidak buat folder tersebut
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0755, true);
             }
 
             // Jika file > 1MB dan tipe gambar, compress
-            if ($file->getSize() > $maxSize && strpos($file->getMimeType(), 'image/') === 0) {
+            if ($file->getSize() > (1024 * 1024) && strpos($file->getMimeType(), 'image/') === 0) {
                 $imageType = $file->getMimeType();
                 $srcPath = $file->getTempName();
-                // $dstPath = 'D:/uploads/images-attachment/' . $newName;
                 $dstPath = $uploadPath . $newName;
 
-                // Kompres gambar (JPEG/PNG)
                 if ($imageType === 'image/jpeg') {
                     $image = imagecreatefromjpeg($srcPath);
-                    imagejpeg($image, $dstPath, 70); // quality 70%
+                    imagejpeg($image, $dstPath, 70);
                     imagedestroy($image);
                 } elseif ($imageType === 'image/png') {
                     $image = imagecreatefrompng($srcPath);
-                    imagepng($image, $dstPath, 7); // compression level 0-9
+                    imagepng($image, $dstPath, 7);
                     imagedestroy($image);
                 } else {
-                    // Jika bukan jpeg/png, tetap move tanpa compress
                     $file->move($uploadPath, $newName);
                 }
             } else {
-                // File <= 1MB atau bukan gambar, langsung move
                 $file->move($uploadPath, $newName);
             }
 
@@ -111,7 +141,7 @@ class Ticket extends Controller
                 'tiket_trx_id' => $ticketId,
                 'file_name'    => $file_name_encrypted,
                 'file_path'    => $file_path_encrypted,
-                'created_by'   => $this->request->getPost('emp_name'),
+                'created_by'   => $emp_name,
                 'created_date' => date('Y-m-d H:i:s'),
             ]);
 
@@ -119,10 +149,19 @@ class Ticket extends Controller
         }
 
         // Kirim email konfirmasi
-        $emp_name = $this->request->getPost('emp_name');
-        $email = $this->request->getPost('email');
-        $subject = $this->request->getPost('subject');
-        $this->sendTicketConfirmationEmail($emp_name, $email, $ticketId, $subject);
+        try {
+            $this->sendTicketConfirmationEmail($emp_name, $email, $ticketId, $subject);
+        } catch (\Throwable $e) {
+            // Abaikan kegagalan email agar tiket tetap tersimpan
+        }
+
+        if ($isAjax) {
+            return $this->response->setJSON([
+                'status'    => 'success',
+                'message'   => 'Tiket berhasil dibuat!',
+                'ticket_id' => $ticketId
+            ]);
+        }
 
         return view('components/success_confirm');
     }

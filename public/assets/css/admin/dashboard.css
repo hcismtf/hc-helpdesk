@@ -5,165 +5,491 @@ body {
     font-family: 'Montserrat', sans-serif;
 }
 
-/* --- Sidebar & Main Content --- */
-.main-content {
-    margin-left: 70px;
-    transition: margin-left 0.2s;
-    padding: 30px 40px;
-}
-
-
-/* --- Stats Row --- */
-.stats-row {
-    display: flex;
-    gap: 24px;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-}
-.stat-card {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    padding: 24px 32px;
-    min-width: 180px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border-top: 3px solid #eee;
-    margin-bottom: 16px;
-}
-.stat-underline {
-    width: 100%;
-    opacity: 0.6;
-    height: 3px;
-    border-radius: 2px;
-    margin: 12px 0 18px 0;
-}
-.stat-card.open .stat-underline { background: #FCD116; }
-.stat-card.inprogress .stat-underline { background: #283252; }
-.stat-card.done .stat-underline { background: #16FC53; }
-.stat-card.total .stat-underline { background: #000; }
-
-/* --- Analytics --- */
-.analytics-box {
-    position: absolute;
-    right: 40px;
-    top: 30px;
-    text-align: right;
-}
-.analytics-title { font-weight: bold; }
-.analytics-list { font-size: 13px; color: #444; margin-top: 8px; }
-
-/* --- Tickets Box --- */
-.tickets-box {
-    background: #fff;
+/* --- SLA Overview Banner with Connected Chart --- */
+.sla-overview-strip {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    align-items: stretch;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    padding: 24px;
-    margin-top: 24px;
-    overflow-x: auto;
-}
-.tickets-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 18px;
-    flex-wrap: wrap;
+    padding: 12px 14px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
     gap: 12px;
 }
 
-/* --- Table --- */
-.tickets-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 700px;
+.sla-metrics-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    align-items: stretch;
 }
-.tickets-table th, .tickets-table td {
-    padding: 14px 12px;
-    text-align: left;
-    font-size: 15px;
+
+.sla-item.metric-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    background: #f8fafc;
+    border: 1.5px solid #edf2f7;
+    border-radius: 13px;
+    padding: 12px 13px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+}
+
+.sla-item.metric-card:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+}
+
+.sla-item.metric-card.active {
+    background: #ffffff;
+    border-color: #4f46e5;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.08);
+}
+
+.sla-item.metric-card[data-metric="resolved"].active {
+    border-color: #10b981;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.08);
+}
+
+.sla-item.metric-card[data-metric="sla"].active {
+    border-color: #f59e0b;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.08);
+}
+
+.card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.card-icon-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.card-micro-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.card-micro-tag.tag-blue {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.card-micro-tag.tag-green {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.card-micro-tag.tag-warn {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+.card-micro-tag.tag-danger {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.card-bottom-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.card-sub-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sub-target {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
     white-space: nowrap;
 }
-.tickets-table th {
-    color: #444;
-    font-size: 15px;
-    font-weight: 600;
-    border-bottom: 1px solid #eee;
-}
-.tickets-table td {
-    border-bottom: 1px solid #f3f3f3;
-}
-.btn-open {
-    background: #3b82f6;
-    color: #fff;
-    border: none;
-    border-radius: 18px;
-    padding: 4px 22px;
-    font-size: 15px;
-    cursor: pointer;
-    font-weight: 500;
+
+.metric-indicator-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: transparent;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
-/* --- Search Box --- */
-.search-box {
+.sla-item.metric-card.active .metric-indicator-dot {
+    background: #4f46e5;
+}
+
+.sla-item.metric-card[data-metric="resolved"].active .metric-indicator-dot {
+    background: #10b981;
+}
+
+.sla-item.metric-card[data-metric="sla"].active .metric-indicator-dot {
+    background: #f59e0b;
+}
+
+.sla-val-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+}
+
+.sla-mini-progress {
+    width: 100%;
+    max-width: 80px;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.sla-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.sla-progress-fill.good {
+    background: #059669;
+}
+
+.sla-progress-fill.warn {
+    background: #d97706;
+}
+
+.sla-progress-fill.danger {
+    background: #dc2626;
+}
+
+.sla-icon-pill {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
-    background: #f5f6fa;
-    border-radius: 18px;
-    padding: 6px 16px;
-    width: 260px;
-    min-width: 120px;
+    justify-content: center;
+    flex-shrink: 0;
 }
-.search-box input {
+
+.sla-icon-pill.resp-pill {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.sla-icon-pill.reso-pill {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.sla-icon-pill.comp-pill.good {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.sla-icon-pill.comp-pill.warn {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+.sla-icon-pill.comp-pill.danger {
+    background: #fff1f2;
+    color: #e11d48;
+}
+
+.sla-label {
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sla-val {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+}
+
+.sla-val.text-success {
+    color: #059669;
+}
+
+.sla-val.text-warn {
+    color: #d97706;
+}
+
+.sla-val.text-danger {
+    color: #e11d48;
+}
+
+/* --- SLA Mini Chart Section --- */
+.sla-mini-chart-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 8px 14px 6px 14px;
+    box-sizing: border-box;
+}
+
+.mini-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.mini-chart-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #334155;
+    letter-spacing: 0.2px;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4f46e5;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+    transition: all 0.25s ease;
+}
+
+.mini-chart-toggles {
+    display: flex;
+    align-items: center;
+    background: #e2e8f0;
+    padding: 2px;
+    border-radius: 7px;
+    gap: 2px;
+}
+
+.mini-toggle {
     border: none;
     background: transparent;
-    outline: none;
-    font-size: 15px;
-    width: 100%;
-}
-.search-box .search-icon {
-    font-size: 18px;
-    color: #888;
+    font-size: 10px;
+    font-weight: 600;
+    color: #64748b;
+    padding: 2px 7px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
 }
 
-/* --- Pagination --- */
-.pagination {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    text-decoration: none;
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.mini-toggle:hover {
+    color: #0f172a;
 }
-.pagination li a,
-.pagination li span {
+
+.mini-toggle.active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.mini-chart-canvas-wrap {
+    height: 48px;
+    width: 100%;
+    position: relative;
+}
+
+/* --- Responsive for SLA Overview Strip --- */
+@media (max-width: 1200px) {
+    .sla-overview-strip {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 768px) {
+    .sla-metrics-group {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Modern Stats Grid --- */
+.modern-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.modern-stat-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    padding: 20px 22px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    border-color: #cbd5e1;
+}
+
+.stat-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.stat-card-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.2px;
+}
+
+.stat-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    text-decoration: none;
-    color: #333;
+}
+
+/* Card Open: Amber */
+.card-open .stat-card-badge {
+    background: #fef3c7;
+    color: #b45309;
+}
+.card-open .stat-card-icon {
+    background: #fffbeb;
+    color: #d97706;
+}
+.card-open:hover {
+    border-color: #fde68a;
+}
+
+/* Card In Progress: Blue */
+.card-inprogress .stat-card-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+.card-inprogress .stat-card-icon {
+    background: #f0f9ff;
+    color: #0284c7;
+}
+.card-inprogress:hover {
+    border-color: #bae6fd;
+}
+
+/* Card Done: Emerald */
+.card-done .stat-card-badge {
+    background: #d1fae5;
+    color: #047857;
+}
+.card-done .stat-card-icon {
+    background: #ecfdf5;
+    color: #059669;
+}
+.card-done:hover {
+    border-color: #a7f3d0;
+}
+
+/* Card Total: Indigo */
+.card-total .stat-card-badge {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+.card-total .stat-card-icon {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+.card-total:hover {
+    border-color: #c7d2fe;
+}
+
+.stat-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stat-card-number {
+    font-size: 32px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+    letter-spacing: -0.8px;
+}
+
+.stat-card-label {
     font-size: 14px;
-    font-weight: 500;
-    transition: background 0.2s ease;
-    list-style: none;
-}
-.pagination li a:hover {
-    background: #f0f0f0;
-}
-.pagination li.active span,
-.pagination li.active a {
-    background: #4F46E5;
-    color: #fff;
     font-weight: 600;
+    color: #64748b;
+    margin-top: 4px;
 }
-.pagination li.disabled span {
-    color: #aaa;
-    cursor: not-allowed;
+
+.stat-card-footer {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #f8fafc;
+}
+
+.stat-footer-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: #94a3b8;
+}
+
+@media (max-width: 1100px) {
+    .modern-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 650px) {
+    .modern-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .sla-overview-strip {
+        gap: 16px;
+    }
+    .sla-item-divider {
+        display: none;
+    }
 }
 
 /* --- Modal --- */

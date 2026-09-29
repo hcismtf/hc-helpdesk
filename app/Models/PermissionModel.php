@@ -1,13 +1,11 @@
 <?php
 namespace App\Models;
-use CodeIgniter\Model;
 
-class PermissionModel extends Model
+class PermissionModel extends BaseModel
 {
     protected $table = 'permissions';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'code', 'name', 'created_by', 'created_date', 'modified_by', 'modified_date'
+        'id', 'code', 'name', 'created_by', 'created_date', 'modified_by', 'modified_date'
     ];
-    
 }

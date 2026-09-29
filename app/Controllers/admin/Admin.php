@@ -148,17 +148,31 @@ class Admin extends BaseController
         // User login dari database
         $userModel = new \App\Models\UserModel();
         $user = $userModel
-            ->where('email', $username)
-            ->orWhere('name', $username)
+            ->groupStart()
+                ->where('email', $username)
+                ->orWhere('name', $username)
+            ->groupEnd()
+            ->groupStart()
+                ->where('is_deleted !=', 1)
+                ->orWhere('is_deleted IS NULL')
+            ->groupEnd()
             ->first();
 
         // Debug: Log user lookup
         log_message('info', 'Login attempt - Username: ' . $username . ', User found: ' . ($user ? 'YES' : 'NO'));
 
         if ($user) {
-            // Generate UUID dari password input dan bandingkan dengan UUID yang tersimpan di DB
-            $inputPasswordUUID = $this->generateUUIDFromPassword($password);
-            $passwordValid = ($inputPasswordUUID === $user['password']);
+            // Verifikasi password menggunakan Bcrypt
+            $passwordValid = false;
+            if (password_verify($password, $user['password'])) {
+                $passwordValid = true;
+            } elseif ($this->generateUUIDFromPassword($password) === $user['password']) {
+                // Fallback untuk akun lama: otomatis upgrade hash ke Bcrypt
+                $passwordValid = true;
+                $userModel->update($user['id'], [
+                    'password' => password_hash($password, PASSWORD_BCRYPT)
+                ]);
+            }
 
             if ($passwordValid) {
                 // Ambil permission dari role
@@ -176,12 +190,17 @@ class Admin extends BaseController
                     if ($perm) $userPermissions[] = $perm['code'];
                 }
 
+                $roleModel = new \App\Models\RoleModel();
+                $roleObj = $roleId ? $roleModel->find($roleId) : null;
+                $userRoleName = $roleObj['name'] ?? 'User';
+
                 $userModel->update($user['id'], [
                     'last_login_time' => date('Y-m-d H:i:s')
                 ]);
                 session()->set([
                     'isLoggedIn' => true,
-                    'role' => 'user',
+                    'role' => $userRoleName,
+                    'role_name' => $userRoleName,
                     'username' => $user['name'],
                     'user_id' => $user['id'],
                     'user_permissions' => $userPermissions
@@ -296,13 +315,22 @@ class Admin extends BaseController
         // SLA Compliance Rate
         $slaRate = $countClosed ? round(($slaCompliant / $countClosed) * 100) : 0;
 
-        // Helper untuk format detik ke d h m
+        // Helper untuk format detik ke d h m tanpa unit 00 yang mengganggu
         function formatDuration($seconds) {
-            $seconds = (int) round($seconds); // ← tambahkan ini biar aman
+            $seconds = (int) round($seconds);
+            if ($seconds <= 0) {
+                return '0m';
+            }
             $d = floor($seconds / 86400);
             $h = floor(($seconds % 86400) / 3600);
             $m = floor(($seconds % 3600) / 60);
-            return sprintf('%02d d %02d h %02d m', $d, $h, $m);
+
+            $parts = [];
+            if ($d > 0) $parts[] = $d . 'd';
+            if ($h > 0) $parts[] = $h . 'h';
+            if ($m > 0 || empty($parts)) $parts[] = $m . 'm';
+
+            return implode(' ', $parts);
         }
 
 
@@ -317,6 +345,31 @@ class Admin extends BaseController
         if ($start) $additionalParams .= '&start=' . urlencode($start);
         if ($end) $additionalParams .= '&end=' . urlencode($end);
         $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/dashboard'), $additionalParams);
+
+        // 7 Days Trend Data for Interactive Mini Chart
+        $trendDates = [];
+        $trendIncoming = [];
+        $trendResolved = [];
+        $trendSla = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $dayDate = date('Y-m-d', strtotime("-$i days"));
+            $dayLabel = date('D (d/m)', strtotime("-$i days"));
+            $trendDates[] = $dayLabel;
+
+            $inCount = $ticketModel->where('DATE(created_date)', $dayDate)->countAllResults();
+            $trendIncoming[] = $inCount;
+
+            $resCount = $ticketModel->where('DATE(finish_date)', $dayDate)->where('ticket_status', 'closed')->countAllResults();
+            $trendResolved[] = $resCount;
+
+            $compCount = $ticketModel->where('DATE(finish_date)', $dayDate)
+                ->where('ticket_status', 'closed')
+                ->where('finish_date <= due_date')
+                ->countAllResults();
+            $slaPct = $resCount > 0 ? round(($compCount / $resCount) * 100) : 100;
+            $trendSla[] = $slaPct;
+        }
 
         return view('admin/dashboard', [
             'openCount' => $openCount,
@@ -335,28 +388,45 @@ class Admin extends BaseController
             'role' => session('role'),
             'avgResponseStr' => $avgResponseStr,
             'avgResolutionStr' => $avgResolutionStr,
-            'slaRate' => $slaRate
+            'slaRate' => $slaRate,
+            'trendDates' => $trendDates,
+            'trendIncoming' => $trendIncoming,
+            'trendResolved' => $trendResolved,
+            'trendSla' => $trendSla
         ]);
     }
 
     public function Ticket_dashboard()
     {
         $model = new TicketModel();
-        $perPage = (int) ($this->request->getGet('per_page') ?? 10);
+        $perPage = (int) ($this->request->getGet('per_page') ?? 12);
         $page = (int) ($this->request->getGet('page') ?? 1);
         $start = $this->request->getGet('start');
         $end = $this->request->getGet('end');
         $priority = $this->request->getGet('priority');
+        $type = $this->request->getGet('type');
+        $status = $this->request->getGet('status');
+        $search = $this->request->getGet('search');
 
         // Ensure valid values
-        if ($perPage <= 0) $perPage = 10;
+        if ($perPage <= 0) $perPage = 12;
         if ($page <= 0) $page = 1;
 
         // Build query
         $query = $model;
         if ($start) $query = $query->where('created_date >=', $start . ' 00:00:00');
         if ($end) $query = $query->where('created_date <=', $end . ' 23:59:59');
-        if ($priority) $query = $query->where('ticket_priority', $priority);
+        if (!empty($priority)) $query = $query->where('ticket_priority', $priority);
+        if (!empty($type)) $query = $query->where('req_type', $type);
+        if (!empty($status)) $query = $query->where('ticket_status', $status);
+        if (!empty($search)) {
+            $query = $query->groupStart()
+                ->like('id', $search)
+                ->orLike('emp_name', $search)
+                ->orLike('subject', $search)
+                ->orLike('req_type', $search)
+                ->groupEnd();
+        }
 
         // Get total count
         $totalRecords = $query->countAllResults(false);
@@ -380,6 +450,44 @@ class Admin extends BaseController
             $tickets[] = $ticket;
         }
 
+        // Prepare full dataset for Kanban Swimlane view (up to 300 recent records)
+        $kanbanQuery = (clone $model);
+        if ($start) $kanbanQuery = $kanbanQuery->where('created_date >=', $start . ' 00:00:00');
+        if ($end) $kanbanQuery = $kanbanQuery->where('created_date <=', $end . ' 23:59:59');
+        if (!empty($priority)) $kanbanQuery = $kanbanQuery->where('ticket_priority', $priority);
+        if (!empty($type)) $kanbanQuery = $kanbanQuery->where('req_type', $type);
+        if (!empty($status)) $kanbanQuery = $kanbanQuery->where('ticket_status', $status);
+        if (!empty($search)) {
+            $kanbanQuery = $kanbanQuery->groupStart()
+                ->like('id', $search)
+                ->orLike('emp_name', $search)
+                ->orLike('subject', $search)
+                ->orLike('req_type', $search)
+                ->groupEnd();
+        }
+        $kanbanRaw = $kanbanQuery->orderBy('created_date', 'DESC')->limit(300)->findAll();
+        $kanbanTickets = [];
+        foreach ($kanbanRaw as $kt) {
+            $nip_dec = '';
+            if (!empty($kt['nip_encrypted'])) {
+                try {
+                    $nip_dec = $encrypter->decrypt(hex2bin($kt['nip_encrypted']));
+                } catch (\Exception $e) {
+                    $nip_dec = '[Invalid]';
+                }
+            }
+            $kt['emp_nip'] = $nip_dec;
+            $kanbanTickets[] = $kt;
+        }
+
+        // Fetch active request types
+        try {
+            $requestTypeModel = new \App\Models\RequestTypeModel();
+            $requestTypes = $requestTypeModel->where('status', 'Active')->orderBy('name', 'ASC')->findAll();
+        } catch (\Throwable $e) {
+            $requestTypes = [];
+        }
+
         // Create pagination links using helper method
         $totalPages = $perPage > 0 ? ceil($totalRecords / $perPage) : 1;
         
@@ -388,27 +496,106 @@ class Admin extends BaseController
         if ($start) $additionalParams .= '&start=' . urlencode($start);
         if ($end) $additionalParams .= '&end=' . urlencode($end);
         if ($priority) $additionalParams .= '&priority=' . urlencode($priority);
+        if ($type) $additionalParams .= '&type=' . urlencode($type);
+        if ($status) $additionalParams .= '&status=' . urlencode($status);
+        if ($search) $additionalParams .= '&search=' . urlencode($search);
         
         $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/Ticket_dashboard'), $additionalParams);
 
         return view('admin/Ticket_dashboard', [
-            'tickets' => $tickets,
+            'tickets'        => $tickets,
+            'kanbanTickets'  => $kanbanTickets,
             'paginationHTML' => $paginationHTML,
-            'perPage' => $perPage,
-            'currentPage' => $page,
-            'totalPages' => $totalPages,
-            'active' => 'tickets',
-            'start' => $start,
-            'end' => $end,
-            'priority' => $priority
+            'perPage'        => $perPage,
+            'currentPage'    => $page,
+            'totalPages'     => $totalPages,
+            'totalRecords'   => $totalRecords,
+            'active'         => 'tickets',
+            'start'          => $start,
+            'end'            => $end,
+            'priority'       => $priority,
+            'type'           => $type,
+            'status'         => $status,
+            'search'         => $search,
+            'requestTypes'   => $requestTypes,
         ]);
     }
+
+    public function update_ticket_status()
+    {
+        if (!session('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+
+        $ticketId = $this->request->getPost('ticket_id');
+        $newStatus = strtolower(trim($this->request->getPost('status') ?? ''));
+
+        $allowedStatuses = ['open', 'in_progress', 'done', 'closed'];
+        if (!in_array($newStatus, $allowedStatuses)) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Status tidak valid.']);
+        }
+
+        $ticketModel = new TicketModel();
+        $ticket = $ticketModel->find($ticketId);
+        if (!$ticket) {
+            return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Tiket tidak ditemukan.']);
+        }
+
+        $userId   = session('user_id') ?? 9999;
+        $username = session('username') ?? 'Admin';
+
+        $updateData = [
+            'ticket_status' => $newStatus,
+            'modified_date' => date('Y-m-d H:i:s'),
+            'modified_by'   => $username
+        ];
+
+        if ($newStatus === 'closed' || $newStatus === 'done') {
+            $updateData['finish_date'] = date('Y-m-d H:i:s');
+        } else {
+            $updateData['finish_date'] = null;
+        }
+
+        if (empty($ticket['first_response_at']) && $newStatus === 'in_progress') {
+            $updateData['first_response_at'] = date('Y-m-d H:i:s');
+        }
+
+        $ticketModel->update($ticketId, $updateData);
+
+        // Record history log in TiketTransactionsModel
+        try {
+            $trxModel = new TiketTransactionsModel();
+            $trxModel->insert([
+                'tiket_trx_id' => $ticketId,
+                'user_id'      => $userId,
+                'submitted_by' => $userId,
+                'status'       => $newStatus,
+                'priority'     => $ticket['ticket_priority'] ?? 'medium',
+                'assigned_to'  => $ticket['assigned_to'] ?? null,
+                'reply'        => 'Status changed to ' . ucwords(str_replace('_', ' ', $newStatus)) . ' via Kanban Board',
+                'created_at'   => date('Y-m-d H:i:s')
+            ]);
+        } catch (\Throwable $e) {}
+
+        return $this->response->setJSON([
+            'status'     => 'success',
+            'message'    => 'Status tiket berhasil diubah menjadi: ' . ucwords(str_replace('_', ' ', $newStatus)),
+            'new_status' => $newStatus
+        ]);
+    }
+
     public function Ticket_detail($id)
     {
         $model = new TicketModel();
         $ticket = null;
         $userModel = new \App\Models\UserModel();
-        $users = $userModel->where('status', 'active')->findAll();
+        $users = $userModel
+            ->where('status', 'active')
+            ->groupStart()
+                ->where('is_deleted !=', 1)
+                ->orWhere('is_deleted IS NULL')
+            ->groupEnd()
+            ->findAll();
         // Ticket Attachment
         $attModel = new \App\Models\TicketAttModel();
         $attachmentsRaw = $attModel->where('tiket_trx_id', $id)->findAll();
@@ -945,11 +1132,13 @@ class Admin extends BaseController
         $roles = $roleModel->findAll();
 
         $userModel = new \App\Models\UserModel();
-        // JOIN ke role_detail dan role untuk dapat nama role
+        // JOIN ke role_detail dan role untuk dapat nama role (filter yang tidak di-delete)
         $users = $userModel
             ->select('users.*, role.name as role_name')
             ->join('role_detail', 'role_detail.user_id = users.id', 'left')
             ->join('role', 'role.id = role_detail.role_id', 'left')
+            ->where('users.is_deleted !=', 1)
+            ->orWhere('users.is_deleted IS NULL')
             ->findAll();
         
         $permissionsModel = new PermissionsModel();
@@ -966,56 +1155,102 @@ class Admin extends BaseController
         $userModel = new \App\Models\UserModel();
         $roleDetailModel = new \App\Models\RoleDetailModel();
 
-        $newUserId = $this->generateUUIDv4();
+        $email = trim($this->request->getPost('email'));
         $password = $this->request->getPost('password');
-        
-        // Generate UUID dari password input menggunakan hash
-        // Ini memastikan setiap password yang sama menghasilkan UUID yang sama
-        $passwordUUID = $this->generateUUIDFromPassword($password);
+        $roleId = $this->request->getPost('role');
+        $name = $this->request->getPost('name');
+        $status = $this->request->getPost('status');
+
+        // Cek apakah email sudah ada di database (termasuk yang soft-deleted)
+        $existingUser = $userModel->where('email', $email)->first();
+
+        if ($existingUser) {
+            // Jika user sebelumnya sudah di-soft-delete, pulihkan dan perbarui datanya
+            if (!empty($existingUser['is_deleted']) && (int)$existingUser['is_deleted'] === 1) {
+                $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+                $updateData = [
+                    'name'          => $name,
+                    'password'      => $hashedPassword,
+                    'status'        => $status,
+                    'role_id'       => $roleId,
+                    'is_deleted'    => 0,
+                    'modified_by'   => session('username') ?? 'system',
+                    'modified_date' => date('Y-m-d H:i:s'),
+                ];
+                $userModel->update($existingUser['id'], $updateData);
+
+                // Update / insert role detail
+                if ($roleId) {
+                    $roleDetail = $roleDetailModel->where('user_id', $existingUser['id'])->first();
+                    if ($roleDetail) {
+                        $roleDetailModel->update($roleDetail['id'], [
+                            'role_id'       => $roleId,
+                            'modified_by'   => session('username') ?? 'system',
+                            'modified_date' => date('Y-m-d H:i:s'),
+                        ]);
+                    } else {
+                        $roleDetailModel->insert([
+                            'role_id'      => $roleId,
+                            'user_id'      => $existingUser['id'],
+                            'created_by'   => session('username') ?? 'system',
+                            'created_date' => date('Y-m-d H:i:s'),
+                        ]);
+                    }
+                }
+
+                $user = $userModel->find($existingUser['id']);
+                return $this->response->setJSON(['success' => true, 'user' => $user]);
+            } else {
+                return $this->response->setJSON(['success' => false, 'message' => 'Email ' . $email . ' sudah terdaftar dan masih aktif!']);
+            }
+        }
+
+        $newUserId = $this->generateUUIDv4();
+        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
         $userData = [
             'id'          => $newUserId,
-            'name'        => $this->request->getPost('name'),
-            'email'       => $this->request->getPost('email'),
-            'password'    => $passwordUUID, // Simpan UUID yang di-generate dari password
-            'status'      => $this->request->getPost('status'),
-            'role_id'     => $this->request->getPost('role'),
+            'name'        => $name,
+            'email'       => $email,
+            'password'    => $hashedPassword,
+            'status'      => $status,
+            'role_id'     => $roleId,
+            'is_deleted'  => 0,
             'created_by'  => session('username') ?? 'system',
             'created_date'=> date('Y-m-d H:i:s'),
         ];
 
-        $userId = $userModel->insert($userData);
+        try {
+            $userId = $userModel->insert($userData);
 
-        // Simpan ke role_detail
-        $roleId = $this->request->getPost('role');
-        if ($roleId) {
-            $roleDetailModel->insert([
-                'role_id' => $roleId,
-                'user_id' => $newUserId,
-                'created_by' => session('username') ?? 'system',
-                'created_date' => date('Y-m-d H:i:s')
-            ]);
+            // Simpan ke role_detail
+            if ($roleId) {
+                $roleDetailModel->insert([
+                    'role_id'      => $roleId,
+                    'user_id'      => $newUserId,
+                    'created_by'   => session('username') ?? 'system',
+                    'created_date' => date('Y-m-d H:i:s')
+                ]);
+            }
+
+            $user = $userModel->find($userId);
+
+            return $this->response->setJSON(['success' => true, 'user' => $user]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
         }
-
-        // Ambil data user baru untuk update list di frontend
-        $user = $userModel->find($userId);
-        
-        // Return UUID yang di-generate dari password
-        $user['generated_uuid'] = $passwordUUID;
-
-        return $this->response->setJSON(['success' => true, 'user' => $user]);
     }
     public function delete_user()
     {
         $id = $this->request->getPost('id');
         $userModel = new \App\Models\UserModel();
-        $roleDetailModel = new \App\Models\RoleDetailModel();
 
-        // Hapus role_detail dulu
-        $roleDetailModel->where('user_id', $id)->delete();
-
-        // Hapus user
-        $userModel->delete($id);
+        // Soft delete: set is_deleted = 1
+        $userModel->update($id, [
+            'is_deleted'    => 1,
+            'modified_by'   => session('username') ?? 'system',
+            'modified_date' => date('Y-m-d H:i:s'),
+        ]);
 
         return $this->response->setJSON(['success' => true]);
     }
@@ -1033,20 +1268,15 @@ class Admin extends BaseController
         $roleDetailModel = new \App\Models\RoleDetailModel();
 
         $updateData = [
-            'ticket_status'     => $status,
-            'ticket_priority'   => $priority,
-            'assigned_to'       => $assignedTo,
-            'due_date'          => $dueDate,
-            'first_response_at' => $firstResponseAt,
-            'modified_date'     => date('Y-m-d H:i:s'),
-            'modified_by'       => $username,
-            'finish_date'       => $finishDate
+            'name'          => $name,
+            'email'         => $email,
+            'status'        => $status,
+            'role_id'       => $roleId,
+            'modified_date' => date('Y-m-d H:i:s'),
+            'modified_by'   => session('username') ?? 'system',
         ];
         if (!empty($password)) {
             $updateData['password'] = password_hash($password, PASSWORD_DEFAULT);
-        }
-        if (!empty($username)) {
-            $updateData['username'] = $username;
         }
 
         $userModel->update($id, $updateData);

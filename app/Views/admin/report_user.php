@@ -5,22 +5,23 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Report User</title>
-    <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/css/admin/report_user.css') ?>">
-    <script src="<?= base_url('assets/js/admin/report_user.js') ?>" defer></script>
-
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/dashboard.css') ?>?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/report_user.css') ?>?v=<?= time() ?>">
+    <script src="<?= base_url('assets/js/admin/report_user.js') ?>?v=<?= time() ?>" defer></script>
 </head>
 <body>
     <?php include(APPPATH . 'Views/admin/navbar.php'); ?>
     <div class="main-content">
         <div class="container">
-            <div class="page-title">Report</div>
-            <div class="breadcrumb">Home &gt; Laporan</div>
-            <div class="welcome-row">
-                <div class="welcome-user">Selamat datang, <?= esc($username) ?></div>
-                <!-- <div class="welcome-role"><?= esc($role) ?></div> -->
-            </div>
+            <!-- Top Header Component -->
+            <?= view('components/admin_header', [
+                'breadcrumbRoot'   => 'Helpdesk Admin',
+                'breadcrumbActive' => 'Reports',
+                'pageTitle'        => 'Report & Export',
+                'showCreateTicket' => false,
+                'showNotif'        => true,
+            ]) ?>
 
             <div class="report-card">
                 <div class="report-title">Submit Report</div>

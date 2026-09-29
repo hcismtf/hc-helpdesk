@@ -9,7 +9,7 @@ use Config\Superadmin;
 class PermissionFilter implements FilterInterface
 {
     protected $permissionFileMap = [
-        'tickets'         => ['ticket_dashboard', 'ticket_detail', 'get_ticket_list', 'send_reply', 'ticket-detail'],
+        'tickets'         => ['ticket_dashboard', 'ticket_detail', 'get_ticket_list', 'send_reply', 'ticket-detail', 'update_ticket_status'],
         'dashboard'       => ['dashboard'],
         'user_management' => [
             'user_mgt', 'get_user_list',
@@ -17,7 +17,7 @@ class PermissionFilter implements FilterInterface
         ],
         'system_settings' => [
             'system_settings',
-            'faq_list', 'get_faq_list',
+            'faq_list', 'get_faq_list', 'add_faq', 'edit_faq', 'delete_faq',
             'user_role_list', 'get_user_role_list',
             'add_user_role', 'edit_user_role', 'delete_user_role', 
             'request_type', 'get_request_type_list',
@@ -26,7 +26,7 @@ class PermissionFilter implements FilterInterface
             'add_sla', 'edit_sla', 'delete_sla', 
             'add_permission', 'get_permission', 'edit_permission', 'delete_permission', 
         ],
-         'reports' => [
+        'reports' => [
             'report_user', 'export_ticket_excel', 'export_sla_excel','submit_report_job', 'download_report' ,'delete_report_job'
         ],
     ];
@@ -62,6 +62,12 @@ class PermissionFilter implements FilterInterface
             }
         }
         if (!$allowed) {
+            if ($request->isAJAX()) {
+                return service('response')->setStatusCode(403)->setJSON([
+                    'status' => 'error',
+                    'message' => 'Anda tidak memiliki akses untuk tindakan ini.'
+                ]);
+            }
             return redirect()->to('/admin/forbidden');
         }
     }

@@ -1,12 +1,12 @@
 <?php
 namespace App\Models;
-use CodeIgniter\Model;
 
-class SlaModel extends Model
+class SlaModel extends BaseModel
 {
     protected $table = 'sla_configuration';
     protected $primaryKey = 'id';
     protected $allowedFields = [
+        'id',
         'priority',
         'response_time',
         'resolution_time',

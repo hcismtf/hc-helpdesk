@@ -11,8 +11,8 @@
     },
     "require": {
         "php": "^8.1",
-        "codeigniter4/framework": "^4.0",
-        "phpmailer/phpmailer": "^7.0"
+        "phpmailer/phpmailer": "^7.0",
+        "codeigniter4/codeigniter4": "dev-develop"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9",
@@ -40,5 +40,13 @@
     },
     "scripts": {
         "test": "phpunit"
-    }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/codeigniter4/codeigniter4"
+        }
+    ]
 }

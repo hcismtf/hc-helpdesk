@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>User Management</title>
-    <link rel="stylesheet" href="<?= base_url('assets/css/admin/dashboard.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/css/admin/user_mgt.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/dashboard.css') ?>?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/user_mgt.css') ?>?v=<?= time() ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <?php include(APPPATH . 'Views/components/warning_confirm.php'); ?>
@@ -15,15 +15,14 @@
 <body>
     <?php $active = 'user_mgt'; include(APPPATH . 'Views/admin/navbar.php'); ?>
     <div class="main-content">
-        <div class="settings-header-row">
-            <div>
-                <div class="page-title">User Management</div>
-                <div class="breadcrumb">Home &gt; User Management</div>
-            </div>
-            <div class="settings-header-right">
-                <div class="settings-welcome">Welcome, <?= esc(session('username')) ?></div>
-            </div>
-        </div>
+        <!-- Top Header Component -->
+        <?= view('components/admin_header', [
+            'breadcrumbRoot'   => 'Helpdesk Admin',
+            'breadcrumbActive' => 'User Management',
+            'pageTitle'        => 'User Management',
+            'showCreateTicket' => false,
+            'showNotif'        => true,
+        ]) ?>
         <div class="settings-tabs" id="settingsTabs">
             <div class="settings-slider" id="settingsSlider"></div>
             <button class="settings-tab active" onclick="showTab(0)">User Management</button>
@@ -735,11 +734,10 @@
                 if (data.success) {
                     closeAddUserModal();
                     addUserRow(data.user); // Tambahkan user baru ke tabel
-                    // Tampilkan generated UUID
-                    const message = 'User berhasil ditambahkan!\n\nGenerated UUID:\n' + data.user.generated_uuid + '\n\nUser dapat login dengan password yang telah diatur.';
+                    const message = 'User berhasil ditambahkan! User dapat login dengan password yang telah diatur.';
                     showSuccessConfirm(message);
                 } else {
-                    alert('Gagal menambah user!');
+                    alert(data.message || 'Gagal menambah user!');
                 }
             });
         };

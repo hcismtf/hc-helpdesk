@@ -3,13 +3,13 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class TicketDetailReportModel extends Model
+class TicketDetailReportModel extends BaseModel
 {
     protected $table = 'tiket_trx';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $allowedFields = [
-        'emp_id', 'nip_encrypted', 'emp_name', 'email', 'wa_no', 'req_type', 'subject', 'message',
+        'id', 'emp_id', 'nip_encrypted', 'emp_name', 'email', 'wa_no', 'req_type', 'subject', 'message',
         'ticket_status', 'ticket_priority', 'created_by', 'created_date', 'modified_by', 'modified_date',
         'due_date', 'first_response_at', 'finish_date'
     ];

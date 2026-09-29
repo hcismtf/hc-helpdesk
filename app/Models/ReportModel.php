@@ -1,8 +1,6 @@
 <?php
 namespace App\Models;
-use CodeIgniter\Model;
-
-class ReportModel extends Model
+class ReportModel extends BaseModel
 {
     protected $table = 'tiket_trx';
 

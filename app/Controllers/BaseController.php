@@ -76,25 +76,43 @@ abstract class BaseController extends Controller
 
         // Previous button
         if ($currentPage > 1) {
-            $html .= '<li><a href="' . $baseUrl . $separator . 'page=' . ($currentPage - 1) . $additionalParams . '">Back</a></li>';
+            $html .= '<li class="page-item"><a class="page-link page-prev" href="' . $baseUrl . $separator . 'page=' . ($currentPage - 1) . $additionalParams . '" title="Previous Page">‹ Back</a></li>';
         } else {
-            $html .= '<li class="disabled"><span>Back</span></li>';
+            $html .= '<li class="page-item disabled"><span class="page-link page-prev">‹ Back</span></li>';
         }
 
-        // Page numbers
-        for ($i = 1; $i <= $totalPages; $i++) {
-            if ($i == $currentPage) {
-                $html .= '<li class="active"><span>' . $i . '</span></li>';
-            } else {
-                $html .= '<li><a href="' . $baseUrl . $separator . 'page=' . $i . $additionalParams . '">' . $i . '</a></li>';
+        // Smart pagination with window
+        $range = 2;
+        $start = max(1, $currentPage - $range);
+        $end = min($totalPages, $currentPage + $range);
+
+        if ($start > 1) {
+            $html .= '<li class="page-item"><a class="page-link" href="' . $baseUrl . $separator . 'page=1' . $additionalParams . '">1</a></li>';
+            if ($start > 2) {
+                $html .= '<li class="page-item disabled"><span class="page-link page-ellipsis">…</span></li>';
             }
+        }
+
+        for ($i = $start; $i <= $end; $i++) {
+            if ($i == $currentPage) {
+                $html .= '<li class="page-item active"><span class="page-link">' . $i . '</span></li>';
+            } else {
+                $html .= '<li class="page-item"><a class="page-link" href="' . $baseUrl . $separator . 'page=' . $i . $additionalParams . '">' . $i . '</a></li>';
+            }
+        }
+
+        if ($end < $totalPages) {
+            if ($end < $totalPages - 1) {
+                $html .= '<li class="page-item disabled"><span class="page-link page-ellipsis">…</span></li>';
+            }
+            $html .= '<li class="page-item"><a class="page-link" href="' . $baseUrl . $separator . 'page=' . $totalPages . $additionalParams . '">' . $totalPages . '</a></li>';
         }
 
         // Next button
         if ($currentPage < $totalPages) {
-            $html .= '<li><a href="' . $baseUrl . $separator . 'page=' . ($currentPage + 1) . $additionalParams . '">Next</a></li>';
+            $html .= '<li class="page-item"><a class="page-link page-next" href="' . $baseUrl . $separator . 'page=' . ($currentPage + 1) . $additionalParams . '" title="Next Page">Next ›</a></li>';
         } else {
-            $html .= '<li class="disabled"><span>Next</span></li>';
+            $html .= '<li class="page-item disabled"><span class="page-link page-next">Next ›</span></li>';
         }
 
         $html .= '</ul>';
