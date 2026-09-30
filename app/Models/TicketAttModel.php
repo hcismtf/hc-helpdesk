@@ -1,13 +1,11 @@
 <?php
+
 namespace App\Models;
 
-class TicketAttModel extends BaseModel
+/**
+ * Model Legacy TicketAttModel (Mengarahkan ke ticket_attachment)
+ */
+class TicketAttModel extends TicketAttachmentModel
 {
-    protected $table = 'tiket_att';
-    protected $primaryKey = 'id';
-    protected $allowedFields = [
-        'id', 'tiket_trx_id', 'file_name', 'file_path',
-        'created_by', 'created_date', 'modified_by', 'modified_date'
-    ];
-    public $useTimestamps = false;
+    // Mewarisi seluruh fungsionalitas dan konfigurasi tabel ticket_attachment
 }

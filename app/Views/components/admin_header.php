@@ -22,15 +22,10 @@ $resolvedRole = $roleName ?? $role ?? session('role_name') ?? session('role');
 
 if ((!$resolvedRole || strtolower($resolvedRole) === 'user') && $userId) {
     try {
-        $db = \Config\Database::connect();
-        $roleRow = $db->table('role_detail')
-            ->join('role', 'role.id = role_detail.role_id')
-            ->where('role_detail.user_id', $userId)
-            ->select('role.name as role_name')
-            ->get()
-            ->getRowArray();
-        if (!empty($roleRow['role_name'])) {
-            $resolvedRole = $roleRow['role_name'];
+        $userModel = new \App\Models\UserModel();
+        $userWithRole = $userModel->getUserWithRole($userId);
+        if (!empty($userWithRole['role_name'])) {
+            $resolvedRole = $userWithRole['role_name'];
         }
     } catch (\Throwable $e) {
         // Fallback jika DB query gagal

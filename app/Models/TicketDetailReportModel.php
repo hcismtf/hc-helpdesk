@@ -5,7 +5,7 @@ use CodeIgniter\Model;
 
 class TicketDetailReportModel extends BaseModel
 {
-    protected $table = 'tiket_trx';
+    protected $table = 'ticket_transactions';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $allowedFields = [

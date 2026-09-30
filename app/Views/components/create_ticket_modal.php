@@ -65,33 +65,46 @@ try {
                     <input type="tel" name="wa_no" id="create_wa_no" class="modal-form-input" placeholder="e.g. 08123456789" inputmode="numeric" required>
                 </div>
 
-                <!-- Request Type -->
+                <!-- Request Type (Reusable Basic Select) -->
                 <div class="modal-form-group">
-                    <label for="create_req_type">Request Type <span class="required-star">*</span></label>
-                    <select name="req_type" id="create_req_type" class="modal-form-select" required>
-                        <option value="">-- Select Request Type --</option>
-                        <?php if (!empty($requestTypes)): ?>
-                            <?php foreach ($requestTypes as $rt): ?>
-                                <option value="<?= esc($rt['name']) ?>"><?= esc($rt['name']) ?></option>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <option value="General Support">General Support</option>
-                            <option value="Hardware / Software">Hardware / Software</option>
-                            <option value="Access & Permission">Access & Permission</option>
-                        <?php endif; ?>
-                    </select>
+                    <label class="modal-form-label">Request Type <span class="required-star">*</span></label>
+                    <?php
+                        $reqTypeOptions = [];
+                        if (!empty($requestTypes)) {
+                            foreach ($requestTypes as $rt) {
+                                $reqTypeOptions[$rt['name']] = $rt['name'];
+                            }
+                        } else {
+                            $reqTypeOptions = [
+                                'General Support'     => 'General Support',
+                                'Hardware / Software' => 'Hardware / Software',
+                                'Access & Permission' => 'Access & Permission'
+                            ];
+                        }
+                    ?>
+                    <?= view('components/basic_select', [
+                        'name'        => 'req_type',
+                        'id'          => 'create_req_type',
+                        'placeholder' => '-- Select Request Type --',
+                        'options'     => $reqTypeOptions,
+                        'required'    => true
+                    ]) ?>
                 </div>
 
-                <!-- Ticket Priority -->
+                <!-- Ticket Priority (Reusable Basic Select) -->
                 <div class="modal-form-group">
-                    <label for="create_priority">Priority</label>
-                    <select name="ticket_priority" id="create_priority" class="modal-form-select">
-                        <option value="">Auto (Default by SLA)</option>
-                        <option value="low">Low Priority</option>
-                        <option value="medium">Medium Priority</option>
-                        <option value="high">High Priority</option>
-                        <option value="urgent">Urgent Priority</option>
-                    </select>
+                    <label class="modal-form-label">Priority</label>
+                    <?= view('components/basic_select', [
+                        'name'        => 'ticket_priority',
+                        'id'          => 'create_priority',
+                        'placeholder' => 'Auto (Default by SLA)',
+                        'options'     => [
+                            'low'    => 'Low Priority',
+                            'medium' => 'Medium Priority',
+                            'high'   => 'High Priority',
+                            'urgent' => 'Urgent Priority'
+                        ]
+                    ]) ?>
                 </div>
 
                 <!-- Subject (Full Width) -->

@@ -2,7 +2,7 @@
 namespace App\Models;
 class ReportModel extends BaseModel
 {
-    protected $table = 'tiket_trx';
+    protected $table = 'ticket_transactions';
 
     // Ambil detail tiket sesuai filter
     public function getTicketDetail($startDate = null, $endDate = null, $requestType = null, $priority = null)

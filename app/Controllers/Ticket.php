@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\TicketModel;
-use App\Models\TicketAttModel;
+use App\Models\TicketAttachmentModel;
 use CodeIgniter\Controller;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -138,7 +138,7 @@ class Ticket extends Controller
             $file_path_encrypted = bin2hex($encrypter->encrypt($newName));
 
             $ticketAttModel->insert([
-                'tiket_trx_id' => $ticketId,
+                'ticket_id'    => $ticketId,
                 'file_name'    => $file_name_encrypted,
                 'file_path'    => $file_path_encrypted,
                 'created_by'   => $emp_name,

@@ -5,101 +5,113 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Ticket::create'); 
-$routes->get('ticket/create', 'Ticket::create');
-$routes->post('/ticket/store', 'Ticket::store'); 
+
+// =============================================================================
+// 1. PUBLIC ROUTES (Tanpa Autentikasi)
+// =============================================================================
+
+$routes->get('/', 'Ticket::create');
 $routes->get('faq', 'Ticket::faq');
+$routes->get('pusat-bantuan', 'PusatBantuan::pusat_bantuan');
 
-$routes->get('/ticket', 'Ticket::index');
-$routes->get('ticket/faq', 'Ticket::faq');
+$routes->group('ticket', static function ($routes) {
+    $routes->get('/', 'Ticket::index');
+    $routes->get('create', 'Ticket::create');
+    $routes->post('store', 'Ticket::store');
+    $routes->get('faq', 'Ticket::faq');
+    $routes->get('detail/(:segment)', 'admin\TicketAdminController::Ticket_detail/$1');
+});
 
-$routes->get('/login', 'Auth::login');
-$routes->post('/login', 'Auth::attemptLogin'); 
+// General Authentication
+$routes->get('login', 'Auth::login');
+$routes->post('login', 'Auth::attemptLogin');
 
-$routes->get('admin/login', 'admin\Admin::login');
-$routes->post('admin/authenticate', 'admin\Admin::authenticate');
-$routes->get('admin/dashboard', 'admin\Admin::dashboard');
-$routes->get('admin/logout', 'admin\Admin::logout');
-
-// dboard
-$routes->get('admin/dashboard', 'admin\Admin::dashboard');
-$routes->get('admin/Ticket_dashboard', 'admin\Admin::Ticket_dashboard');
-
-// tickets_db
-$routes->get('admin/Ticket_detail/(:segment)', 'admin\Admin::Ticket_detail/$1');
-$routes->post('admin/send_reply/(:segment)', 'admin\Admin::send_reply/$1');
-$routes->post('admin/update_ticket_status', 'admin\Admin::update_ticket_status');
-$routes->get('ticket/detail/(:segment)', 'admin\Admin::Ticket_detail/$1'); // <-- Public URL
-
-//system settings
-$routes->get('admin/system_settings', 'admin\Admin::system_settings');
-
-//faq
-$routes->post('admin/add_faq', 'admin\Admin::add_faq');
-$routes->get('admin/get_faq_list', 'admin\Admin::get_faq_list');
-$routes->post('admin/delete_faq', 'admin\Admin::delete_faq');
-$routes->post('admin/edit_faq', 'admin\Admin::edit_faq');
-
-// User Roles
-$routes->get('admin/get_user_role_list', 'admin\Admin::get_user_role_list');
-$routes->post('admin/add_user_role', 'admin\Admin::add_user_role');
-$routes->post('admin/edit_user_role', 'admin\Admin::edit_user_role');
-$routes->post('admin/delete_user_role', 'admin\Admin::delete_user_role');
-
-// Request Types
-$routes->get('admin/get_request_type_list', 'admin\Admin::get_request_type_list');
-$routes->post('admin/add_request_type', 'admin\Admin::add_request_type');
-$routes->post('admin/edit_request_type', 'admin\Admin::edit_request_type');
-$routes->post('admin/delete_request_type', 'admin\Admin::delete_request_type');
-
-// SLA Settings
-$routes->post('admin/add_sla', 'admin\Admin::add_sla');
-$routes->get('admin/get_sla_list', 'admin\Admin::get_sla_list');
-$routes->post('admin/edit_sla', 'admin\Admin::edit_sla');
-$routes->post('admin/delete_sla', 'admin\Admin::delete_sla');
-$routes->get('admin/get_used_request_types', 'admin\Admin::get_used_request_types');
-
-// User Management
-$routes->get('admin/user_mgt', 'admin\Admin::user_mgt');
-$routes->post('admin/add_user', 'admin\Admin::add_user');
-$routes->post('admin/delete_user', 'admin\Admin::delete_user');
-$routes->post('admin/edit_user', 'admin\Admin::edit_user');
-$routes->get('admin/get_user', 'admin\Admin::get_user');
-
-// user permission
-$routes->post('admin/add_permission', 'admin\Admin::add_permission');
-$routes->get('admin/get_permission', 'admin\Admin::get_permission');
-$routes->post('admin/edit_permission', 'admin\Admin::edit_permission');
-$routes->post('admin/delete_permission', 'admin\Admin::delete_permission');
-
-
-
-//assets js
+// Assets / Static JS Helper
 $routes->get('assets/ticket_js', 'Assets::ticket_js');
 
-//view images
-$routes->get('admin/view/(:any)', 'admin\Admin::view/$1');
 
-//Report Routes 
-$routes->get('admin/report', 'ReportController::index');
-$routes->get('admin/report/ticket-detail', 'ReportController::ticketDetail');
-$routes->get('admin/report/sla-detail', 'ReportController::slaDetail');
-$routes->get('admin/report/sla-response', 'ReportController::slaResponseComparison');
-$routes->get('admin/report/sla-resolution', 'ReportController::slaResolutionComparison');
+// =============================================================================
+// 2. ADMIN AUTH ROUTES (Guest/Tanpa Login)
+// =============================================================================
+$routes->group('admin', ['namespace' => 'App\Controllers\admin'], static function ($routes) {
+    $routes->get('login', 'AuthController::login');
+    $routes->post('authenticate', 'AuthController::authenticate');
+    $routes->get('logout', 'AuthController::logout');
+    $routes->get('forbidden', 'AuthController::forbidden');
+});
 
 
-// $routes->get('api/report/ticket-detail', 'ReportApiController::ticketDetail');
-// $routes->get('api/report/sla-detail', 'ReportApiController::slaDetail');
-// $routes->get('api/report/sla-response', 'ReportApiController::slaResponseComparison');
-// $routes->get('api/report/sla-resolution', 'ReportApiController::slaResolutionComparison');
+// =============================================================================
+// 3. ADMIN PROTECTED ROUTES (Wajib Login & Cek Hak Akses Role/Permission)
+// =============================================================================
+$routes->group('admin', [
+    'namespace' => 'App\Controllers\admin',
+    'filter'    => ['auth', 'permission']
+], static function ($routes) {
 
-// report user
-$routes->get('admin/report_user', 'admin\Admin::report_user');
-$routes->post('admin/submit_report_job', 'admin\Admin::submit_report_job');
-$routes->get('admin/download_report/(:num)', 'admin\Admin::download_report/$1');
-$routes->post('admin/delete_report_job/(:num)', 'admin\Admin::delete_report_job/$1');
+    // --- Dashboard ---
+    $routes->get('dashboard', 'DashboardController::dashboard');
 
-$routes->get('admin/developer-options', 'admin\DeveloperOptions::index');
+    // --- Tickets & Kanban Swimlane ---
+    $routes->get('Ticket_dashboard', 'TicketAdminController::Ticket_dashboard');
+    $routes->get('Ticket_detail/(:segment)', 'TicketAdminController::Ticket_detail/$1');
+    $routes->post('send_reply/(:segment)', 'TicketAdminController::send_reply/$1');
+    $routes->post('update_ticket_status', 'TicketAdminController::update_ticket_status');
+    $routes->get('view/(:any)', 'TicketAdminController::view/$1');
 
-//pusat bantuan
-$routes->get('pusat-bantuan', 'PusatBantuan::pusat_bantuan');
+    // --- System Settings & Master Data ---
+    $routes->get('system_settings', 'SystemSettingsController::system_settings');
+
+    // FAQ Management
+    $routes->post('add_faq', 'SystemSettingsController::add_faq');
+    $routes->get('get_faq_list', 'SystemSettingsController::get_faq_list');
+    $routes->post('edit_faq', 'SystemSettingsController::edit_faq');
+    $routes->post('delete_faq', 'SystemSettingsController::delete_faq');
+
+    // User Role Management
+    $routes->get('get_user_role_list', 'SystemSettingsController::get_user_role_list');
+    $routes->post('add_user_role', 'SystemSettingsController::add_user_role');
+    $routes->post('edit_user_role', 'SystemSettingsController::edit_user_role');
+    $routes->post('delete_user_role', 'SystemSettingsController::delete_user_role');
+
+    // Request Type Management
+    $routes->get('get_request_type_list', 'SystemSettingsController::get_request_type_list');
+    $routes->post('add_request_type', 'SystemSettingsController::add_request_type');
+    $routes->post('edit_request_type', 'SystemSettingsController::edit_request_type');
+    $routes->post('delete_request_type', 'SystemSettingsController::delete_request_type');
+
+    // SLA Settings Management
+    $routes->post('add_sla', 'SystemSettingsController::add_sla');
+    $routes->get('get_sla_list', 'SystemSettingsController::get_sla_list');
+    $routes->post('edit_sla', 'SystemSettingsController::edit_sla');
+    $routes->post('delete_sla', 'SystemSettingsController::delete_sla');
+    $routes->get('get_used_request_types', 'SystemSettingsController::get_used_request_types');
+
+    // Permissions Management
+    $routes->post('add_permission', 'SystemSettingsController::add_permission');
+    $routes->get('get_permission', 'SystemSettingsController::get_permission');
+    $routes->post('edit_permission', 'SystemSettingsController::edit_permission');
+    $routes->post('delete_permission', 'SystemSettingsController::delete_permission');
+
+    // --- User Management ---
+    $routes->get('user_mgt', 'UserManagementController::user_mgt');
+    $routes->post('add_user', 'UserManagementController::add_user');
+    $routes->post('edit_user', 'UserManagementController::edit_user');
+    $routes->post('delete_user', 'UserManagementController::delete_user');
+    $routes->get('get_user', 'UserManagementController::get_user');
+
+    // --- Reports & Export Jobs ---
+    $routes->get('report', '\App\Controllers\ReportController::index');
+    $routes->get('report/ticket-detail', '\App\Controllers\ReportController::ticketDetail');
+    $routes->get('report/sla-detail', '\App\Controllers\ReportController::slaDetail');
+    $routes->get('report/sla-response', '\App\Controllers\ReportController::slaResponseComparison');
+    $routes->get('report/sla-resolution', '\App\Controllers\ReportController::slaResolutionComparison');
+
+    $routes->get('report_user', 'ReportUserController::report_user');
+    $routes->post('submit_report_job', 'ReportUserController::submit_report_job');
+    $routes->get('download_report/(:num)', 'ReportUserController::download_report/$1');
+    $routes->post('delete_report_job/(:num)', 'ReportUserController::delete_report_job/$1');
+
+    // --- Developer Options ---
+    $routes->get('developer-options', 'DeveloperOptions::index');
+});

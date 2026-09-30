@@ -3,16 +3,20 @@
 namespace App\Filters;
 
 use CodeIgniter\Filters\FilterInterface;
+use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class DeviceSecurityFilter implements FilterInterface
 {
+    /**
+     * @param IncomingRequest|RequestInterface $request
+     */
     public function before(RequestInterface $request, $arguments = null)
     {
         // Skip check untuk admin routes
-        $uri = $request->getPath();
-        if (strpos($uri, '/admin') === 0 || strpos($uri, 'index.php/admin') !== false) {
+        $uri = $request->getUri()->getPath();
+        if (strpos($uri, '/admin') === 0 || strpos($uri, 'admin') === 0 || strpos($uri, 'index.php/admin') !== false) {
             return null; // Allow admin akses
         }
 
@@ -29,6 +33,9 @@ class DeviceSecurityFilter implements FilterInterface
         return null;
     }
 
+    /**
+     * @param IncomingRequest|RequestInterface $request
+     */
     private function isDeviceCompromised(RequestInterface $request): bool
     {
         $userAgent = $request->getHeaderLine('User-Agent');
@@ -55,7 +62,7 @@ class DeviceSecurityFilter implements FilterInterface
             }
 
             // Deteksi dari JavaScript yang dikirim via request
-            $jsPayload = $request->getPost('device_check');
+            $jsPayload = ($request instanceof IncomingRequest) ? $request->getPost('device_check') : service('request')->getPost('device_check');
             if ($jsPayload) {
                 $decoded = json_decode($jsPayload, true);
                 if (isset($decoded['is_emulator']) && $decoded['is_emulator']) {
@@ -69,7 +76,7 @@ class DeviceSecurityFilter implements FilterInterface
 
         // Check iOS
         if (strpos($userAgent, 'iPhone') !== false || strpos($userAgent, 'iPad') !== false) {
-            $jsPayload = $request->getPost('device_check');
+            $jsPayload = ($request instanceof IncomingRequest) ? $request->getPost('device_check') : service('request')->getPost('device_check');
             if ($jsPayload) {
                 $decoded = json_decode($jsPayload, true);
                 if (isset($decoded['developer_mode']) && $decoded['developer_mode']) {

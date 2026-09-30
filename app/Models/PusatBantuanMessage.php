@@ -1,12 +1,12 @@
 <?php
 
 namespace App\Models;
-use CodeIgniter\Model;
 
-class PusatBantuanMessage extends Model
+class PusatBantuanMessage extends BaseModel
 {
     protected $table = 'pusban_message';
+    protected $primaryKey = 'id';
     protected $allowedFields = [
-        'message'
+        'id', 'message'
     ];
 }

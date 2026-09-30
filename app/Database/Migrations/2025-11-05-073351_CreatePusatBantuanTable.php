@@ -18,7 +18,7 @@ class CreatePusatBantuanTable extends Migration
             ]
         ]);
 
-        $this->forge->createTable('pusban_message');
+        $this->forge->createTable('pusban_message', true);
     }
 
     public function down()

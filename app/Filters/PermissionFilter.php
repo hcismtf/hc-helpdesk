@@ -9,28 +9,56 @@ use Config\Superadmin;
 class PermissionFilter implements FilterInterface
 {
     protected $permissionFileMap = [
-        'tickets'         => ['ticket_dashboard', 'ticket_detail', 'get_ticket_list', 'send_reply', 'ticket-detail', 'update_ticket_status'],
-        'dashboard'       => ['dashboard'],
+        'tickets' => ['ticket_dashboard', 'ticket_detail', 'get_ticket_list', 'send_reply', 'ticket-detail', 'update_ticket_status'],
+        'dashboard' => ['dashboard'],
         'user_management' => [
-            'user_mgt', 'get_user_list',
-            'add_user', 'edit_user', 'delete_user','get_user' 
+            'user_mgt',
+            'get_user_list',
+            'add_user',
+            'edit_user',
+            'delete_user',
+            'get_user'
         ],
         'system_settings' => [
             'system_settings',
-            'faq_list', 'get_faq_list', 'add_faq', 'edit_faq', 'delete_faq',
-            'user_role_list', 'get_user_role_list',
-            'add_user_role', 'edit_user_role', 'delete_user_role', 
-            'request_type', 'get_request_type_list',
-            'add_request_type', 'edit_request_type', 'delete_request_type', 
-            'sla_settings', 'get_sla_list',
-            'add_sla', 'edit_sla', 'delete_sla', 
-            'add_permission', 'get_permission', 'edit_permission', 'delete_permission', 
+            'faq_list',
+            'get_faq_list',
+            'add_faq',
+            'edit_faq',
+            'delete_faq',
+            'user_role_list',
+            'get_user_role_list',
+            'add_user_role',
+            'edit_user_role',
+            'delete_user_role',
+            'request_type',
+            'get_request_type_list',
+            'add_request_type',
+            'edit_request_type',
+            'delete_request_type',
+            'sla_settings',
+            'get_sla_list',
+            'add_sla',
+            'edit_sla',
+            'delete_sla',
+            'add_permission',
+            'get_permission',
+            'edit_permission',
+            'delete_permission',
         ],
         'reports' => [
-            'report_user', 'export_ticket_excel', 'export_sla_excel','submit_report_job', 'download_report' ,'delete_report_job'
+            'report_user',
+            'export_ticket_excel',
+            'export_sla_excel',
+            'submit_report_job',
+            'download_report',
+            'delete_report_job'
         ],
     ];
 
+    /**
+     * @param \CodeIgniter\HTTP\IncomingRequest|\CodeIgniter\HTTP\RequestInterface $request
+     */
     public function before(RequestInterface $request, $arguments = null)
     {
         $userPermissions = session('user_permissions') ?? [];
@@ -47,7 +75,8 @@ class PermissionFilter implements FilterInterface
 
         $uriObj = $request->getUri();
         $segment2 = $uriObj->getTotalSegments() >= 2 ? strtolower($uriObj->getSegment(2)) : '';
-        if ($segment2 === '') return;
+        if ($segment2 === '')
+            return;
 
         // Exception: allow access to attachment view
         if ($segment2 === 'view') {
@@ -62,7 +91,10 @@ class PermissionFilter implements FilterInterface
             }
         }
         if (!$allowed) {
-            if ($request->isAJAX()) {
+            $isAjax = ($request instanceof \CodeIgniter\HTTP\IncomingRequest && $request->isAJAX())
+                || service('request')->isAJAX();
+
+            if ($isAjax) {
                 return service('response')->setStatusCode(403)->setJSON([
                     'status' => 'error',
                     'message' => 'Anda tidak memiliki akses untuk tindakan ini.'
