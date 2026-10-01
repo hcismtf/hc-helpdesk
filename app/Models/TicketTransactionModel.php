@@ -27,9 +27,9 @@ class TicketTransactionModel extends BaseModel
         'due_date',
         'first_response_at',
         'finish_date',
-        'created_by',      // Auditing: nama user pembuat (bukan ID)
+        'created_by',
         'created_date',
-        'modified_by',     // Auditing: nama user pengubah (bukan ID)
+        'modified_by',
         'modified_date'
     ];
 
@@ -44,11 +44,11 @@ class TicketTransactionModel extends BaseModel
     {
         $builder = $this->builder();
         $builder->select('id, ticket_priority, TIMESTAMPDIFF(MINUTE, created_date, first_response_at) as response_time')
-                ->where('first_response_at IS NOT NULL');
+            ->where('first_response_at IS NOT NULL');
 
         if ($startDate && $endDate) {
             $builder->where('DATE(created_date) >=', $startDate)
-                    ->where('DATE(created_date) <=', $endDate);
+                ->where('DATE(created_date) <=', $endDate);
         }
 
         return $builder->get()->getResultArray();
@@ -65,11 +65,11 @@ class TicketTransactionModel extends BaseModel
     {
         $builder = $this->builder();
         $builder->select('id, ticket_priority, TIMESTAMPDIFF(MINUTE, created_date, finish_date) as resolution_time')
-                ->where('finish_date IS NOT NULL');
+            ->where('finish_date IS NOT NULL');
 
         if ($startDate && $endDate) {
             $builder->where('DATE(created_date) >=', $startDate)
-                    ->where('DATE(created_date) <=', $endDate);
+                ->where('DATE(created_date) <=', $endDate);
         }
 
         return $builder->get()->getResultArray();
@@ -86,11 +86,11 @@ class TicketTransactionModel extends BaseModel
     {
         $builder = $this->builder();
         $builder->select('ticket_priority, AVG(TIMESTAMPDIFF(MINUTE, created_date, first_response_at)) as avg_response, AVG(TIMESTAMPDIFF(MINUTE, created_date, finish_date)) as avg_resolution')
-                ->groupBy('ticket_priority');
+            ->groupBy('ticket_priority');
 
         if ($startDate && $endDate) {
             $builder->where('DATE(created_date) >=', $startDate)
-                    ->where('DATE(created_date) <=', $endDate);
+                ->where('DATE(created_date) <=', $endDate);
         }
 
         return $builder->get()->getResultArray();
