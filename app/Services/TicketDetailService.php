@@ -117,15 +117,26 @@ class TicketDetailService
                 ];
             } else {
                 $commentsCount++;
-                $isUser = ($r['submitted_by'] === 'user' || $r['submitted_by'] == ($ticket['emp_id'] ?? ''));
+                $responseAuthor = $r['author_name'] ?? null;
+                $responseUserId = $r['user_id'] ?? ($r['submitted_by'] ?? null);
+
+                $isUser = ($responseUserId === 'user')
+                    || (!empty($responseUserId) && $responseUserId == ($ticket['reporter_id'] ?? ''))
+                    || (!empty($responseAuthor) && $responseAuthor == ($ticket['created_by'] ?? ''));
+
                 if ($isUser) {
-                    $authorName = $ticket['emp_name'] ?? 'Requester';
+                    $authorName = $responseAuthor ?: ($ticket['created_by'] ?? 'Requester');
                     $roleBadge = 'Ticket Reporter';
                     $badgeClass = 'badge-reporter';
                     $avatarBg = 'avatar-f';
                 } else {
-                    $admin = $userModel->find($r['submitted_by']);
-                    $authorName = $admin ? $admin['name'] : ($assignedSpecialist['name'] !== 'Unassigned' ? $assignedSpecialist['name'] : 'Support Agent');
+                    if (empty($responseAuthor) && !empty($responseUserId)) {
+                        $admin = $userModel->find($responseUserId);
+                        if ($admin) {
+                            $responseAuthor = $admin['name'];
+                        }
+                    }
+                    $authorName = $responseAuthor ?: ($assignedSpecialist['name'] !== 'Unassigned' ? $assignedSpecialist['name'] : 'Support Agent');
                     $roleBadge = 'Support Lead';
                     $badgeClass = 'badge-support';
                     $avatarBg = 'avatar-am';

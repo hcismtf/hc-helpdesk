@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use DateTime;
-use App\Models\TicketModel;
+use App\Models\TicketTransactionModel;
 
 class TicketMetricsService
 {
@@ -111,10 +111,10 @@ class TicketMetricsService
     /**
      * Get 7-day trend metrics for interactive chart
      *
-     * @param TicketModel $ticketModel
+     * @param TicketTransactionModel $ticketModel
      * @return array
      */
-    public function get7DaysTrend(TicketModel $ticketModel): array
+    public function get7DaysTrend(TicketTransactionModel $ticketModel): array
     {
         $trendDates = [];
         $trendIncoming = [];

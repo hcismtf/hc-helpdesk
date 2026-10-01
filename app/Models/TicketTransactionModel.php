@@ -15,11 +15,22 @@ class TicketTransactionModel extends BaseModel
     protected $useSoftDeletes = false;
 
     protected $allowedFields = [
-        'id', 'emp_id', 'nip_encrypted', 'emp_name', 'email', 'wa_no', 
-        'req_type', 'subject', 'message', 'monitoring_url',
-        'ticket_status', 'ticket_priority', 'created_by', 'created_date', 
-        'due_date', 'first_response_at', 'finish_date', 'assigned_to', 
-        'modified_by', 'modified_date'
+        'id',
+        'ticket_number',
+        'reporter_id',
+        'assigned_to',
+        'req_type',
+        'subject',
+        'message',
+        'ticket_status',
+        'ticket_priority',
+        'due_date',
+        'first_response_at',
+        'finish_date',
+        'created_by',      // Auditing: nama user pembuat (bukan ID)
+        'created_date',
+        'modified_by',     // Auditing: nama user pengubah (bukan ID)
+        'modified_date'
     ];
 
     /**

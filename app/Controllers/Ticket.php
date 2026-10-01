@@ -2,7 +2,7 @@
 
 namespace App\Controllers;
 
-use App\Models\TicketModel;
+use App\Models\TicketTransactionModel;
 use App\Models\TicketAttachmentModel;
 use CodeIgniter\Controller;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -36,8 +36,8 @@ class Ticket extends Controller
     }
     public function store()
     {
-        $ticketModel = new TicketModel();
-        $ticketAttModel = new TicketAttModel();
+        $ticketModel = new TicketTransactionModel();
+        $ticketAttModel = new TicketAttachmentModel();
 
         $emp_name = trim($this->request->getPost('emp_name') ?? '');
         $nip_asli = trim($this->request->getPost('emp_id') ?? '');
@@ -61,10 +61,7 @@ class Ticket extends Controller
             return redirect()->back()->withInput()->with('error', 'Harap lengkapi semua kolom bertanda bintang (*).');
         }
 
-        $emp_id = $this->generateUUIDv4();
-        $encrypter = \Config\Services::encrypter();
-        $nip_encrypted = bin2hex($encrypter->encrypt($nip_asli));
-
+        $reporterId = $this->generateUUIDv4();
         $ticketId = $this->generateUUIDv4();
 
         // Calculate due_date based on SLA if priority is provided
@@ -83,11 +80,7 @@ class Ticket extends Controller
 
         $data = [
             'id'              => $ticketId,
-            'emp_id'          => $emp_id,
-            'nip_encrypted'   => $nip_encrypted,
-            'emp_name'        => $emp_name,
-            'email'           => $email,
-            'wa_no'           => $wa_no,
+            'reporter_id'     => $reporterId,
             'req_type'        => $req_type,
             'subject'         => $subject,
             'message'         => $message,
@@ -134,6 +127,7 @@ class Ticket extends Controller
             }
 
             // Enkripsi file_name dan file_path
+            $encrypter = \Config\Services::encrypter();
             $file_name_encrypted = bin2hex($encrypter->encrypt($file->getClientName()));
             $file_path_encrypted = bin2hex($encrypter->encrypt($newName));
 

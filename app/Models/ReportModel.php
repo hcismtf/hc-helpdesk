@@ -8,7 +8,7 @@ class ReportModel extends BaseModel
     public function getTicketDetail($startDate = null, $endDate = null, $requestType = null, $priority = null)
     {
         $builder = $this->db->table($this->table);
-        $builder->select('id, emp_id, nip_encrypted, emp_name, email, wa_no, req_type, subject, message, ticket_status, ticket_priority, created_by, created_date, modified_by, modified_date, due_date, first_response_at, finish_date');
+        $builder->select('id, ticket_number, reporter_id, assigned_to, req_type, subject, message, ticket_status, ticket_priority, created_by, created_date, modified_by, modified_date, due_date, first_response_at, finish_date');
         if ($startDate && $endDate) {
             $builder->where("DATE(created_date) >=", $startDate);
             $builder->where("DATE(created_date) <=", $endDate);

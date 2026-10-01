@@ -16,18 +16,26 @@ class TicketResponseModel extends BaseModel
     protected $useSoftDeletes = false;
 
     protected $allowedFields = [
-        'id', 'ticket_id', 'user_id', 'submitted_by', 
-        'status', 'priority', 'assigned_to', 'reply', 'created_at'
+        'id',
+        'ticket_id',
+        'user_id',
+        'author_name',
+        'reply',
+        'is_internal',
+        'status',
+        'priority',
+        'assigned_to',
+        'created_at'
     ];
 
     /**
      * Ambil seluruh balasan/pesan berdasarkan Ticket ID
      *
-     * @param int|string $ticketId
+     * @param string $ticketId
      * @param string $order
      * @return array
      */
-    public function getResponsesByTicketId($ticketId, string $order = 'ASC'): array
+    public function getResponsesByTicketId(string $ticketId, string $order = 'ASC'): array
     {
         return $this->where('ticket_id', $ticketId)
                     ->orderBy('created_at', $order)

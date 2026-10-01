@@ -1,6 +1,6 @@
 <?php
 namespace App\Controllers;
-use App\Models\TicketModel;
+use App\Models\TicketTransactionModel;
 use App\Models\SlaConfigurationModel;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -20,7 +20,7 @@ class SlaReportController extends ResourceController
     public function priorityVsResponse()
     {
         $request = service('request');
-        $model = new TicketModel();
+        $model = new TicketTransactionModel();
         $slaModel = new SlaConfigurationModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
@@ -40,7 +40,7 @@ class SlaReportController extends ResourceController
     public function actualResponseTime()
     {
         $request = service('request');
-        $model = new TicketModel();
+        $model = new TicketTransactionModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
         $builder = $model->builder();
@@ -58,7 +58,7 @@ class SlaReportController extends ResourceController
     public function actualResolutionTime()
     {
         $request = service('request');
-        $model = new TicketModel();
+        $model = new TicketTransactionModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
         $builder = $model->builder();
@@ -76,7 +76,7 @@ class SlaReportController extends ResourceController
     public function compliancePercentage()
     {
         $request = service('request');
-        $model = new TicketModel();
+        $model = new TicketTransactionModel();
         $slaModel = new SlaConfigurationModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
@@ -115,7 +115,7 @@ class SlaReportController extends ResourceController
     public function averageTimes()
     {
         $request = service('request');
-        $model = new TicketModel();
+        $model = new TicketTransactionModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
         $builder = $model->builder();

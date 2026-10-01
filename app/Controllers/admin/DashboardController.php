@@ -3,7 +3,7 @@
 namespace App\Controllers\admin;
 
 use App\Controllers\BaseController;
-use App\Models\TicketModel;
+use App\Models\TicketTransactionModel;
 use App\Models\SlaModel;
 use App\Services\TicketMetricsService;
 
@@ -25,7 +25,7 @@ class DashboardController extends BaseController
             return redirect()->to('/admin/login');
         }
 
-        $ticketModel = new TicketModel();
+        $ticketModel = new TicketTransactionModel();
         $slaModel = new SlaModel();
 
         // Filters from GET

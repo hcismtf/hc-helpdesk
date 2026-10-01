@@ -3,7 +3,7 @@
 namespace App\Controllers\admin;
 
 use App\Controllers\BaseController;
-use App\Models\TicketModel;
+use App\Models\TicketTransactionModel;
 use App\Models\ReportJobModel;
 use App\Services\ReportExportService;
 
@@ -34,7 +34,7 @@ class ReportUserController extends BaseController
         $start_date_sla = $this->request->getGet('start_date_sla') ?? '';
         $end_date_sla = $this->request->getGet('end_date_sla') ?? '';
 
-        $ticketModel = new TicketModel();
+        $ticketModel = new TicketTransactionModel();
         $requestTypes = $ticketModel->select('req_type')->distinct()->where('req_type IS NOT NULL')->where('req_type !=', '')->findAll();
         $priorities = $ticketModel->select('ticket_priority')->distinct()->where('ticket_priority IS NOT NULL')->where('ticket_priority !=', '')->findAll();
 

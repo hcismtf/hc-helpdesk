@@ -28,7 +28,7 @@ class TicketEmailService
         $reqType = htmlspecialchars($ticket['req_type'] ?? '-');
         $subject = htmlspecialchars($ticket['subject'] ?? '-');
         $replyEscaped = nl2br(htmlspecialchars($replyText));
-        $uuid = $ticket['emp_id'] ?? '';
+        $uuid = $ticket['reporter_id'] ?? $ticket['id'] ?? '';
         $publicURL = base_url('ticket/detail/' . $uuid);
 
         if ($status === 'closed') {

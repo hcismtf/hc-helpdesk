@@ -4,7 +4,6 @@ namespace App\Controllers\admin;
 
 use App\Controllers\BaseController;
 use App\Models\TicketTransactionModel;
-use App\Models\TicketModel;
 use App\Models\TicketAttachmentModel;
 use App\Models\TicketResponseModel;
 use App\Models\UserModel;
@@ -28,7 +27,7 @@ class TicketAdminController extends BaseController
      */
     public function Ticket_dashboard()
     {
-        $model = new TicketModel();
+        $model = new TicketTransactionModel();
         $perPage = (int) ($this->request->getGet('per_page') ?? 12);
         $page = (int) ($this->request->getGet('page') ?? 1);
         $start = $this->request->getGet('start');
@@ -166,7 +165,7 @@ class TicketAdminController extends BaseController
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Status tidak valid.']);
         }
 
-        $ticketModel = new TicketModel();
+        $ticketModel = new TicketTransactionModel();
         $ticket = $ticketModel->find($ticketId);
         if (!$ticket) {
             return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Tiket tidak ditemukan.']);
@@ -199,7 +198,7 @@ class TicketAdminController extends BaseController
             $trxModel->insert([
                 'ticket_id'    => $ticketId,
                 'user_id'      => $userId,
-                'submitted_by' => $userId,
+                'author_name'  => $username,
                 'status'       => $newStatus,
                 'priority'     => $ticket['ticket_priority'] ?? 'medium',
                 'assigned_to'  => $ticket['assigned_to'] ?? null,
@@ -222,7 +221,7 @@ class TicketAdminController extends BaseController
      */
     public function Ticket_detail($id)
     {
-        $model = new TicketModel();
+        $model = new TicketTransactionModel();
         $userModel = new UserModel();
 
         if (!session('isLoggedIn') && is_numeric($id)) {
@@ -230,11 +229,11 @@ class TicketAdminController extends BaseController
         }
 
         $ticket = null;
-        if (is_numeric($id)) {
+        if (is_numeric($id) || is_string($id)) {
             $ticket = $model->find($id);
         }
         if (!$ticket) {
-            $ticket = $model->where('emp_id', $id)->first();
+            $ticket = $model->where('reporter_id', $id)->first();
         }
         if (!$ticket) {
             return redirect()->to('/admin/Ticket_dashboard')->with('error', 'Ticket not found');
@@ -289,9 +288,9 @@ class TicketAdminController extends BaseController
         $replies = [];
 
         foreach ($repliesRaw as $r) {
-            $isUser = ($r['submitted_by'] === 'user' || $r['submitted_by'] == $ticket['emp_id']);
+            $isUser = ($r['submitted_by'] === 'user' || $r['submitted_by'] == ($ticket['reporter_id'] ?? '') || $r['submitted_by'] == ($ticket['created_by'] ?? ''));
             if ($isUser) {
-                $authorName = $ticket['emp_name'];
+                $authorName = $ticket['emp_name'] ?? $ticket['created_by'] ?? 'User';
             } else {
                 $adminUser = $userModel->find($r['submitted_by']);
                 $authorName = $adminUser ? $adminUser['name'] : ($assignedName !== '-' ? $assignedName : 'Admin');
@@ -324,7 +323,7 @@ class TicketAdminController extends BaseController
      */
     public function send_reply($id)
     {
-        $ticketModel = new TicketModel();
+        $ticketModel = new TicketTransactionModel();
         $ticket = null;
 
         $replyText = $this->request->getPost('reply');
@@ -336,11 +335,11 @@ class TicketAdminController extends BaseController
             throw PageNotFoundException::forPageNotFound("Ticket not found");
         }
 
-        if (is_numeric($id)) {
+        if (is_numeric($id) || is_string($id)) {
             $ticket = $ticketModel->find($id);
         }
         if (!$ticket) {
-            $ticket = $ticketModel->where('emp_id', $id)->first();
+            $ticket = $ticketModel->where('reporter_id', $id)->first();
         }
         if (!$ticket) {
             return redirect()->back()->with('error', 'Ticket not found.');
@@ -367,8 +366,8 @@ class TicketAdminController extends BaseController
                 $assignedTo = !empty($lastTrx['assigned_to']) ? $lastTrx['assigned_to'] : ($ticket['assigned_to'] ?? null);
             }
         } else {
-            $userId = $ticket['emp_id'] ?? null;
-            $username = $ticket['emp_name'] ?? 'User';
+            $userId = $ticket['reporter_id'] ?? $ticket['created_by'] ?? null;
+            $username = $ticket['created_by'] ?? $ticket['emp_name'] ?? 'User';
             $status = $ticket['ticket_status'] ?? 'open';
             $priority = $ticket['ticket_priority'] ?? 'medium';
             $assignedTo = $ticket['assigned_to'] ?? null;
@@ -393,7 +392,7 @@ class TicketAdminController extends BaseController
         $trxModel->insert([
             'ticket_id'    => $ticketId,
             'user_id'      => $userId,
-            'submitted_by' => $userId,
+            'author_name'  => $username,
             'status'       => $status,
             'priority'     => $priority,
             'assigned_to'  => $assignedTo,

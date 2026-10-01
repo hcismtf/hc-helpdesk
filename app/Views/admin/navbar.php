@@ -2,7 +2,7 @@
 $isSuperadmin = (strtolower(session('role') ?? '') === 'superadmin');
 $userPermissions = session('user_permissions') ?? [];
 try {
-    $ticketModel = new \App\Models\TicketModel();
+    $ticketModel = new \App\Models\TicketTransactionModel();
     $openTicketsCount = $ticketModel->where('ticket_status !=', 'closed')->countAllResults();
 } catch (\Exception $e) {
     $openTicketsCount = 0;

@@ -1,6 +1,6 @@
 <?php
 namespace App\Controllers;
-use App\Models\TicketModel;
+use App\Models\TicketTransactionModel;
 use CodeIgniter\RESTful\ResourceController;
 
 class TicketDetailReportController extends ResourceController
@@ -11,7 +11,7 @@ class TicketDetailReportController extends ResourceController
     public function perRequestType()
     {
     $request = service('request');
-    $model = new TicketModel();
+    $model = new TicketTransactionModel();
     $startDate = $request->getGet('start_date');
     $endDate = $request->getGet('end_date');
         $builder = $model->builder();
@@ -29,7 +29,7 @@ class TicketDetailReportController extends ResourceController
     public function perPriority()
     {
     $request = service('request');
-    $model = new TicketModel();
+    $model = new TicketTransactionModel();
     $startDate = $request->getGet('start_date');
     $endDate = $request->getGet('end_date');
         $builder = $model->builder();
@@ -47,7 +47,7 @@ class TicketDetailReportController extends ResourceController
     public function perStatus()
     {
     $request = service('request');
-    $model = new TicketModel();
+    $model = new TicketTransactionModel();
     $startDate = $request->getGet('start_date');
     $endDate = $request->getGet('end_date');
         $builder = $model->builder();
@@ -65,7 +65,7 @@ class TicketDetailReportController extends ResourceController
     public function perDate()
     {
     $request = service('request');
-    $model = new TicketModel();
+    $model = new TicketTransactionModel();
     $startDate = $request->getGet('start_date');
     $endDate = $request->getGet('end_date');
         $builder = $model->builder();
@@ -83,7 +83,7 @@ class TicketDetailReportController extends ResourceController
     public function perUser()
     {
     $request = service('request');
-    $model = new TicketModel();
+    $model = new TicketTransactionModel();
     $startDate = $request->getGet('start_date');
     $endDate = $request->getGet('end_date');
         $builder = $model->builder();
@@ -101,7 +101,7 @@ class TicketDetailReportController extends ResourceController
     public function detailByDate()
     {
         $request = service('request');
-        $model = new TicketModel();
+        $model = new TicketTransactionModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
         $encrypter = \Config\Services::encrypter();
