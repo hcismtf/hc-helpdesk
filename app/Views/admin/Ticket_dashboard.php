@@ -299,7 +299,7 @@
                     <div class="swimlane-header">
                         <div class="swimlane-title-group">
                             <span class="swimlane-indicator-dot dot-open"></span>
-                            <span class="swimlane-title">Ticket Open</span>
+                            <span class="swimlane-title">Open</span>
                             <span class="swimlane-count-badge" id="count-open"><?= count($openTicketsList) ?> tickets</span>
                         </div>
                         <div class="swimlane-controls">
@@ -346,7 +346,7 @@
                     <div class="swimlane-header">
                         <div class="swimlane-title-group">
                             <span class="swimlane-indicator-dot dot-in-progress"></span>
-                            <span class="swimlane-title">Ticket In Progress</span>
+                            <span class="swimlane-title">In Progress</span>
                             <span class="swimlane-count-badge" id="count-in_progress"><?= count($inProgressTicketsList) ?> tickets</span>
                         </div>
                         <div class="swimlane-controls">
@@ -393,7 +393,7 @@
                     <div class="swimlane-header">
                         <div class="swimlane-title-group">
                             <span class="swimlane-indicator-dot dot-closed"></span>
-                            <span class="swimlane-title">Ticket Closed / Done</span>
+                            <span class="swimlane-title">Closed / Done</span>
                             <span class="swimlane-count-badge" id="count-closed"><?= count($closedTicketsList) ?> tickets</span>
                         </div>
                         <div class="swimlane-controls">

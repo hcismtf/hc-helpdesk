@@ -109,7 +109,7 @@
                 <div class="mini-chart-header">
                     <div class="mini-chart-title">
                         <span class="pulse-dot" id="chartPulseDot"></span>
-                        <span id="chartActiveLabel">7-Day Trend: Incoming</span>
+                        <span id="chartActiveLabel">Graph Incoming</span>
                     </div>
                     <div class="mini-chart-toggles">
                         <button type="button" class="mini-toggle active" data-metric="incoming" onclick="switchMiniChart('incoming', this)">Incoming</button>

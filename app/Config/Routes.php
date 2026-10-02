@@ -13,11 +13,12 @@ $routes->get('faq', 'Ticket::faq');
 $routes->get('/ticket', 'Ticket::index');
 $routes->get('ticket/faq', 'Ticket::faq');
 
-$routes->get('/login', 'Auth::login');
+$routes->get('/login', 'Auth::authenticate');
 $routes->post('/login', 'Auth::attemptLogin'); 
 
 $routes->get('admin/login', 'admin\Admin::login');
-$routes->post('admin/authenticate', 'admin\Admin::authenticate');
+// $routes->post('admin/authenticate', 'admin\Admin::authenticate');
+$routes->post('admin/authenticate', 'Auth::authenticate');
 $routes->get('admin/dashboard', 'admin\Admin::dashboard');
 $routes->get('admin/logout', 'admin\Admin::logout');
 
