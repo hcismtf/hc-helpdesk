@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/codeigniter4/CodeIgniter4.git",
-                "reference": "fba436206823db34659adb1e41811b726fc065db"
+                "reference": "092c8f3d914afe4a7567695d55ee368ea9267e95"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/codeigniter4/CodeIgniter4/zipball/fba436206823db34659adb1e41811b726fc065db",
-                "reference": "fba436206823db34659adb1e41811b726fc065db",
+                "url": "https://api.github.com/repos/codeigniter4/CodeIgniter4/zipball/092c8f3d914afe4a7567695d55ee368ea9267e95",
+                "reference": "092c8f3d914afe4a7567695d55ee368ea9267e95",
                 "shasum": ""
             },
             "require": {
@@ -43,7 +43,7 @@
                 "phpunit/phpcov": "^9.0.2 || ^10.0",
                 "phpunit/phpunit": "^10.5.16 || ^11.2",
                 "predis/predis": "^3.0",
-                "rector/rector": "2.6.7",
+                "rector/rector": "2.7.0",
                 "shipmonk/phpstan-baseline-per-identifier": "^2.0"
             },
             "suggest": {
@@ -150,7 +150,7 @@
                 "slack": "https://codeigniterchat.slack.com",
                 "issues": "https://github.com/codeigniter4/CodeIgniter4/issues"
             },
-            "time": "2026-09-27T11:56:30+00:00"
+            "time": "2026-10-06T11:32:42+00:00"
         },
         {
             "name": "laminas/laminas-escaper",
@@ -1020,16 +1020,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "10.5.65",
+            "version": "10.5.66",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "b4f678d4ebb686d6d3bd6a7c193e8a067d1a7f01"
+                "reference": "747c9889613d0b3ffa08b74272e50ed3b8fa6d72"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/b4f678d4ebb686d6d3bd6a7c193e8a067d1a7f01",
-                "reference": "b4f678d4ebb686d6d3bd6a7c193e8a067d1a7f01",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/747c9889613d0b3ffa08b74272e50ed3b8fa6d72",
+                "reference": "747c9889613d0b3ffa08b74272e50ed3b8fa6d72",
                 "shasum": ""
             },
             "require": {
@@ -1101,7 +1101,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/10.5.65"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/10.5.66"
             },
             "funding": [
                 {
@@ -1109,7 +1109,7 @@
                     "type": "other"
                 }
             ],
-            "time": "2026-09-23T10:01:12+00:00"
+            "time": "2026-10-05T05:46:26+00:00"
         },
         {
             "name": "psr/container",

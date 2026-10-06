@@ -15,7 +15,6 @@ class TicketTransactionModel extends BaseModel
     protected $useSoftDeletes = false;
 
     protected $allowedFields = [
-        'id',
         'ticket_number',
         'reporter_id',
         'assigned_to',
@@ -27,10 +26,6 @@ class TicketTransactionModel extends BaseModel
         'due_date',
         'first_response_at',
         'finish_date',
-        'created_by',
-        'created_date',
-        'modified_by',
-        'modified_date'
     ];
 
     /**

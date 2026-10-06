@@ -17,8 +17,7 @@ class TicketAttachmentModel extends BaseModel
     public $useTimestamps = false;
 
     protected $allowedFields = [
-        'id', 'ticket_id', 'file_name', 'file_path',
-        'created_by', 'created_date', 'modified_by', 'modified_date'
+        'ticket_id', 'file_name', 'file_path',
     ];
 
     /**

@@ -64,7 +64,10 @@ class SystemSettingsService
 
         $roleUsersMap = [];
         foreach ($allUsers as $u) {
-            $rId = (int) ($u['role_id'] ?? 0);
+            $rId = (string) ($u['role_id'] ?? '');
+            if ($rId === '') {
+                continue;
+            }
             if (!isset($roleUsersMap[$rId])) {
                 $roleUsersMap[$rId] = [];
             }
@@ -76,7 +79,7 @@ class SystemSettingsService
         }
 
         foreach ($roles as &$role) {
-            $rId = (int) $role['id'];
+            $rId = (string) $role['id'];
             
             // Menggunakan method relasi di RoleModel: getPermissions & getPermissionIds
             $permList = $this->roleModel->getPermissions($rId);

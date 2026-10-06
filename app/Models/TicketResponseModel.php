@@ -16,7 +16,6 @@ class TicketResponseModel extends BaseModel
     protected $useSoftDeletes = false;
 
     protected $allowedFields = [
-        'id',
         'ticket_id',
         'user_id',
         'author_name',

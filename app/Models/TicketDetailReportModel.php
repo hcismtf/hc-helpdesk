@@ -9,8 +9,8 @@ class TicketDetailReportModel extends BaseModel
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $allowedFields = [
-        'id', 'ticket_number', 'reporter_id', 'assigned_to', 'req_type', 'subject', 'message',
-        'ticket_status', 'ticket_priority', 'created_by', 'created_date', 'modified_by', 'modified_date',
+        'ticket_number', 'reporter_id', 'assigned_to', 'req_type', 'subject', 'message',
+        'ticket_status', 'ticket_priority',
         'due_date', 'first_response_at', 'finish_date'
     ];
 

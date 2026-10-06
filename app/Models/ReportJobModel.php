@@ -6,8 +6,13 @@ class ReportJobModel extends BaseModel
     protected $table      = 'report_jobs';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'id', 'report_type', 'filter_params', 'file_path', 'status', 'action',
-        'created_at', 'updated_at', 'created_by'
+        'report_type',
+        'filter_params',
+        'file_path',
+        'status',
+        'action',
+        'created_at',
+        'updated_at',
     ];
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
