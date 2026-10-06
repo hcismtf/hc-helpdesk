@@ -21,7 +21,7 @@ class TicketTransactionModel extends BaseModel
         'assigned_to',
         'req_type',
         'subject',
-        'message',
+        'description',
         'ticket_status',
         'ticket_priority',
         'due_date',
