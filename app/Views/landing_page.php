@@ -138,21 +138,39 @@
           </p>
 
           <form id="trackTicketForm" class="track-form" onsubmit="handleTrackTicket(event)">
-            <div class="form-group-landing">
-              <label for="track_ticket_no">Nomor Tiket</label>
-              <input type="text" id="track_ticket_no" name="ticket_no" placeholder="CTH: #HC-2025-0042" required
-                autocomplete="off">
+            <div class="track-inputs-stack">
+              <div class="form-group-landing">
+                <label for="track_ticket_no">Nomor Tiket <span class="required-star">*</span></label>
+                <div class="input-with-icon">
+                  <i class="fas fa-ticket-alt input-icon"></i>
+                  <input type="text" id="track_ticket_no" name="ticket_no" placeholder="CTH: #HC-2025-0042" required
+                    autocomplete="off">
+                </div>
+              </div>
+
+              <div class="form-group-landing">
+                <label for="track_email">Email Pelapor <span class="label-opt">(Opsional)</span></label>
+                <div class="input-with-icon">
+                  <i class="fas fa-envelope input-icon"></i>
+                  <input type="email" id="track_email" name="email" placeholder="nama@perusahaan.co.id" autocomplete="off">
+                </div>
+              </div>
             </div>
 
-            <div class="form-group-landing">
-              <label for="track_email">Email Pelapor</label>
-              <input type="email" id="track_email" name="email" placeholder="nama@perusahaan.co.id" autocomplete="off">
-            </div>
+            <div class="track-actions-group">
+              <button type="submit" class="btn-track-submit" id="btnTrackSubmit">
+                <i class="fas fa-search btn-submit-icon"></i>
+                <span>Lacak Progres Penanganan</span>
+              </button>
 
-            <button type="submit" class="btn-track-submit" id="btnTrackSubmit">
-              <img src="<?= base_url('assets/icons/doc-search.svg') ?>" alt="Search">
-              <span>Lacak Progres Penanganan</span>
-            </button>
+              <div class="track-no-ticket-wrap">
+                <span class="no-ticket-text">Belum punya tiket bantuan?</span>
+                <a href="<?= base_url('ticket/create') ?>" class="btn-link-create-ticket">
+                  <span>Buat Tiket Baru</span>
+                  <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
           </form>
         </div>
       </aside>
