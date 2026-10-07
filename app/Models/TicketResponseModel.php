@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Entities\TicketResponseEntity;
+
 /**
  * Model Reply / Response Message Tiket (1-to-Many dari ticket_transactions)
  * Tabel: ticket_response
@@ -12,7 +14,7 @@ class TicketResponseModel extends BaseModel
     protected $primaryKey = 'id';
     protected $keyType = 'string';
     protected $useAutoIncrement = false;
-    protected $returnType = 'array';
+    protected $returnType = TicketResponseEntity::class;
     protected $useSoftDeletes = false;
 
     protected $allowedFields = [
@@ -24,7 +26,6 @@ class TicketResponseModel extends BaseModel
         'status',
         'priority',
         'assigned_to',
-        'created_at'
     ];
 
     /**
@@ -32,12 +33,12 @@ class TicketResponseModel extends BaseModel
      *
      * @param string $ticketId
      * @param string $order
-     * @return array
+     * @return array<TicketResponseEntity>
      */
     public function getResponsesByTicketId(string $ticketId, string $order = 'ASC'): array
     {
         return $this->where('ticket_id', $ticketId)
-                    ->orderBy('created_at', $order)
+                    ->orderBy('created_date', $order)
                     ->findAll();
     }
 }
