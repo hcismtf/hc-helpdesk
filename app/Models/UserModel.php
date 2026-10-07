@@ -24,16 +24,6 @@ class UserModel extends BaseModel
     'is_deleted',
   ];
 
-  // ========================================================
-  // RECONSTRUCTED RBAC: users (role_id) ──> roles ──< role_permissions >── permissions
-  // ========================================================
-
-  /**
-   * Dapatkan RoleEntity pengguna
-   *
-   * @param string $userId
-   * @return RoleEntity|null
-   */
   public function getRole(string $userId): ?RoleEntity
   {
     $user = $this->find($userId);
@@ -45,12 +35,6 @@ class UserModel extends BaseModel
     return $roleModel->find($user['role_id']);
   }
 
-  /**
-   * Dapatkan seluruh PermissionEntity pengguna melalui rolenya
-   *
-   * @param string $userId
-   * @return PermissionEntity[]
-   */
   public function getUserPermissions(string $userId): array
   {
     $user = $this->find($userId);
@@ -62,12 +46,6 @@ class UserModel extends BaseModel
     return $roleModel->getPermissions($user['role_id']);
   }
 
-  /**
-   * Dapatkan list permission codes milik pengguna
-   *
-   * @param string $userId
-   * @return string[]
-   */
   public function getUserPermissionCodes(string $userId): array
   {
     $permissions = $this->getUserPermissions($userId);
@@ -84,13 +62,6 @@ class UserModel extends BaseModel
     return $codes;
   }
 
-  /**
-   * Cek apakah user memiliki permission tertentu
-   *
-   * @param string $userId
-   * @param string $permissionCode
-   * @return bool
-   */
   public function hasPermission(string $userId, string $permissionCode): bool
   {
     return in_array($permissionCode, $this->getUserPermissionCodes($userId), true);
@@ -112,8 +83,8 @@ class UserModel extends BaseModel
       ->select('users.*, role.name as role_name')
       ->join('role', 'role.id = users.role_id', 'left')
       ->groupStart()
-        ->where('users.is_deleted !=', 1)
-        ->orWhere('users.is_deleted IS NULL')
+      ->where('users.is_deleted !=', 1)
+      ->orWhere('users.is_deleted IS NULL')
       ->groupEnd()
       ->orderBy('users.created_date', 'desc')
       ->get()

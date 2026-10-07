@@ -15,27 +15,11 @@ class RolePermissionsModel extends BaseModel
     'permission_id',
   ];
 
-  // ========================================================
-  // RECONSTRUCTED RBAC PIVOT HELPERS
-  // ========================================================
-
-  /**
-   * Dapatkan seluruh relasi pivot berdasarkan role_id
-   *
-   * @param string $roleId
-   * @return RolePermissionEntity[]
-   */
   public function getByRoleId(string $roleId): array
   {
     return $this->where('role_id', $roleId)->findAll();
   }
 
-  /**
-   * Dapatkan seluruh relasi pivot berdasarkan permission_id
-   *
-   * @param string $permissionId
-   * @return RolePermissionEntity[]
-   */
   public function getByPermissionId(string $permissionId): array
   {
     return $this->where('permission_id', $permissionId)->findAll();

@@ -5,21 +5,19 @@ namespace App\Entities;
 class UserEntity extends BaseEntity
 {
   protected $casts = [
-    'name'            => 'string',
-    'email'           => 'string',
-    'employee_no'     => 'string',
-    'position'        => '?string',
-    'position_level'  => '?string',
-    'job_title'       => '?string',
-    'status'          => 'string',
+    'name' => 'string',
+    'email' => 'string',
+    'employee_no' => 'string',
+    'position' => '?string',
+    'position_level' => '?string',
+    'job_title' => '?string',
+    'status' => 'string',
     'last_login_time' => '?datetime',
-    'role_id'         => '?string',
-    'is_deleted'      => 'boolean',
+    'role_id' => '?string',
+    'category_id' => '?string',
+    'is_deleted' => 'boolean',
   ];
 
-  /**
-   * RoleEntity yang terasosiasi dengan user ini
-   */
   protected ?RoleEntity $role = null;
 
   public function getName(): ?string
@@ -121,6 +119,17 @@ class UserEntity extends BaseEntity
     return $this;
   }
 
+  public function getCategoryId(): ?string
+  {
+    return $this->attributes['category_id'] ?? null;
+  }
+
+  public function setCategoryId(?string $roleId): static
+  {
+    $this->attributes['category_id'] = $roleId;
+    return $this;
+  }
+
   public function getIsDeleted(): bool
   {
     return (bool) ($this->attributes['is_deleted'] ?? false);
@@ -151,17 +160,11 @@ class UserEntity extends BaseEntity
     return $this;
   }
 
-  /**
-   * @return PermissionEntity[]
-   */
   public function getPermissions(): array
   {
     return $this->role ? $this->role->getPermissions() : [];
   }
 
-  /**
-   * @return string[]
-   */
   public function getPermissionCodes(): array
   {
     return $this->role ? $this->role->getPermissionCodes() : [];
@@ -172,9 +175,15 @@ class UserEntity extends BaseEntity
     return $this->role ? $this->role->hasPermission($code) : false;
   }
 
-  // ==========================================
-  // Domain Business Logic Helper
-  // ==========================================
+  public function managesCategory(?string $categoryId): bool
+  {
+    if ($this->category_id === null || $categoryId === null) {
+      return false;
+    }
+
+    return (string) $this->category_id === (string) $categoryId;
+  }
+
   public function isActive(): bool
   {
     $status = strtolower((string) ($this->attributes['status'] ?? ''));

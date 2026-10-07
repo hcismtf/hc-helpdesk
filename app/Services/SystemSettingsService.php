@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\FaqModel;
 use App\Models\RoleModel;
 use App\Models\RolePermissionsModel;
-use App\Models\PermissionsModel;
+use App\Models\PermissionModel;
 use App\Models\RequestTypeModel;
 use App\Models\SlaModel;
 use App\Models\UserModel;
@@ -15,7 +15,7 @@ class SystemSettingsService
     protected FaqModel $faqModel;
     protected RoleModel $roleModel;
     protected RolePermissionsModel $rolePermissionsModel;
-    protected PermissionsModel $permissionsModel;
+    protected PermissionModel $permissionModel;
     protected RequestTypeModel $requestTypeModel;
     protected SlaModel $slaModel;
     protected UserModel $userModel;
@@ -25,7 +25,7 @@ class SystemSettingsService
         $this->faqModel = new FaqModel();
         $this->roleModel = new RoleModel();
         $this->rolePermissionsModel = new RolePermissionsModel();
-        $this->permissionsModel = new PermissionsModel();
+        $this->permissionModel = new PermissionModel();
         $this->requestTypeModel = new RequestTypeModel();
         $this->slaModel = new SlaModel();
         $this->userModel = new UserModel();
@@ -37,9 +37,9 @@ class SystemSettingsService
     public function getCounts(): array
     {
         return [
-            'roles'        => $this->roleModel->countAllResults(),
-            'slas'         => $this->slaModel->countAllResults(),
-            'faqs'         => $this->faqModel->countAllResults(),
+            'roles' => $this->roleModel->countAllResults(),
+            'slas' => $this->slaModel->countAllResults(),
+            'faqs' => $this->faqModel->countAllResults(),
             'requestTypes' => $this->requestTypeModel->countAllResults(),
         ];
     }
@@ -57,8 +57,8 @@ class SystemSettingsService
         $allUsers = $this->userModel
             ->select('users.id, users.name, users.email, users.role_id')
             ->groupStart()
-                ->where('users.is_deleted !=', 1)
-                ->orWhere('users.is_deleted IS NULL')
+            ->where('users.is_deleted !=', 1)
+            ->orWhere('users.is_deleted IS NULL')
             ->groupEnd()
             ->findAll();
 
@@ -72,25 +72,25 @@ class SystemSettingsService
                 $roleUsersMap[$rId] = [];
             }
             $roleUsersMap[$rId][] = [
-                'id'       => $u['id'],
-                'name'     => $u['name'] ?? 'User',
+                'id' => $u['id'],
+                'name' => $u['name'] ?? 'User',
                 'initials' => strtoupper(substr(trim($u['name'] ?? 'U'), 0, 2))
             ];
         }
 
         foreach ($roles as &$role) {
             $rId = (string) $role['id'];
-            
+
             // Menggunakan method relasi di RoleModel: getPermissions & getPermissionIds
             $permList = $this->roleModel->getPermissions($rId);
-            $permIds  = $this->roleModel->getPermissionIds($rId);
+            $permIds = $this->roleModel->getPermissionIds($rId);
             $permNames = array_column($permList, 'name');
 
-            $role['permissions']    = $permList;
+            $role['permissions'] = $permList;
             $role['permission_ids'] = $permIds;
-            $role['menu_access']    = implode(', ', $permNames);
-            $role['members']        = $roleUsersMap[$rId] ?? [];
-            $role['members_count']  = count($role['members']);
+            $role['menu_access'] = implode(', ', $permNames);
+            $role['members'] = $roleUsersMap[$rId] ?? [];
+            $role['members_count'] = count($role['members']);
 
             // Human-readable scope descriptions
             $roleNameLower = strtolower($role['name'] ?? '');
@@ -114,11 +114,11 @@ class SystemSettingsService
         unset($role);
 
         return [
-            'roles'      => $roles,
-            'total'      => $total,
+            'roles' => $roles,
+            'total' => $total,
             'totalPages' => $totalPages,
-            'page'       => $page,
-            'perPage'    => $perPage
+            'page' => $page,
+            'perPage' => $perPage
         ];
     }
 
@@ -172,11 +172,11 @@ class SystemSettingsService
         unset($sla);
 
         return [
-            'slas'       => $slas,
-            'total'      => $total,
+            'slas' => $slas,
+            'total' => $total,
             'totalPages' => $totalPages,
-            'page'       => $page,
-            'perPage'    => $perPage
+            'page' => $page,
+            'perPage' => $perPage
         ];
     }
 }

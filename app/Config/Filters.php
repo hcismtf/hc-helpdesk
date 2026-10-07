@@ -25,19 +25,19 @@ class Filters extends BaseFilters
      * or [filter_name => [classname1, classname2, ...]]
      */
     public array $aliases = [
-        'csrf'          => CSRF::class,
-        'toolbar'       => DebugToolbar::class,
-        'honeypot'      => Honeypot::class,
-        'invalidchars'  => InvalidChars::class,
+        'csrf' => CSRF::class,
+        'toolbar' => DebugToolbar::class,
+        'honeypot' => Honeypot::class,
+        'invalidchars' => InvalidChars::class,
         'secureheaders' => SecureHeaders::class,
-        'cors'          => Cors::class,
-        'forcehttps'    => ForceHTTPS::class,
-        'pagecache'     => PageCache::class,
-        'performance'   => PerformanceMetrics::class,
-        'permission'    => \App\Filters\PermissionFilter::class,
-        'auth'          => \App\Filters\AuthFilter::class,
+        'cors' => Cors::class,
+        'forcehttps' => ForceHTTPS::class,
+        'pagecache' => PageCache::class,
+        'performance' => PerformanceMetrics::class,
+        'perm' => \App\Filters\PermissionFilter::class,
+        'auth' => \App\Filters\AuthFilter::class,
         'devicesecurity' => \App\Filters\DeviceSecurityFilter::class,
-        'apikeyfilter'  => \App\Filters\ApiKeyFilter::class,
+        'apikeyfilter' => \App\Filters\ApiKeyFilter::class,
     ];
 
     /**
@@ -79,13 +79,15 @@ class Filters extends BaseFilters
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
-            'devicesecurity' => ['except' => [
-                'admin/*',
-                'pusat_bantuan',
-                'ticket/detail/*'
-            ]],
+            'devicesecurity' => [
+                'except' => [
+                    'admin/*',
+                    'pusat_bantuan',
+                    'ticket/detail/*'
+                ]
+            ],
         ],
-        
+
         'after' => [
             // 'honeypot',
             // 'secureheaders',

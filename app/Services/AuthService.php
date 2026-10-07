@@ -3,9 +3,6 @@
 namespace App\Services;
 
 use App\Models\UserModel;
-use App\Models\RoleModel;
-use App\Models\RolePermissionsModel;
-use App\Models\PermissionsModel;
 
 class AuthService
 {
@@ -76,21 +73,21 @@ class AuthService
 
         if (!$user) {
             return [
-                'role_id'     => null,
-                'role_name'   => 'User',
+                'role_id' => null,
+                'role_name' => 'User',
                 'permissions' => [],
             ];
         }
 
-        $roleId   = $user['role_id'] ?? null;
+        $roleId = $user['role_id'] ?? null;
         $roleName = $user['role_name'] ?? 'User';
 
         // Get permissions from UserModel relationship method
         $permissionCodes = $userModel->getUserPermissionCodes($userId);
 
         return [
-            'role_id'     => $roleId,
-            'role_name'   => $roleName,
+            'role_id' => $roleId,
+            'role_name' => $roleName,
             'permissions' => $permissionCodes,
         ];
     }

@@ -5,7 +5,7 @@ namespace App\Controllers\admin;
 use App\Controllers\BaseController;
 use App\Models\UserModel;
 use App\Models\RoleModel;
-use App\Models\PermissionsModel;
+use App\Models\PermissionModel;
 use App\Services\AuthService;
 
 class UserManagementController extends BaseController
@@ -29,13 +29,13 @@ class UserManagementController extends BaseController
         // Menggunakan clean relationship method getAllWithRole()
         $users = $userModel->getAllWithRole();
 
-        $permissionsModel = new PermissionsModel();
-        $permissions = $permissionsModel->orderBy('name', 'asc')->findAll();
+        $permissionModel = new PermissionModel();
+        $permissions = $permissionModel->orderBy('name', 'asc')->findAll();
 
         return view('admin/user_mgt', [
-            'active'      => 'user_mgt',
-            'roles'       => $roles,
-            'users'       => $users,
+            'active' => 'user_mgt',
+            'roles' => $roles,
+            'users' => $users,
             'permissions' => $permissions
         ]);
     }
@@ -56,15 +56,15 @@ class UserManagementController extends BaseController
         $existingUser = $userModel->where('email', $email)->first();
 
         if ($existingUser) {
-            if (!empty($existingUser['is_deleted']) && (int)$existingUser['is_deleted'] === 1) {
+            if (!empty($existingUser['is_deleted']) && (int) $existingUser['is_deleted'] === 1) {
                 $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
                 $updateData = [
-                    'name'          => $name,
-                    'password'      => $hashedPassword,
-                    'status'        => $status,
-                    'role_id'       => $roleId,
-                    'is_deleted'    => 0,
-                    'modified_by'   => session('username') ?? 'system',
+                    'name' => $name,
+                    'password' => $hashedPassword,
+                    'status' => $status,
+                    'role_id' => $roleId,
+                    'is_deleted' => 0,
+                    'modified_by' => session('username') ?? 'system',
                     'modified_date' => date('Y-m-d H:i:s'),
                 ];
                 $userModel->update($existingUser['id'], $updateData);
@@ -80,14 +80,14 @@ class UserManagementController extends BaseController
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
         $userData = [
-            'id'           => $newUserId,
-            'name'         => $name,
-            'email'        => $email,
-            'password'     => $hashedPassword,
-            'status'       => $status,
-            'role_id'      => $roleId,
-            'is_deleted'   => 0,
-            'created_by'   => session('username') ?? 'system',
+            'id' => $newUserId,
+            'name' => $name,
+            'email' => $email,
+            'password' => $hashedPassword,
+            'status' => $status,
+            'role_id' => $roleId,
+            'is_deleted' => 0,
+            'created_by' => session('username') ?? 'system',
             'created_date' => date('Y-m-d H:i:s'),
         ];
 
@@ -109,8 +109,8 @@ class UserManagementController extends BaseController
         $userModel = new UserModel();
 
         $userModel->update($id, [
-            'is_deleted'    => 1,
-            'modified_by'   => session('username') ?? 'system',
+            'is_deleted' => 1,
+            'modified_by' => session('username') ?? 'system',
             'modified_date' => date('Y-m-d H:i:s'),
         ]);
 
@@ -132,12 +132,12 @@ class UserManagementController extends BaseController
         $userModel = new UserModel();
 
         $updateData = [
-            'name'          => $name,
-            'email'         => $email,
-            'status'        => $status,
-            'role_id'       => $roleId,
+            'name' => $name,
+            'email' => $email,
+            'status' => $status,
+            'role_id' => $roleId,
             'modified_date' => date('Y-m-d H:i:s'),
-            'modified_by'   => session('username') ?? 'system',
+            'modified_by' => session('username') ?? 'system',
         ];
         if (!empty($password)) {
             $updateData['password'] = password_hash($password, PASSWORD_BCRYPT);

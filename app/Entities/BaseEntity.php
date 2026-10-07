@@ -5,15 +5,8 @@ namespace App\Entities;
 use CodeIgniter\Entity\Entity;
 use App\Libraries\AuditorAware;
 
-/**
- * BaseEntity (mirip @MappedSuperclass BaseEntity di Spring Boot JPA)
- * Mengenkapsulasi data attributes, UUID identifier, dan siklus audit (AuditorAware).
- */
 class BaseEntity extends Entity implements \ArrayAccess
 {
-  /**
-   * Date fields yang dikonversi otomatis oleh CodeIgniter
-   */
   protected $dates = [
     'created_date',
     'modified_date',
@@ -21,9 +14,6 @@ class BaseEntity extends Entity implements \ArrayAccess
     'updated_at',
   ];
 
-  /**
-   * Tipe casting default untuk kolom audit
-   */
   protected $casts = [
     'id' => 'string',
     'created_by' => 'string',
@@ -33,8 +23,8 @@ class BaseEntity extends Entity implements \ArrayAccess
   public function __construct(?array $data = null)
   {
     $this->casts = array_merge([
-      'id'          => 'string',
-      'created_by'  => 'string',
+      'id' => 'string',
+      'created_by' => 'string',
       'modified_by' => 'string',
     ], $this->casts);
 
@@ -47,21 +37,13 @@ class BaseEntity extends Entity implements \ArrayAccess
 
     parent::__construct($data);
 
-    // Jika entity baru diinstansiasi tanpa ID, jalankan prePersist untuk inisialisasi audit
     if (empty($this->attributes['id'])) {
       $this->prePersist();
     }
   }
 
-  /**
-   * Lifecycle Hook: Pre-Persist (mirip @PrePersist di Spring Boot JPA)
-   * Dijalankan sebelum entity disimpan baru ke database
-   *
-   * @return $this
-   */
   public function prePersist(): static
   {
-    // 1. Generate UUID v4 jika ID belum terisi
     if (empty($this->attributes['id'])) {
       $this->attributes['id'] = $this->generateUuidV4();
     }
@@ -69,17 +51,14 @@ class BaseEntity extends Entity implements \ArrayAccess
     $auditor = $this->getCurrentAuditor();
     $now = date('Y-m-d H:i:s');
 
-    // 2. Isi created_by dari AuditorAware jika kosong
     if (empty($this->attributes['created_by'])) {
       $this->attributes['created_by'] = $auditor;
     }
 
-    // 3. Isi created_date jika kosong
     if (empty($this->attributes['created_date'])) {
       $this->attributes['created_date'] = $now;
     }
 
-    // 4. Inisialisasi awal modified_by & modified_date
     if (empty($this->attributes['modified_by'])) {
       $this->attributes['modified_by'] = $this->attributes['created_by'];
     }
@@ -91,12 +70,6 @@ class BaseEntity extends Entity implements \ArrayAccess
     return $this;
   }
 
-  /**
-   * Lifecycle Hook: Pre-Update (mirip @PreUpdate di Spring Boot JPA)
-   * Dijalankan sebelum entity diperbarui ke database
-   *
-   * @return $this
-   */
   public function preUpdate(): static
   {
     $this->attributes['modified_by'] = $this->getCurrentAuditor();
@@ -105,36 +78,22 @@ class BaseEntity extends Entity implements \ArrayAccess
     return $this;
   }
 
-  /**
-   * Ambil username auditor saat ini dari AuditorAware
-   */
   public function getCurrentAuditor(): string
   {
     return AuditorAware::getCurrentAuditor();
   }
 
-  /**
-   * Cek apakah entity ini data baru (belum memiliki ID yang tersimpan)
-   */
   public function isNew(): bool
   {
     return empty($this->original['id']);
   }
-
-  /**
-   * Helper generate UUID versi 4 RFC 4122
-   */
   protected function generateUuidV4(): string
   {
     $bytes = random_bytes(16);
-    $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40); // version 4
-    $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80); // variant RFC 4122
+    $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
+    $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
   }
-
-  // ==========================================
-  // ArrayAccess Implementation (Kemudahan Akses)
-  // ==========================================
 
   public function offsetExists(mixed $offset): bool
   {

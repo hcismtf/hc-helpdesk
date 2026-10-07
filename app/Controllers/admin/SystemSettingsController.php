@@ -6,7 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\FaqModel;
 use App\Models\RequestTypeModel;
 use App\Models\SlaModel;
-use App\Models\PermissionsModel;
+use App\Models\PermissionModel;
 use App\Models\RoleModel;
 use App\Models\RolePermissionsModel;
 
@@ -35,8 +35,8 @@ class SystemSettingsController extends BaseController
         $slaModel = new SlaModel();
         $usedRequestTypeIds = array_column($slaModel->findAll(), 'request_type_id');
 
-        $permissionsModel = new PermissionsModel();
-        $permissions = $permissionsModel->orderBy('name', 'asc')->findAll();
+        $permissionModel = new PermissionModel();
+        $permissions = $permissionModel->orderBy('name', 'asc')->findAll();
 
         $page = (int) ($this->request->getGet('page') ?? 1);
         $perPage = (int) ($this->request->getGet('per_page') ?? 10);
@@ -50,22 +50,22 @@ class SystemSettingsController extends BaseController
         }
 
         $rolesData = $this->settingsService->getEnrichedRoles(1, 10);
-        $slasData  = $this->settingsService->getEnrichedSlas(1, 10);
+        $slasData = $this->settingsService->getEnrichedSlas(1, 10);
 
         $data = [
-            'username'           => session('username') ?? '[user name]',
-            'role'               => session('role') ?? 'Superadmin',
-            'counts'             => $counts,
-            'rolesData'          => $rolesData,
-            'slasData'           => $slasData,
-            'faqs'               => $faqs,
-            'editFaq'            => $editFaq,
-            'permissions'        => $permissions,
-            'requestTypes'       => $requestTypes,
+            'username' => session('username') ?? '[user name]',
+            'role' => session('role') ?? 'Superadmin',
+            'counts' => $counts,
+            'rolesData' => $rolesData,
+            'slasData' => $slasData,
+            'faqs' => $faqs,
+            'editFaq' => $editFaq,
+            'permissions' => $permissions,
+            'requestTypes' => $requestTypes,
             'usedRequestTypeIds' => $usedRequestTypeIds,
-            'page'               => $page,
-            'perPage'            => $perPage,
-            'totalPages'         => $totalPages
+            'page' => $page,
+            'perPage' => $perPage,
+            'totalPages' => $totalPages
         ];
 
         return view('admin/System_settings', $data);
@@ -83,9 +83,9 @@ class SystemSettingsController extends BaseController
 
         $faqModel = new FaqModel();
         $faqModel->insert([
-            'question'     => $question,
-            'answer'       => $answer,
-            'created_by'   => $createdBy,
+            'question' => $question,
+            'answer' => $answer,
+            'created_by' => $createdBy,
             'created_date' => date('Y-m-d H:i:s')
         ]);
 
@@ -102,9 +102,9 @@ class SystemSettingsController extends BaseController
 
         $faqModel = new FaqModel();
         $faqModel->update($id, [
-            'question'      => $question,
-            'answer'        => $answer,
-            'modified_by'   => $modifiedBy,
+            'question' => $question,
+            'answer' => $answer,
+            'modified_by' => $modifiedBy,
             'modified_date' => $modifiedDate
         ]);
 
@@ -124,10 +124,10 @@ class SystemSettingsController extends BaseController
         $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/system_settings'), '&per_page=' . $perPage);
 
         return view('admin/faq_list', [
-            'faqs'           => $faqs,
-            'page'           => $page,
-            'totalPages'     => $totalPages,
-            'perPage'        => $perPage,
+            'faqs' => $faqs,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'perPage' => $perPage,
             'paginationHTML' => $paginationHTML
         ]);
     }
@@ -170,8 +170,8 @@ class SystemSettingsController extends BaseController
 
         try {
             $roleId = $roleModel->insert([
-                'name'         => $name,
-                'created_by'   => $createdBy,
+                'name' => $name,
+                'created_by' => $createdBy,
                 'created_date' => $createdDate
             ]);
 
@@ -197,8 +197,8 @@ class SystemSettingsController extends BaseController
         $roleModel = new RoleModel();
 
         $roleModel->update($id, [
-            'name'          => $name,
-            'modified_by'   => session('username'),
+            'name' => $name,
+            'modified_by' => session('username'),
             'modified_date' => date('Y-m-d H:i:s')
         ]);
 
@@ -213,12 +213,12 @@ class SystemSettingsController extends BaseController
     {
         $id = $this->request->getPost('id');
         $roleModel = new RoleModel();
-        $rolePermissionsModel = new RolePermissionsModel();
+        $rolePermissionsModel = new RolePermissionModel();
 
         $rolePermissionsModel->where('role_id', $id)->delete();
         $deleted = $roleModel->delete($id);
 
-        return $this->response->setJSON(['success' => (bool)$deleted]);
+        return $this->response->setJSON(['success' => (bool) $deleted]);
     }
 
     public function get_user_role_list()
@@ -230,10 +230,10 @@ class SystemSettingsController extends BaseController
         $paginationHTML = $this->generatePaginationHTML($page, $data['totalPages'], base_url('admin/system_settings'), '&per_page=' . $perPage);
 
         return view('admin/user_role_list', [
-            'roles'          => $data['roles'],
-            'page'           => $page,
-            'totalPages'     => $data['totalPages'],
-            'perPage'        => $perPage,
+            'roles' => $data['roles'],
+            'page' => $page,
+            'totalPages' => $data['totalPages'],
+            'perPage' => $perPage,
             'paginationHTML' => $paginationHTML
         ]);
     }
@@ -255,10 +255,10 @@ class SystemSettingsController extends BaseController
         $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/system_settings'), '&per_page=' . $perPage);
 
         return view('admin/request_type', [
-            'types'          => $types,
-            'page'           => $page,
-            'totalPages'     => $totalPages,
-            'perPage'        => $perPage,
+            'types' => $types,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'perPage' => $perPage,
             'paginationHTML' => $paginationHTML
         ]);
     }
@@ -282,12 +282,12 @@ class SystemSettingsController extends BaseController
 
         $requestTypeModel = new RequestTypeModel();
         $requestTypeModel->insert([
-            'name'          => $name,
-            'description'   => $description,
-            'status'        => $status,
-            'created_by'    => $createdBy,
-            'created_date'  => date('Y-m-d H:i:s'),
-            'modified_by'   => $createdBy,
+            'name' => $name,
+            'description' => $description,
+            'status' => $status,
+            'created_by' => $createdBy,
+            'created_date' => date('Y-m-d H:i:s'),
+            'modified_by' => $createdBy,
             'modified_date' => date('Y-m-d H:i:s')
         ]);
 
@@ -305,10 +305,10 @@ class SystemSettingsController extends BaseController
 
         $model = new RequestTypeModel();
         $model->update($id, [
-            'name'          => $name,
-            'description'   => $description,
-            'status'        => $status,
-            'modified_by'   => $modifiedBy,
+            'name' => $name,
+            'description' => $description,
+            'status' => $status,
+            'modified_by' => $modifiedBy,
             'modified_date' => $modifiedDate
         ]);
 
@@ -324,9 +324,9 @@ class SystemSettingsController extends BaseController
 
         $requestTypeModel = new RequestTypeModel();
         $requestTypeModel->update($id, [
-            'name'        => $name,
+            'name' => $name,
             'description' => $description,
-            'status'      => $status
+            'status' => $status
         ]);
 
         return redirect()->to(base_url('admin/System_settings?tab=request-type'));
@@ -355,11 +355,11 @@ class SystemSettingsController extends BaseController
 
         $slaModel = new SlaModel();
         $slaModel->insert([
-            'priority'        => $priority,
-            'response_time'   => $responseTime,
+            'priority' => $priority,
+            'response_time' => $responseTime,
             'resolution_time' => $resolutionTime,
-            'created_by'      => $createdBy,
-            'created_date'    => $createdDate
+            'created_by' => $createdBy,
+            'created_date' => $createdDate
         ]);
 
         return $this->response->setJSON(['success' => true]);
@@ -372,9 +372,9 @@ class SystemSettingsController extends BaseController
         $data = $this->settingsService->getEnrichedSlas($page, $perPage);
 
         return view('admin/sla_settings', [
-            'slas'       => $data['slas'],
-            'page'       => $page,
-            'perPage'    => $perPage,
+            'slas' => $data['slas'],
+            'page' => $page,
+            'perPage' => $perPage,
             'totalPages' => $data['totalPages']
         ]);
     }
@@ -390,11 +390,11 @@ class SystemSettingsController extends BaseController
 
         $slaModel = new SlaModel();
         $slaModel->update($id, [
-            'priority'        => $priority,
-            'response_time'   => $responseTime,
+            'priority' => $priority,
+            'response_time' => $responseTime,
             'resolution_time' => $resolutionTime,
-            'modified_by'     => $modifiedBy,
-            'modified_date'   => $modifiedDate
+            'modified_by' => $modifiedBy,
+            'modified_date' => $modifiedDate
         ]);
 
         return $this->response->setJSON(['success' => true]);
@@ -424,12 +424,12 @@ class SystemSettingsController extends BaseController
     {
         $name = $this->request->getPost('name');
         $code = $this->request->getPost('code');
-        $model = new PermissionsModel();
+        $model = new PermissionModel();
 
         $data = [
-            'name'         => $name,
-            'code'         => $code,
-            'created_by'   => session('username'),
+            'name' => $name,
+            'code' => $code,
+            'created_by' => session('username'),
             'created_date' => date('Y-m-d H:i:s')
         ];
 
@@ -445,7 +445,7 @@ class SystemSettingsController extends BaseController
     public function get_permission()
     {
         $id = $this->request->getGet('id');
-        $model = new PermissionsModel();
+        $model = new PermissionModel();
         $permission = $model->find($id);
 
         if ($permission) {
@@ -460,12 +460,12 @@ class SystemSettingsController extends BaseController
         $id = $this->request->getPost('id');
         $name = $this->request->getPost('name');
         $code = $this->request->getPost('code');
-        $model = new PermissionsModel();
+        $model = new PermissionModel();
 
         $data = [
-            'name'          => $name,
-            'code'          => $code,
-            'modified_by'   => session('username'),
+            'name' => $name,
+            'code' => $code,
+            'modified_by' => session('username'),
             'modified_date' => date('Y-m-d H:i:s')
         ];
 
@@ -482,7 +482,7 @@ class SystemSettingsController extends BaseController
     public function delete_permission()
     {
         $id = $this->request->getPost('id');
-        $model = new PermissionsModel();
+        $model = new PermissionModel();
 
         if ($model->delete($id)) {
             return $this->response->setJSON(['success' => true]);
