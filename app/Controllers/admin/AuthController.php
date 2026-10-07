@@ -19,7 +19,12 @@ class AuthController extends BaseController
   public function login()
   {
     if (session('isLoggedIn')) {
-      return redirect()->to('/admin/dashboard');
+      $roleId = session('role_id');
+      $role = strtolower(session('role') ?? '');
+      if (!empty($roleId) || $role === 'superadmin') {
+        return redirect()->to('/admin/dashboard');
+      }
+      return redirect()->to('/')->with('error', 'Akun Anda tidak memiliki hak akses administrator.');
     }
     return view('admin/login');
   }

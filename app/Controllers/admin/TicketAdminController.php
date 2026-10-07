@@ -25,7 +25,7 @@ class TicketAdminController extends BaseController
     /**
      * Display ticket dashboard with filter, pagination and Kanban data
      */
-    public function Ticket_dashboard()
+    public function ticket_dashboard()
     {
         $model = new TicketTransactionModel();
         $perPage = (int) ($this->request->getGet('per_page') ?? 12);
@@ -37,16 +37,40 @@ class TicketAdminController extends BaseController
         $status = $this->request->getGet('status');
         $search = $this->request->getGet('search');
 
-        if ($perPage <= 0) $perPage = 12;
-        if ($page <= 0) $page = 1;
+        if ($perPage <= 0)
+            $perPage = 12;
+        if ($page <= 0)
+            $page = 1;
+
+        $userRole = strtolower(session('role') ?? '');
+        $userPerms = session('user_permissions') ?? [];
+        $isStaffAdmin = ($userRole === 'superadmin' || in_array('ticket:read', $userPerms, true) || in_array('tickets', $userPerms, true));
+        $currentEmpNo = session('employee_no') ?? session('username') ?? '';
+        $currentUserId = session('user_id') ?? '';
+        $currentEmpName = session('name') ?? '';
+
+        // Non-admin / normal employee can only see their own tickets
+        if (!$isStaffAdmin) {
+            $model->groupStart()
+                ->where('created_by', $currentEmpNo)
+                ->orWhere('created_by', $currentEmpName)
+                ->orWhere('reporter_id', $currentUserId)
+                ->orWhere('reporter_id', $currentEmpNo)
+                ->groupEnd();
+        }
 
         // Build base query
         $query = $model;
-        if ($start) $query = $query->where('created_date >=', $start . ' 00:00:00');
-        if ($end) $query = $query->where('created_date <=', $end . ' 23:59:59');
-        if (!empty($priority)) $query = $query->where('ticket_priority', $priority);
-        if (!empty($type)) $query = $query->where('req_type', $type);
-        if (!empty($status)) $query = $query->where('ticket_status', $status);
+        if ($start)
+            $query = $query->where('created_date >=', $start . ' 00:00:00');
+        if ($end)
+            $query = $query->where('created_date <=', $end . ' 23:59:59');
+        if (!empty($priority))
+            $query = $query->where('ticket_priority', $priority);
+        if (!empty($type))
+            $query = $query->where('req_type', $type);
+        if (!empty($status))
+            $query = $query->where('ticket_status', $status);
         if (!empty($search)) {
             $query = $query->groupStart()
                 ->like('id', $search)
@@ -81,11 +105,16 @@ class TicketAdminController extends BaseController
 
         // Kanban Swimlane dataset (up to 300 recent records)
         $kanbanQuery = (clone $model);
-        if ($start) $kanbanQuery = $kanbanQuery->where('created_date >=', $start . ' 00:00:00');
-        if ($end) $kanbanQuery = $kanbanQuery->where('created_date <=', $end . ' 23:59:59');
-        if (!empty($priority)) $kanbanQuery = $kanbanQuery->where('ticket_priority', $priority);
-        if (!empty($type)) $kanbanQuery = $kanbanQuery->where('req_type', $type);
-        if (!empty($status)) $kanbanQuery = $kanbanQuery->where('ticket_status', $status);
+        if ($start)
+            $kanbanQuery = $kanbanQuery->where('created_date >=', $start . ' 00:00:00');
+        if ($end)
+            $kanbanQuery = $kanbanQuery->where('created_date <=', $end . ' 23:59:59');
+        if (!empty($priority))
+            $kanbanQuery = $kanbanQuery->where('ticket_priority', $priority);
+        if (!empty($type))
+            $kanbanQuery = $kanbanQuery->where('req_type', $type);
+        if (!empty($status))
+            $kanbanQuery = $kanbanQuery->where('ticket_status', $status);
         if (!empty($search)) {
             $kanbanQuery = $kanbanQuery->groupStart()
                 ->like('id', $search)
@@ -120,31 +149,37 @@ class TicketAdminController extends BaseController
         $totalPages = $perPage > 0 ? ceil($totalRecords / $perPage) : 1;
 
         $additionalParams = '&per_page=' . $perPage;
-        if ($start) $additionalParams .= '&start=' . urlencode($start);
-        if ($end) $additionalParams .= '&end=' . urlencode($end);
-        if ($priority) $additionalParams .= '&priority=' . urlencode($priority);
-        if ($type) $additionalParams .= '&type=' . urlencode($type);
-        if ($status) $additionalParams .= '&status=' . urlencode($status);
-        if ($search) $additionalParams .= '&search=' . urlencode($search);
+        if ($start)
+            $additionalParams .= '&start=' . urlencode($start);
+        if ($end)
+            $additionalParams .= '&end=' . urlencode($end);
+        if ($priority)
+            $additionalParams .= '&priority=' . urlencode($priority);
+        if ($type)
+            $additionalParams .= '&type=' . urlencode($type);
+        if ($status)
+            $additionalParams .= '&status=' . urlencode($status);
+        if ($search)
+            $additionalParams .= '&search=' . urlencode($search);
 
-        $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/Ticket_dashboard'), $additionalParams);
+        $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/ticket_dashboard'), $additionalParams);
 
-        return view('admin/Ticket_dashboard', [
-            'tickets'        => $tickets,
-            'kanbanTickets'  => $kanbanTickets,
+        return view('admin/ticket_dashboard', [
+            'tickets' => $tickets,
+            'kanbanTickets' => $kanbanTickets,
             'paginationHTML' => $paginationHTML,
-            'perPage'        => $perPage,
-            'currentPage'    => $page,
-            'totalPages'     => $totalPages,
-            'totalRecords'   => $totalRecords,
-            'active'         => 'tickets',
-            'start'          => $start,
-            'end'            => $end,
-            'priority'       => $priority,
-            'type'           => $type,
-            'status'         => $status,
-            'search'         => $search,
-            'requestTypes'   => $requestTypes,
+            'perPage' => $perPage,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'totalRecords' => $totalRecords,
+            'active' => 'tickets',
+            'start' => $start,
+            'end' => $end,
+            'priority' => $priority,
+            'type' => $type,
+            'status' => $status,
+            'search' => $search,
+            'requestTypes' => $requestTypes,
         ]);
     }
 
@@ -177,7 +212,7 @@ class TicketAdminController extends BaseController
         $updateData = [
             'ticket_status' => $newStatus,
             'modified_date' => date('Y-m-d H:i:s'),
-            'modified_by'   => $username
+            'modified_by' => $username
         ];
 
         if ($newStatus === 'closed' || $newStatus === 'done') {
@@ -196,20 +231,21 @@ class TicketAdminController extends BaseController
         try {
             $trxModel = new TicketResponseModel();
             $trxModel->insert([
-                'ticket_id'    => $ticketId,
-                'user_id'      => $userId,
-                'author_name'  => $username,
-                'status'       => $newStatus,
-                'priority'     => $ticket['ticket_priority'] ?? 'medium',
-                'assigned_to'  => $ticket['assigned_to'] ?? null,
-                'reply'        => 'Status changed to ' . ucwords(str_replace('_', ' ', $newStatus)) . ' via Kanban Board',
-                'created_at'   => date('Y-m-d H:i:s')
+                'ticket_id' => $ticketId,
+                'user_id' => $userId,
+                'author_name' => $username,
+                'status' => $newStatus,
+                'priority' => $ticket['ticket_priority'] ?? 'medium',
+                'assigned_to' => $ticket['assigned_to'] ?? null,
+                'reply' => 'Status changed to ' . ucwords(str_replace('_', ' ', $newStatus)) . ' via Kanban Board',
+                'created_at' => date('Y-m-d H:i:s')
             ]);
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         return $this->response->setJSON([
-            'status'     => 'success',
-            'message'    => 'Status tiket berhasil diubah menjadi: ' . ucwords(str_replace('_', ' ', $newStatus)),
+            'status' => 'success',
+            'message' => 'Status tiket berhasil diubah menjadi: ' . ucwords(str_replace('_', ' ', $newStatus)),
             'new_status' => $newStatus
         ]);
     }
@@ -219,7 +255,7 @@ class TicketAdminController extends BaseController
      *
      * @param string|int $id
      */
-    public function Ticket_detail($id)
+    public function ticket_detail($id)
     {
         $model = new TicketTransactionModel();
         $userModel = new UserModel();
@@ -236,14 +272,34 @@ class TicketAdminController extends BaseController
             $ticket = $model->where('reporter_id', $id)->first();
         }
         if (!$ticket) {
-            return redirect()->to('/admin/Ticket_dashboard')->with('error', 'Ticket not found');
+            return redirect()->to('/admin/ticket_dashboard')->with('error', 'Ticket not found');
+        }
+
+        // Enforce user isolation: regular employees can only view their own tickets
+        $userRole = strtolower(session('role') ?? '');
+        $userPerms = session('user_permissions') ?? [];
+        $isStaffAdmin = ($userRole === 'superadmin' || in_array('ticket:read', $userPerms, true) || in_array('tickets', $userPerms, true));
+        $currentEmpNo = session('employee_no') ?? session('username') ?? '';
+        $currentUserId = session('user_id') ?? '';
+        $currentEmpName = session('name') ?? '';
+
+        if (!$isStaffAdmin && session('isLoggedIn')) {
+            $isOwner = (
+                ($ticket['created_by'] ?? '') === $currentEmpNo ||
+                ($ticket['created_by'] ?? '') === $currentEmpName ||
+                ($ticket['reporter_id'] ?? '') === $currentUserId ||
+                ($ticket['reporter_id'] ?? '') === $currentEmpNo
+            );
+            if (!$isOwner) {
+                return redirect()->to('/')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk melihat tiket karyawan lain.');
+            }
         }
 
         $users = $userModel
             ->where('status', 'active')
             ->groupStart()
-                ->where('is_deleted !=', 1)
-                ->orWhere('is_deleted IS NULL')
+            ->where('is_deleted !=', 1)
+            ->orWhere('is_deleted IS NULL')
             ->groupEnd()
             ->findAll();
 
@@ -297,21 +353,21 @@ class TicketAdminController extends BaseController
             }
 
             $replies[] = [
-                'is_user'    => $isUser,
-                'author'     => $authorName ?: 'User',
+                'is_user' => $isUser,
+                'author' => $authorName ?: 'User',
                 'created_at' => $r['created_at'],
-                'text'       => $r['reply']
+                'text' => $r['reply']
             ];
         }
 
         $detailService = new \App\Services\TicketDetailService();
         $detailData = $detailService->buildDetailViewData($ticket, $repliesRaw, $attachments, $userModel);
 
-        return view('admin/Ticket_detail', array_merge($detailData, [
-            'users'           => $users,
-            'replies'         => $replies,
-            'hasReply'        => count($replies) > 0,
-            'assignedName'    => $detailData['assignedSpecialist']['name'],
+        return view('admin/ticket_detail', array_merge($detailData, [
+            'users' => $users,
+            'replies' => $replies,
+            'hasReply' => count($replies) > 0,
+            'assignedName' => $detailData['assignedSpecialist']['name'],
             'originalMessage' => $ticket['message'] ?? ''
         ]));
     }
@@ -376,7 +432,7 @@ class TicketAdminController extends BaseController
         // SLA resolution time calculation
         $slaModel = new SlaModel();
         $sla = $slaModel->where('priority', $priority)->first();
-        $resolutionTime = $sla ? (int)$sla['resolution_time'] : 24;
+        $resolutionTime = $sla ? (int) $sla['resolution_time'] : 24;
 
         $createdDate = $ticket['created_date'] ?? date('Y-m-d H:i:s');
         $dueDate = (new DateTime($createdDate))->modify('+' . $resolutionTime . ' hours')->format('Y-m-d H:i:s');
@@ -390,25 +446,25 @@ class TicketAdminController extends BaseController
 
         // Insert reply record
         $trxModel->insert([
-            'ticket_id'    => $ticketId,
-            'user_id'      => $userId,
-            'author_name'  => $username,
-            'status'       => $status,
-            'priority'     => $priority,
-            'assigned_to'  => $assignedTo,
-            'reply'        => $replyText,
-            'created_at'   => date('Y-m-d H:i:s')
+            'ticket_id' => $ticketId,
+            'user_id' => $userId,
+            'author_name' => $username,
+            'status' => $status,
+            'priority' => $priority,
+            'assigned_to' => $assignedTo,
+            'reply' => $replyText,
+            'created_at' => date('Y-m-d H:i:s')
         ]);
 
         // Update ticket record
         $updateData = [
-            'ticket_status'     => $status,
-            'ticket_priority'   => $priority,
-            'assigned_to'       => $assignedTo,
-            'due_date'          => $dueDate,
+            'ticket_status' => $status,
+            'ticket_priority' => $priority,
+            'assigned_to' => $assignedTo,
+            'due_date' => $dueDate,
             'first_response_at' => $firstResponseAt,
-            'modified_date'     => date('Y-m-d H:i:s'),
-            'modified_by'       => $username
+            'modified_date' => date('Y-m-d H:i:s'),
+            'modified_by' => $username
         ];
         if ($finishDate) {
             $updateData['finish_date'] = $finishDate;

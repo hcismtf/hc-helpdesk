@@ -10,8 +10,6 @@ class BaseEntity extends Entity implements \ArrayAccess
   protected $dates = [
     'created_date',
     'modified_date',
-    'created_at',
-    'updated_at',
   ];
 
   protected $casts = [
@@ -31,8 +29,6 @@ class BaseEntity extends Entity implements \ArrayAccess
     $this->dates = array_values(array_unique(array_merge([
       'created_date',
       'modified_date',
-      'created_at',
-      'updated_at',
     ], $this->dates)));
 
     parent::__construct($data);

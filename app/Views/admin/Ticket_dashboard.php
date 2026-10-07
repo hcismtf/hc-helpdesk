@@ -142,7 +142,7 @@
                     'day_left'        => ['label' => 'Day Left', 'type' => 'day_left', 'due_field' => 'due_date'],
                     'ticket_status'   => ['label' => 'Status', 'type' => 'status'],
                     'ticket_priority' => ['label' => 'Priority', 'type' => 'priority'],
-                    'action'          => ['label' => 'Action', 'type' => 'action', 'detail_url' => 'admin/Ticket_detail'],
+                    'action'          => ['label' => 'Action', 'type' => 'action', 'detail_url' => 'admin/ticket_detail'],
                 ],
                 'rows'           => $tickets,
                 'emptyMessage'   => 'No tickets found matching the criteria.',
@@ -256,7 +256,7 @@
                     <div class="ticket-card-body">
                         <!-- Title -->
                         <h4 class="ticket-card-title">
-                            <a href="<?= base_url('admin/Ticket_detail/' . esc($ticketId)) ?>" title="<?= esc($t['subject'] ?? '') ?>">
+                            <a href="<?= base_url('admin/ticket_detail/' . esc($ticketId)) ?>" title="<?= esc($t['subject'] ?? '') ?>">
                                 <?= esc($t['subject'] ?? 'Untitled Ticket') ?>
                             </a>
                         </h4>
@@ -279,7 +279,7 @@
                             <?= $overdueHtml ?>
                             <span class="meta-date"><?= !empty($t['created_date']) ? esc(date('d M Y, H:i', strtotime($t['created_date']))) : '-' ?></span>
                         </div>
-                        <a href="<?= base_url('admin/Ticket_detail/' . esc($ticketId)) ?>" style="text-decoration:none;">
+                        <a href="<?= base_url('admin/ticket_detail/' . esc($ticketId)) ?>" style="text-decoration:none;">
                             <button type="button" class="btn-open">
                                 <span>Open</span>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">

@@ -17,11 +17,11 @@
     <div class="main-content" id="main-content">
         <!-- Reusable Top Header Component -->
         <?= view('components/admin_header', [
-            'breadcrumbRoot'   => 'Helpdesk Admin',
+            'breadcrumbRoot' => 'Helpdesk Admin',
             'breadcrumbActive' => 'Analytics Overview',
-            'pageTitle'        => 'Dashboard',
+            'pageTitle' => 'Dashboard',
             'showCreateTicket' => true,
-            'showNotif'        => true,
+            'showNotif' => true,
         ]) ?>
 
         <!-- SLA Overview Banner with Connected Interactive Trend Chart -->
@@ -29,11 +29,13 @@
             <!-- Left Side: 3 Connected Metric Cards -->
             <div class="sla-metrics-group">
                 <!-- Card 1: AVG Response Time -->
-                <div class="sla-item metric-card active" data-metric="incoming" onclick="switchMiniChart('incoming', this)" title="Click to view Incoming Trend">
+                <div class="sla-item metric-card active" data-metric="incoming"
+                    onclick="switchMiniChart('incoming', this)" title="Click to view Incoming Trend">
                     <div class="card-top-row">
                         <div class="card-icon-title">
                             <div class="sla-icon-pill resp-pill">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <polyline points="12 6 12 12 16 14"></polyline>
                                 </svg>
@@ -52,11 +54,13 @@
                 </div>
 
                 <!-- Card 2: AVG Resolution Time -->
-                <div class="sla-item metric-card" data-metric="resolved" onclick="switchMiniChart('resolved', this)" title="Click to view Resolved Trend">
+                <div class="sla-item metric-card" data-metric="resolved" onclick="switchMiniChart('resolved', this)"
+                    title="Click to view Resolved Trend">
                     <div class="card-top-row">
                         <div class="card-icon-title">
                             <div class="sla-icon-pill reso-pill">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                                 </svg>
@@ -75,25 +79,31 @@
                 </div>
 
                 <!-- Card 3: SLA Compliance Rate -->
-                <div class="sla-item metric-card" data-metric="sla" onclick="switchMiniChart('sla', this)" title="Click to view SLA % Trend">
+                <div class="sla-item metric-card" data-metric="sla" onclick="switchMiniChart('sla', this)"
+                    title="Click to view SLA % Trend">
                     <div class="card-top-row">
                         <div class="card-icon-title">
-                            <div class="sla-icon-pill comp-pill <?= $slaRate >= 80 ? 'good' : ($slaRate >= 60 ? 'warn' : 'danger') ?>">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <div
+                                class="sla-icon-pill comp-pill <?= $slaRate >= 80 ? 'good' : ($slaRate >= 60 ? 'warn' : 'danger') ?>">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                                 </svg>
                             </div>
                             <span class="sla-label">SLA Compliance</span>
                         </div>
-                        <span class="card-micro-tag <?= $slaRate >= 80 ? 'tag-green' : ($slaRate >= 60 ? 'tag-warn' : 'tag-danger') ?>">
+                        <span
+                            class="card-micro-tag <?= $slaRate >= 80 ? 'tag-green' : ($slaRate >= 60 ? 'tag-warn' : 'tag-danger') ?>">
                             <?= $slaRate >= 80 ? 'Good' : ($slaRate >= 60 ? 'Moderate' : 'Low') ?>
                         </span>
                     </div>
                     <div class="card-bottom-row">
                         <div class="sla-val-wrap">
-                            <span class="sla-val <?= $slaRate >= 80 ? 'text-success' : ($slaRate >= 60 ? 'text-warn' : 'text-danger') ?>"><?= esc($slaRate) ?>%</span>
+                            <span
+                                class="sla-val <?= $slaRate >= 80 ? 'text-success' : ($slaRate >= 60 ? 'text-warn' : 'text-danger') ?>"><?= esc($slaRate) ?>%</span>
                             <div class="sla-mini-progress">
-                                <div class="sla-progress-fill <?= $slaRate >= 80 ? 'good' : ($slaRate >= 60 ? 'warn' : 'danger') ?>" style="width: <?= min(100, max(0, (int)$slaRate)) ?>%;"></div>
+                                <div class="sla-progress-fill <?= $slaRate >= 80 ? 'good' : ($slaRate >= 60 ? 'warn' : 'danger') ?>"
+                                    style="width: <?= min(100, max(0, (int) $slaRate)) ?>%;"></div>
                             </div>
                         </div>
                         <div class="card-sub-info">
@@ -112,9 +122,12 @@
                         <span id="chartActiveLabel">7-Day Trend: Incoming</span>
                     </div>
                     <div class="mini-chart-toggles">
-                        <button type="button" class="mini-toggle active" data-metric="incoming" onclick="switchMiniChart('incoming', this)">Incoming</button>
-                        <button type="button" class="mini-toggle" data-metric="resolved" onclick="switchMiniChart('resolved', this)">Resolved</button>
-                        <button type="button" class="mini-toggle" data-metric="sla" onclick="switchMiniChart('sla', this)">SLA %</button>
+                        <button type="button" class="mini-toggle active" data-metric="incoming"
+                            onclick="switchMiniChart('incoming', this)">Incoming</button>
+                        <button type="button" class="mini-toggle" data-metric="resolved"
+                            onclick="switchMiniChart('resolved', this)">Resolved</button>
+                        <button type="button" class="mini-toggle" data-metric="sla"
+                            onclick="switchMiniChart('sla', this)">SLA %</button>
                     </div>
                 </div>
                 <div class="mini-chart-canvas-wrap">
@@ -130,7 +143,8 @@
                 <div class="stat-card-header">
                     <div class="stat-card-badge">Needs Action</div>
                     <div class="stat-card-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="8" x2="12" y2="12"></line>
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -151,7 +165,8 @@
                 <div class="stat-card-header">
                     <div class="stat-card-badge">Active Handling</div>
                     <div class="stat-card-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="23 4 23 10 17 10"></polyline>
                             <polyline points="1 20 1 14 7 14"></polyline>
                             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
@@ -172,7 +187,8 @@
                 <div class="stat-card-header">
                     <div class="stat-card-badge">Completed</div>
                     <div class="stat-card-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                             <polyline points="22 4 12 14.01 9 11.01"></polyline>
                         </svg>
@@ -192,7 +208,8 @@
                 <div class="stat-card-header">
                     <div class="stat-card-badge">Total Volume</div>
                     <div class="stat-card-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                             <polyline points="2 17 12 22 22 17"></polyline>
                             <polyline points="2 12 12 17 22 12"></polyline>
@@ -210,19 +227,19 @@
         </div>
         <!-- Reusable Dynamic Data Table Component -->
         <?= view('components/data_table', [
-            'title'          => 'Open Tickets',
-            'tableId'        => 'ticketsTable',
-            'perPage'        => $perPage,
-            'columns'        => [
-                'emp_name'     => 'Name',
-                'req_type'     => 'Type',
+            'title' => 'Open Tickets',
+            'tableId' => 'ticketsTable',
+            'perPage' => $perPage,
+            'columns' => [
+                'emp_name' => 'Name',
+                'req_type' => 'Type',
                 'created_date' => ['label' => 'Created Date', 'type' => 'datetime'],
-                'due_date'     => ['label' => 'Due Date', 'type' => 'datetime'],
-                'day_left'     => ['label' => 'Day Left', 'type' => 'day_left', 'due_field' => 'due_date'],
-                'action'       => ['label' => 'Action', 'type' => 'action', 'detail_url' => 'admin/Ticket_detail'],
+                'due_date' => ['label' => 'Due Date', 'type' => 'datetime'],
+                'day_left' => ['label' => 'Day Left', 'type' => 'day_left', 'due_field' => 'due_date'],
+                'action' => ['label' => 'Action', 'type' => 'action', 'detail_url' => 'admin/ticket_detail'],
             ],
-            'rows'           => $openTickets,
-            'emptyMessage'   => 'No open tickets found.',
+            'rows' => $openTickets,
+            'emptyMessage' => 'No open tickets found.',
             'paginationHTML' => $paginationHTML ?? '',
         ]) ?>
 
@@ -239,7 +256,8 @@
                             <option value="">Select</option>
                             <?php foreach ($types as $t): ?>
                                 <option value="<?= esc($t['req_type']) ?>" <?= $type == $t['req_type'] ? 'selected' : '' ?>>
-                                    <?= esc($t['req_type']) ?></option>
+                                    <?= esc($t['req_type']) ?>
+                                </option>
                             <?php endforeach ?>
                         </select>
                     </div>
@@ -361,7 +379,7 @@
                             cornerRadius: 6,
                             displayColors: false,
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     var val = context.parsed.y;
                                     var activeBtn = document.querySelector('.mini-toggle.active');
                                     var activeMetric = activeBtn ? activeBtn.getAttribute('data-metric') : 'incoming';
@@ -416,4 +434,5 @@
         });
     </script>
 </body>
+
 </html>

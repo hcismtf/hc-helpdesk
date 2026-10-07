@@ -25,6 +25,10 @@ class DashboardController extends BaseController
             return redirect()->to('/admin/login');
         }
 
+        if (empty(session('role_id')) && strtolower(session('role') ?? '') !== 'superadmin') {
+            return redirect()->to('/')->with('error', 'Akses ditolak: Anda tidak memiliki role administrator.');
+        }
+
         $ticketModel = new TicketTransactionModel();
         $slaModel = new SlaModel();
 

@@ -8,41 +8,39 @@ class RolePermissionColumn extends Migration
 {
   public function up()
   {
-    $this->forge->addField([
-      'role_id' => [
-        'type' => 'VARCHAR',
-        'constraint' => 36,
-      ],
-      'permission_id' => [
-        'type' => 'VARCHAR',
-        'constraint' => 36,
-      ],
+    $this->forge->addColumn('role_permissions', [
       'created_by' => [
         'type' => 'VARCHAR',
         'constraint' => 36,
         'null' => true,
+        'after' => 'permission_id',
       ],
       'modified_by' => [
         'type' => 'VARCHAR',
         'constraint' => 36,
         'null' => true,
+        'after' => 'created_by',
       ],
       'created_date' => [
         'type' => 'DATETIME',
         'null' => true,
+        'after' => 'modified_by',
       ],
       'modified_date' => [
         'type' => 'DATETIME',
         'null' => true,
+        'after' => 'created_date',
       ],
     ]);
-
-    $this->forge->addPrimaryKey('id');
-    $this->forge->createTable('role_permissions', true);
   }
 
   public function down()
   {
-    $this->forge->dropTable('role_permissions', true);
+    $this->forge->dropColumn('role_permissions', [
+      'created_by',
+      'modified_by',
+      'created_date',
+      'modified_date',
+    ]);
   }
 }

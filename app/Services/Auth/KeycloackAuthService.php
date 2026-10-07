@@ -98,4 +98,36 @@ class KeycloackAuthService
       return null;
     }
   }
+
+  /**
+   * Refresh token Keycloak via grant_type refresh_token
+   */
+  public function refreshToken(string $refreshToken): ?array
+  {
+    $payload = [
+      'grant_type'    => 'refresh_token',
+      'client_id'     => $this->config->keycloakClientId,
+      'refresh_token' => $refreshToken,
+    ];
+
+    if (!empty($this->config->keycloakClientSecret)) {
+      $payload['client_secret'] = $this->config->keycloakClientSecret;
+    }
+
+    try {
+      $response = $this->client->post($this->config->keycloakTokenUrl, [
+        'form_params' => $payload,
+      ]);
+
+      if ($response->getStatusCode() !== 200) {
+        log_message('error', 'Keycloak refresh token failed: ' . $response->getBody());
+        return null;
+      }
+
+      return json_decode($response->getBody(), true);
+    } catch (\Throwable $e) {
+      log_message('error', 'Keycloak refresh token exception: ' . $e->getMessage());
+      return null;
+    }
+  }
 }

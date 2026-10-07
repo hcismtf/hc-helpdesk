@@ -10,21 +10,26 @@ use CodeIgniter\Router\RouteCollection;
 // 1. PUBLIC ROUTES (Tanpa Autentikasi)
 // =============================================================================
 
-$routes->get('/', 'Ticket::create');
-$routes->get('faq', 'Ticket::faq');
+$routes->get('/', 'Home::index');
+$routes->get('beranda', 'Home::index');
+$routes->post('track-ticket', 'Home::trackTicket');
+$routes->get('faq', 'PusatBantuan::pusat_bantuan');
 $routes->get('pusat-bantuan', 'PusatBantuan::pusat_bantuan');
 
 $routes->group('ticket', static function ($routes) {
-	$routes->get('/', 'Ticket::index');
+	$routes->get('/', 'Ticket::create');
 	$routes->get('create', 'Ticket::create');
 	$routes->post('store', 'Ticket::store');
-	$routes->get('faq', 'Ticket::faq');
-	$routes->get('detail/(:segment)', 'admin\TicketAdminController::Ticket_detail/$1');
+	$routes->get('faq', 'PusatBantuan::pusat_bantuan');
+	$routes->get('detail/(:segment)', 'admin\TicketAdminController::ticket_detail/$1');
 });
 
-// General Authentication
+// General Authentication & User Login (Popup /)
 $routes->get('login', 'Auth::login');
-$routes->post('login', 'Auth::attemptLogin');
+$routes->post('login', 'Auth::ajaxLogin');
+$routes->post('auth/refresh-token', 'Auth::refreshToken');
+$routes->get('auth/logout', 'Auth::logout');
+$routes->get('logout', 'Auth::logout');
 
 // Assets / Static JS Helper
 $routes->get('assets/ticket_js', 'Assets::ticket_js');
@@ -52,8 +57,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\admin', 'filter' => 'au
 
 	// --- Tickets Management ---
 	$routes->group('', static function ($routes) {
-		$routes->get('Ticket_dashboard', 'TicketAdminController::Ticket_dashboard', ['filter' => 'perm:ticket.read']);
-		$routes->get('Ticket_detail/(:segment)', 'TicketAdminController::Ticket_detail/$1', ['filter' => 'perm:ticket.read']);
+		$routes->get('ticket_dashboard', 'TicketAdminController::ticket_dashboard', ['filter' => 'perm:ticket.read']);
+		$routes->get('ticket_detail/(:segment)', 'TicketAdminController::ticket_detail/$1', ['filter' => 'perm:ticket.read']);
 		$routes->get('view/(:any)', 'TicketAdminController::view/$1', ['filter' => 'perm:ticket.read']);
 		$routes->post('send_reply/(:segment)', 'TicketAdminController::send_reply/$1', ['filter' => 'perm:ticket.reply']);
 		$routes->post('update_ticket_status', 'TicketAdminController::update_ticket_status', ['filter' => 'perm:ticket.status']);

@@ -6,7 +6,7 @@
     <title>#<?= esc($ticket['id']) ?> - <?= esc($ticket['subject'] ?? 'Ticket Detail') ?> | Helpdesk</title>
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/dashboard.css') ?>?v=<?= time() ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/navbar.css') ?>?v=<?= time() ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/css/admin/Ticket_detail.css') ?>?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin/ticket_detail.css') ?>?v=<?= time() ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/admin/system_settings.css') ?>?v=<?= time() ?>">
 </head>
 <body>
