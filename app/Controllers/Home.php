@@ -23,38 +23,42 @@ class Home extends BaseController
 
         $cleanNo = ltrim($ticketNo, '#');
 
-        $ticketModel = new \App\Models\TicketTransactionModel();
-        $builder = $ticketModel->builder();
-        $builder->groupStart()
-                ->where('id', $cleanNo)
-                ->orLike('id', $cleanNo)
-                ->groupEnd();
-
-        if (!empty($email)) {
-            $builder->where('email', $email);
-        }
-
-        $ticket = $builder->get()->getRowArray();
+        $ticketService = new \App\Services\TicketService();
+        $ticket = $ticketService->getTicketByIdentifier($cleanNo);
 
         if (!$ticket) {
             return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'Tiket dengan nomor "' . esc($ticketNo) . '" tidak ditemukan' . (!empty($email) ? ' atau email tidak sesuai.' : '.')
+                'status'  => 'error',
+                'message' => 'Tiket dengan nomor "' . esc($ticketNo) . '" tidak ditemukan.'
             ]);
+        }
+
+        // Cek filter email jika diisi
+        if (!empty($email) && stripos((string) $ticket->getDescription(), $email) === false) {
+            return $this->response->setJSON([
+                'status'  => 'error',
+                'message' => 'Tiket ditemukan, namun email yang dimasukkan tidak sesuai dengan data pelapor.'
+            ]);
+        }
+
+        $finishDate = null;
+        if ($ticket->isClosed()) {
+            $respModel = new \App\Models\TicketResponseModel();
+            $finishDate = $respModel->getCompletedDate((string) $ticket->getId());
         }
 
         return $this->response->setJSON([
             'status' => 'success',
             'data'   => [
-                'id'            => $ticket['id'],
-                'subject'       => $ticket['subject'] ?? 'Tiket Bantuan',
-                'req_type'      => $ticket['req_type'] ?? '-',
-                'ticket_status' => $ticket['ticket_status'] ?? 'Open',
-                'ticket_priority' => $ticket['ticket_priority'] ?? 'Normal',
-                'created_date'  => $ticket['created_date'] ?? date('Y-m-d H:i:s'),
-                'due_date'      => $ticket['due_date'] ?? null,
-                'finish_date'   => $ticket['finish_date'] ?? null,
-                'created_by'    => $ticket['created_by'] ?? ($ticket['emp_name'] ?? 'Karyawan')
+                'id'              => $ticket->getTicketNo() ?? $ticket->getId(),
+                'subject'         => $ticket->getTitle() ?? 'Tiket Bantuan',
+                'req_type'        => 'HC Helpdesk',
+                'ticket_status'   => $ticket->getStatusLabel(),
+                'ticket_priority' => 'Normal',
+                'created_date'    => (string) ($ticket->getCreatedDate() ?? date('Y-m-d H:i:s')),
+                'due_date'        => (string) ($ticket->getResolutionDueDate() ?? $ticket->getResponseDueDate() ?? 'Dalam Antrean'),
+                'finish_date'     => $finishDate,
+                'created_by'      => $ticket->getCreatedBy() ?? 'Karyawan'
             ]
         ]);
     }

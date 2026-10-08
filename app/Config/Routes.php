@@ -17,11 +17,19 @@ $routes->get('faq', 'PusatBantuan::pusat_bantuan');
 $routes->get('pusat-bantuan', 'PusatBantuan::pusat_bantuan');
 
 $routes->group('ticket', static function ($routes) {
-	$routes->get('/', 'Ticket::create');
-	$routes->get('create', 'Ticket::create');
-	$routes->post('store', 'Ticket::store');
+	$routes->get('/', '\App\Controllers\Public\TicketController::create');
+	$routes->get('create', '\App\Controllers\Public\TicketController::create');
+	$routes->post('store', '\App\Controllers\Public\TicketController::store');
+	$routes->get('track', '\App\Controllers\Public\TicketController::track');
 	$routes->get('faq', 'PusatBantuan::pusat_bantuan');
 	$routes->get('detail/(:segment)', 'admin\TicketAdminController::ticket_detail/$1');
+});
+
+// User / Employee Tickets (Wajib Login)
+$routes->group('my', ['namespace' => 'App\Controllers\User', 'filter' => 'auth'], static function ($routes) {
+	$routes->get('tickets', 'TicketController::index');
+	$routes->get('ticket/(:segment)', 'TicketController::show/$1');
+	$routes->post('ticket/(:segment)/reply', 'TicketController::reply/$1');
 });
 
 // General Authentication & User Login (Popup /)
@@ -35,15 +43,6 @@ $routes->get('logout', 'Auth::logout');
 $routes->get('assets/ticket_js', 'Assets::ticket_js');
 
 
-// =============================================================================
-// 2. ADMIN AUTH ROUTES (Guest/Tanpa Login)
-// =============================================================================
-$routes->group('admin', ['namespace' => 'App\Controllers\admin'], static function ($routes) {
-	$routes->get('login', 'AuthController::login');
-	$routes->post('authenticate', 'AuthController::authenticate');
-	$routes->get('logout', 'AuthController::logout');
-	$routes->get('forbidden', 'AuthController::forbidden');
-});
 
 
 // =============================================================================
@@ -52,6 +51,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\admin'], static functio
 $routes->group('admin', ['namespace' => 'App\Controllers\admin', 'filter' => 'auth'], static function ($routes) {
 
 	// --- Dashboard & Main Settings View ---
+	$routes->get('', 'DashboardController::dashboard');
+	$routes->get('/', 'DashboardController::dashboard');
 	$routes->get('dashboard', 'DashboardController::dashboard');
 	$routes->get('system_settings', 'SystemSettingsController::system_settings', ['filter' => 'perm:settings.read']);
 

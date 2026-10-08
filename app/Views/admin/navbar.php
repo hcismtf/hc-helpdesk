@@ -1,5 +1,6 @@
 <?php
-$isSuperadmin = (strtolower(session('role') ?? '') === 'superadmin');
+$cleanRole = strtolower(trim((string) preg_replace('/[^a-zA-Z0-9]/', '', (string)(session('role') ?? ''))));
+$isSuperadmin = ($cleanRole === 'superadmin');
 $userPermissions = session('user_permissions') ?? [];
 
 // Helper check permission (bisa string tunggal atau array OR)
@@ -16,8 +17,8 @@ $canAccess = function ($required) use ($isSuperadmin, $userPermissions) {
 
 // Hitung open tickets untuk badge
 try {
-    $ticketModel = new \App\Models\TicketTransactionModel();
-    $openTicketsCount = $ticketModel->where('ticket_status !=', 'closed')->countAllResults();
+    $ticketModel = new \App\Models\TicketModel();
+    $openTicketsCount = $ticketModel->whereNotIn('status', ['closed', 'done', 'resolved'])->countAllResults();
 } catch (\Throwable $e) {
     $openTicketsCount = 0;
 }

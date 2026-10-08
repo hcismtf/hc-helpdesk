@@ -255,8 +255,8 @@
                         <select name="type">
                             <option value="">Select</option>
                             <?php foreach ($types as $t): ?>
-                                <option value="<?= esc($t['req_type']) ?>" <?= $type == $t['req_type'] ? 'selected' : '' ?>>
-                                    <?= esc($t['req_type']) ?>
+                                <option value="<?= esc($t['id'] ?? $t['name']) ?>" <?= $type == ($t['id'] ?? $t['name']) ? 'selected' : '' ?>>
+                                    <?= esc($t['name'] ?? ($t['req_type'] ?? '-')) ?>
                                 </option>
                             <?php endforeach ?>
                         </select>

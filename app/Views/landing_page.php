@@ -164,9 +164,9 @@
               </button>
 
               <div class="track-no-ticket-wrap">
-                <span class="no-ticket-text">Belum punya tiket bantuan?</span>
-                <a href="<?= base_url('ticket/create') ?>" class="btn-link-create-ticket">
-                  <span>Buat Tiket Baru</span>
+                <span class="no-ticket-text">Ingin melihat detail tiket?</span>
+                <a href="<?= base_url('login') ?>" onclick="event.preventDefault(); openUserLoginModal();" class="btn-link-create-ticket">
+                  <span>Masuk ke Akun</span>
                   <i class="fas fa-arrow-right"></i>
                 </a>
               </div>

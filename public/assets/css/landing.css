@@ -382,6 +382,20 @@ a {
   color: var(--primary-navy);
 }
 
+.nav-dropdown-item.item-admin {
+  color: var(--primary-navy);
+  font-weight: 700;
+}
+
+.nav-dropdown-item.item-admin i {
+  color: var(--accent-blue-hover);
+}
+
+.nav-dropdown-item.item-admin:hover {
+  background-color: #EFF6FF;
+  color: var(--accent-blue-hover);
+}
+
 .nav-dropdown-item.item-logout {
   color: #DC2626;
 }
@@ -524,8 +538,9 @@ a {
   transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, visibility 0.25s;
 }
 
-.mobile-dropdown-menu.show {
-  max-height: 420px;
+.mobile-dropdown-menu.show,
+.mobile-dropdown-menu.open {
+  max-height: 520px;
   opacity: 1;
   visibility: visible;
 }
@@ -767,13 +782,14 @@ a {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 16px 14px;
   display: flex;
   flex-direction: row;
-  align-items: stretch;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 12px;
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-width: 0;
 }
 
 .quick-card:hover {
@@ -782,14 +798,17 @@ a {
 }
 
 .quick-icon-box {
-  width: 76px;
-  min-width: 76px;
-  border-radius: var(--radius-md);
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  align-self: stretch;
+  align-self: flex-start;
+  margin-top: 2px;
 }
 
 .quick-icon-box.icon-blue {
@@ -805,8 +824,8 @@ a {
 }
 
 .quick-icon-box img {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
 }
 
@@ -850,10 +869,12 @@ a {
 .btn-quick-action {
   font-size: 11.5px;
   font-weight: 600;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-radius: var(--radius-sm);
   text-align: center;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 10px;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -862,6 +883,10 @@ a {
   background-color: var(--primary-navy);
   color: #FFFFFF;
   border: 1px solid var(--primary-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
 .btn-quick-action:hover {
@@ -877,7 +902,9 @@ a {
   border-radius: var(--radius-pill);
   padding: 6px 10px;
   text-align: center;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -885,6 +912,9 @@ a {
   border: 1px solid #BBF7D0;
   color: #15803D;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
 .badge-operational:hover {
@@ -1616,15 +1646,15 @@ a {
   }
 }
 
-/* Medium Desktop / Laptops (992px - 1199px) - Matches user's 1176px & 1152px screens */
-@media (min-width: 992px) and (max-width: 1199px) {
+/* Medium Desktop / Laptops (1100px - 1199px) */
+@media (min-width: 1100px) and (max-width: 1199px) {
   .main-wrapper {
     max-width: 100%;
     padding: 22px 20px 40px;
   }
 
   .top-grid {
-    grid-template-columns: minmax(0, 1fr) 330px;
+    grid-template-columns: minmax(0, 1.4fr) 330px;
     gap: 16px;
   }
 
@@ -1651,13 +1681,17 @@ a {
   }
 
   .quick-icon-box {
-    width: 60px;
-    min-width: 60px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 12px;
+    align-self: flex-start;
   }
 
   .quick-icon-box img {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
   }
 
   .quick-card-title {
@@ -1672,12 +1706,18 @@ a {
     font-size: 11px;
     padding: 8px 8px;
     margin-top: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .badge-operational {
     font-size: 10px;
     padding: 6px 8px;
     margin-top: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .track-ticket-card {
@@ -1698,8 +1738,48 @@ a {
   }
 }
 
-/* Tablet Landscape / Small Desktop (769px - 991px) */
-@media (min-width: 769px) and (max-width: 991px) {
+/* Header Compact Mode for Tablets & Small Laptops (851px - 1150px) */
+@media (max-width: 1150px) {
+  .header-container {
+    padding: 10px 20px;
+  }
+
+  .brand-subtitle {
+    display: none; /* Sembunyikan subteks agar navbar tidak penuh sesak */
+  }
+
+  .header-nav {
+    gap: 16px;
+  }
+
+  .nav-item {
+    font-size: 13px;
+    padding: 12px 2px;
+    gap: 6px;
+  }
+
+  .nav-user-text {
+    display: none; /* Sembunyikan teks nama & NIK; avatar circular tetap tampil & bisa diklik */
+  }
+
+  .nav-header-separator {
+    display: none;
+  }
+
+  .btn-nav-create-ticket {
+    padding: 7px 14px;
+    font-size: 12px;
+    gap: 6px;
+  }
+}
+
+/* Tablet Landscape & iPad Mini (769px - 1099px) - FIX UNTUK IPAD MINI 1024px */
+@media (min-width: 769px) and (max-width: 1099px) {
+  .main-wrapper {
+    max-width: 100%;
+    padding: 22px 20px 44px;
+  }
+
   .top-grid {
     grid-template-columns: 1fr;
     gap: 20px;
@@ -1713,19 +1793,70 @@ a {
     font-size: 25px;
   }
 
+  .hero-description {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
   .quick-actions-row {
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 14px;
   }
 
   .quick-card {
-    padding: 14px;
+    padding: 16px 14px;
     gap: 12px;
+    min-width: 0;
+    align-items: flex-start;
   }
 
   .quick-icon-box {
-    width: 64px;
-    min-width: 64px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 12px;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+
+  .quick-icon-box img {
+    width: 22px;
+    height: 22px;
+  }
+
+  .quick-card-title {
+    font-size: 13px;
+  }
+
+  .quick-card-subtitle {
+    font-size: 11px;
+  }
+
+  .btn-quick-action {
+    font-size: 11.5px;
+    padding: 8px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .badge-operational {
+    font-size: 10.5px;
+    padding: 6px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .track-ticket-card {
+    padding: 26px 24px;
+  }
+
+  .track-inputs-stack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
   }
 
   .service-card {
@@ -1738,8 +1869,8 @@ a {
   }
 }
 
-/* Mobile Viewport (<= 768px) with Strict Anti-Horizontal-Overflow */
-@media (max-width: 768px) {
+/* Mobile Navigation & Tablet Portrait Header (<= 850px) */
+@media (max-width: 850px) {
   .header-container {
     padding: 12px 16px;
     width: 100%;
@@ -1772,9 +1903,12 @@ a {
   }
 
   .brand-subtitle {
-    display: none; /* Sembunyikan subteks di HP agar navbar lega */
+    display: none;
   }
+}
 
+/* Mobile Viewport (<= 768px) */
+@media (max-width: 768px) {
   .main-wrapper {
     padding: 16px 14px 40px;
     max-width: 100%;
@@ -1850,31 +1984,42 @@ a {
     box-sizing: border-box;
   }
 
+  /* Quick cards on tablet portrait (681px - 768px): 3 columns */
   .quick-actions-row {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
     width: 100%;
     max-width: 100%;
   }
 
+  .track-inputs-stack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
   .quick-card {
-    padding: 14px;
+    padding: 12px 10px;
     border-radius: var(--radius-md);
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    gap: 12px;
+    gap: 10px;
+    align-items: flex-start;
   }
 
   .quick-icon-box {
-    width: 64px;
-    min-width: 64px;
-    border-radius: var(--radius-sm);
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 10px;
+    align-self: flex-start;
   }
 
   .quick-icon-box img {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
   }
 
   .quick-card-title {
@@ -1886,11 +2031,14 @@ a {
   }
 
   .btn-quick-action {
-    padding: 8px 12px;
+    padding: 8px 10px;
     font-size: 11.5px;
     margin-top: 10px;
     box-sizing: border-box;
     width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .badge-operational {
@@ -1899,6 +2047,9 @@ a {
     margin-top: 10px;
     box-sizing: border-box;
     width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .track-ticket-card {
@@ -2040,6 +2191,20 @@ a {
   }
 }
 
+/* Smartphone Portrait Viewport (<= 680px) */
+@media (max-width: 680px) {
+  .quick-actions-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .track-inputs-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
 /* Extra Small Mobile (<= 480px down to 320px) */
 @media (max-width: 480px) {
   .main-wrapper {
@@ -2069,16 +2234,21 @@ a {
   .quick-card {
     padding: 12px;
     gap: 10px;
+    align-items: flex-start;
   }
 
   .quick-icon-box {
-    width: 54px;
-    min-width: 54px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 10px;
+    align-self: flex-start;
   }
 
   .quick-icon-box img {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
 
   .quick-card-title {
@@ -2092,11 +2262,17 @@ a {
   .btn-quick-action {
     font-size: 11px;
     padding: 7px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .badge-operational {
     font-size: 10px;
     padding: 6px 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .service-card {

@@ -13,8 +13,9 @@ $userName    = session('name') ?? session('username') ?? 'User';
 $employeeNo  = session('employee_no') ?? session('username') ?? '';
 $initials    = strtoupper(substr(trim($userName), 0, 2));
 $userRole    = session('role');
+$roleId      = session('role_id');
 $permissions = session('user_permissions') ?? [];
-$canAdmin    = ($userRole === 'superadmin' || in_array('dashboard', $permissions, true));
+$canAdmin    = \App\Services\AuthService::canAccessAdmin();
 ?>
 
 <header class="landing-header">
@@ -71,9 +72,9 @@ $canAdmin    = ($userRole === 'superadmin' || in_array('dashboard', $permissions
               </div>
               <div class="nav-dropdown-divider"></div>
               <?php if ($canAdmin): ?>
-                <a href="<?= base_url('admin/dashboard') ?>" class="nav-dropdown-item">
-                  <i class="fas fa-chart-line"></i>
-                  <span>Admin Dashboard</span>
+                <a href="<?= base_url('admin/dashboard') ?>" class="nav-dropdown-item item-admin">
+                  <i class="fas fa-user-shield"></i>
+                  <span>Menu Admin</span>
                 </a>
               <?php endif; ?>
               <a href="<?= base_url('ticket/create') ?>" class="nav-dropdown-item">
@@ -147,11 +148,11 @@ $canAdmin    = ($userRole === 'superadmin' || in_array('dashboard', $permissions
           <span>Buat Tiket Baru</span>
         </a>
         <?php if ($canAdmin): ?>
-          <a href="<?= base_url('admin/dashboard') ?>" class="mobile-nav-item" onclick="closeMobileMenu()">
+          <a href="<?= base_url('admin/dashboard') ?>" class="mobile-nav-item item-admin" onclick="closeMobileMenu()">
             <div class="mobile-nav-icon">
-              <i class="fas fa-chart-line" style="color: #0F2B5B;"></i>
+              <i class="fas fa-user-shield" style="color: #0F2B5B;"></i>
             </div>
-            <span>Admin Dashboard</span>
+            <span>Menu Admin</span>
           </a>
         <?php endif; ?>
         <a href="<?= base_url('auth/logout') ?>" class="mobile-nav-item logout-link" onclick="closeMobileMenu()">

@@ -3,6 +3,7 @@
 namespace App\Entities;
 
 use CodeIgniter\I18n\Time;
+use App\Entities\TicketStatus;
 
 class TicketEntity extends BaseEntity
 {
@@ -26,6 +27,10 @@ class TicketEntity extends BaseEntity
     'title' => 'string',
     'description' => 'string',
     'status' => 'string',
+
+    'reporter_id' => '?string',
+    'reporter_email' => '?string',
+    'reporter_phone' => '?string',
 
     'pic_helpdesk_id' => '?string',
     'pic_dev_ba_id' => '?string',
@@ -102,6 +107,39 @@ class TicketEntity extends BaseEntity
   public function setStatus(string $status): self
   {
     $this->attributes['status'] = $status;
+    return $this;
+  }
+
+  public function getReporterId(): ?string
+  {
+    return $this->attributes['reporter_id'] ?? null;
+  }
+
+  public function setReporterId(?string $reporterId): self
+  {
+    $this->attributes['reporter_id'] = $reporterId;
+    return $this;
+  }
+
+  public function getReporterEmail(): ?string
+  {
+    return $this->attributes['reporter_email'] ?? null;
+  }
+
+  public function setReporterEmail(?string $reporterEmail): self
+  {
+    $this->attributes['reporter_email'] = $reporterEmail;
+    return $this;
+  }
+
+  public function getReporterPhone(): ?string
+  {
+    return $this->attributes['reporter_phone'] ?? null;
+  }
+
+  public function setReporterPhone(?string $reporterPhone): self
+  {
+    $this->attributes['reporter_phone'] = $reporterPhone;
     return $this;
   }
 
@@ -265,11 +303,32 @@ class TicketEntity extends BaseEntity
 
   public function isEligibleForAutoClose(): bool
   {
-    if ($this->getStatus() !== 'Resolved' || empty($this->attributes['completed_date'])) {
+    $status = TicketStatus::normalize($this->getStatus());
+    if ($status !== TicketStatus::RESOLVED || empty($this->attributes['completed_date'])) {
       return false;
     }
 
     $resolvedTimestamp = strtotime((string) $this->attributes['completed_date']);
     return (time() - $resolvedTimestamp) >= (24 * 3600);
+  }
+
+  public function isReopened(): bool
+  {
+    return TicketStatus::normalize($this->getStatus()) === TicketStatus::REOPENED;
+  }
+
+  public function isClosed(): bool
+  {
+    return TicketStatus::isClosedOrResolved($this->getStatus());
+  }
+
+  public function getStatusLabel(): string
+  {
+    return TicketStatus::getLabel($this->getStatus());
+  }
+
+  public function getStatusBadgeClass(): string
+  {
+    return TicketStatus::getStatusBadgeClass($this->getStatus());
   }
 }

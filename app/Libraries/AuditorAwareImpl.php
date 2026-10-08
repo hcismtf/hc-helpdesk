@@ -38,7 +38,9 @@ class AuditorAwareImpl implements AuditorAwareInterface
         if ($request && method_exists($request, 'getHeaderLine')) {
           $authHeader = $request->getHeaderLine('Authorization');
           if (!empty($authHeader) && preg_match('/Bearer\s+(\S+)/i', $authHeader, $matches)) {
-            return $this->extractUsernameFromJwt($matches[1]);
+            $rawToken = $matches[1];
+            $plainToken = class_exists(\App\Services\AuthService::class) ? \App\Services\AuthService::decryptToken($rawToken) : $rawToken;
+            return $this->extractUsernameFromJwt((string) $plainToken);
           }
         }
       }
@@ -64,7 +66,8 @@ class AuditorAwareImpl implements AuditorAwareInterface
 
           $accessToken = $session->get('access_token');
           if (!empty($accessToken)) {
-            $jwtAuditor = $this->extractUsernameFromJwt((string) $accessToken);
+            $plainToken = class_exists(\App\Services\AuthService::class) ? \App\Services\AuthService::decryptToken((string) $accessToken) : (string) $accessToken;
+            $jwtAuditor = $this->extractUsernameFromJwt((string) $plainToken);
             if (!empty($jwtAuditor)) {
               return $jwtAuditor;
             }

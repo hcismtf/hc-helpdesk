@@ -3,7 +3,7 @@
 namespace App\Controllers\admin;
 
 use App\Controllers\BaseController;
-use App\Models\TicketTransactionModel;
+use App\Models\TicketModel;
 use App\Models\ReportJobModel;
 use App\Services\ReportExportService;
 
@@ -34,9 +34,17 @@ class ReportUserController extends BaseController
         $start_date_sla = $this->request->getGet('start_date_sla') ?? '';
         $end_date_sla = $this->request->getGet('end_date_sla') ?? '';
 
-        $ticketModel = new TicketTransactionModel();
-        $requestTypes = $ticketModel->select('req_type')->distinct()->where('req_type IS NOT NULL')->where('req_type !=', '')->findAll();
-        $priorities = $ticketModel->select('ticket_priority')->distinct()->where('ticket_priority IS NOT NULL')->where('ticket_priority !=', '')->findAll();
+        $reqTypeModel = new \App\Models\RequestTypeModel();
+        $requestTypesRaw = $reqTypeModel->where('status', 'Active')->orderBy('name', 'ASC')->findAll();
+        $requestTypes = array_map(function($rt) {
+            return ['req_type' => $rt['name']];
+        }, $requestTypesRaw);
+
+        $slaModel = new \App\Models\SlaModel();
+        $prioritiesRaw = $slaModel->findAll();
+        $priorities = array_map(function($s) {
+            return ['ticket_priority' => $s['priority']];
+        }, $prioritiesRaw);
 
         $jobModel = new ReportJobModel();
         $reportJobs = $jobModel->where('created_by', $userId)->orderBy('created_at', 'desc')->findAll(10);

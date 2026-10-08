@@ -17,9 +17,10 @@ class PermissionFilter implements FilterInterface
 
     // Superadmin bypass
     $superadminConfig = new \Config\Superadmin();
+    $cleanRole = strtolower(trim((string) preg_replace('/[^a-zA-Z0-9]/', '', (string)$role)));
     if (
-      strtolower($role) === 'superadmin' ||
-      (!empty($superadminConfig->username) && strtolower($username) === strtolower($superadminConfig->username))
+      $cleanRole === 'superadmin' ||
+      (!empty($superadminConfig->username) && strtolower($username) === strtolower($superConfig->username ?? $superadminConfig->username))
     ) {
       return;
     }

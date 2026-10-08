@@ -3,7 +3,7 @@
 namespace App\Controllers\admin;
 
 use App\Controllers\BaseController;
-use App\Models\TicketTransactionModel;
+use App\Models\TicketModel;
 use App\Models\SlaModel;
 use App\Services\TicketMetricsService;
 
@@ -22,14 +22,14 @@ class DashboardController extends BaseController
     public function dashboard()
     {
         if (!session('isLoggedIn')) {
-            return redirect()->to('/admin/login');
+            return redirect()->to('/')->with('error', 'Silakan login terlebih dahulu.');
         }
 
-        if (empty(session('role_id')) && strtolower(session('role') ?? '') !== 'superadmin') {
-            return redirect()->to('/')->with('error', 'Akses ditolak: Anda tidak memiliki role administrator.');
+        if (!\App\Services\AuthService::canAccessAdmin()) {
+            return redirect()->to('/')->with('error', 'Akses ditolak: Akun Anda tidak memiliki role administratif untuk mengakses halaman admin.');
         }
 
-        $ticketModel = new TicketTransactionModel();
+        $ticketModel = new TicketModel();
         $slaModel = new SlaModel();
 
         // Filters from GET
@@ -43,17 +43,25 @@ class DashboardController extends BaseController
         if ($page <= 0) $page = 1;
 
         // Query open/active tickets
-        $builder = $ticketModel->where('ticket_status !=', 'closed');
-        if ($type) $builder->where('req_type', $type);
+        $builder = $ticketModel->whereNotIn('status', ['closed', 'done', 'resolved']);
+        if ($type) $builder->where('request_type_id', $type);
         if ($start) $builder->where('created_date >=', $start . ' 00:00:00');
         if ($end) $builder->where('created_date <=', $end . ' 23:59:59');
 
-        $openTickets = $builder->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
+        $openTicketsRaw = $builder->orderBy('created_date', 'DESC')->paginate($perPage, 'tickets', $page);
+        $openTickets = [];
+        foreach ($openTicketsRaw as $ot) {
+            $row = is_object($ot) ? $ot->toArray() : (array) $ot;
+            $row['emp_name'] = $row['reporter_id'] ?? ($row['created_by'] ?? 'User');
+            $row['req_type'] = 'HC Helpdesk';
+            $row['due_date'] = $row['resolution_due_date'] ?? $row['response_due_date'] ?? null;
+            $openTickets[] = $row;
+        }
 
         // Status counts
-        $openCount = (clone $ticketModel)->where('ticket_status', 'open')->countAllResults();
-        $inProgressCount = (clone $ticketModel)->where('ticket_status', 'in_progress')->countAllResults();
-        $doneCount = (clone $ticketModel)->where('ticket_status', 'closed')->countAllResults();
+        $openCount = (clone $ticketModel)->where('status', 'open')->countAllResults();
+        $inProgressCount = (clone $ticketModel)->where('status', 'in_progress')->countAllResults();
+        $doneCount = (clone $ticketModel)->whereIn('status', ['closed', 'done', 'resolved'])->countAllResults();
         $totalCount = (clone $ticketModel)->countAllResults();
 
         // SLA mapping
@@ -63,15 +71,40 @@ class DashboardController extends BaseController
             $slaMap[$sla['priority']] = $sla;
         }
 
-        // Inject SLA & due dates
-        $openTickets = $this->metricsService->injectSlaData($openTickets, $slaMap);
-
         // Request types for dropdown
-        $types = $ticketModel->select('req_type')->distinct()->findAll();
+        $reqTypeModel = new \App\Models\RequestTypeModel();
+        $types = $reqTypeModel->where('status', 'Active')->orderBy('name', 'ASC')->findAll();
 
-        // Calculate performance metrics from closed tickets
-        $closedTickets = (clone $ticketModel)->where('ticket_status', 'closed')->findAll();
-        $metrics = $this->metricsService->calculatePerformanceMetrics($closedTickets);
+        // Calculate performance metrics from closed tickets secara dinamis
+        $closedTickets = (clone $ticketModel)->whereIn('status', ['closed', 'done', 'resolved'])->findAll();
+        $closedTicketsArr = [];
+        $db = \Config\Database::connect();
+
+        foreach ($closedTickets as $ct) {
+            $r = is_object($ct) ? $ct->toArray() : (array) $ct;
+            $tId = $r['id'] ?? null;
+
+            // First response dinamis
+            $firstRep = $db->table('ticket_response')
+                ->select('MIN(created_date) as first_res')
+                ->where('ticket_id', $tId)
+                ->get()
+                ->getRowArray();
+
+            // Resolution dinamis
+            $lastResolved = $db->table('ticket_response')
+                ->select('MIN(created_date) as resolved_at')
+                ->where('ticket_id', $tId)
+                ->whereIn('LOWER(status)', ['closed', 'done', 'resolved'])
+                ->get()
+                ->getRowArray();
+
+            $r['first_response_at'] = $firstRep['first_res'] ?? null;
+            $r['finish_date'] = $lastResolved['resolved_at'] ?? null;
+            $r['due_date'] = $r['resolution_due_date'] ?? null;
+            $closedTicketsArr[] = $r;
+        }
+        $metrics = $this->metricsService->calculatePerformanceMetrics($closedTicketsArr);
 
         // Pagination HTML
         $totalRecords = $builder->countAllResults(false);

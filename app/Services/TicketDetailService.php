@@ -59,10 +59,31 @@ class TicketDetailService
 
         $createdTime = !empty($ticket['created_date']) ? strtotime($ticket['created_date']) : time();
         $targetResolutionTime = $createdTime + ($slaResolutionHours * 3600);
+
+        // Ambil first response dan resolved time dinamis dari responses jika ada
         $firstResponseTime = !empty($ticket['first_response_at']) ? strtotime($ticket['first_response_at']) : null;
-        $resolvedTime = (!empty($ticket['finish_date']) && in_array(strtolower($ticket['ticket_status']), ['closed', 'done'])) 
+        $resolvedTime = (!empty($ticket['finish_date']) && in_array(strtolower($ticket['ticket_status'] ?? ''), ['closed', 'done', 'resolved'])) 
             ? strtotime($ticket['finish_date']) 
             : null;
+
+        if (!$firstResponseTime && !empty($repliesRaw)) {
+            $sortedReplies = $repliesRaw;
+            usort($sortedReplies, fn($a, $b) => strtotime($a['created_at'] ?? $a['created_date'] ?? 'now') <=> strtotime($b['created_at'] ?? $b['created_date'] ?? 'now'));
+            $firstReply = $sortedReplies[0] ?? null;
+            if ($firstReply) {
+                $firstResponseTime = strtotime($firstReply['created_at'] ?? $firstReply['created_date']);
+            }
+        }
+
+        if (!$resolvedTime && !empty($repliesRaw)) {
+            foreach ($repliesRaw as $rep) {
+                $repStatus = strtolower(is_object($rep) ? ($rep->getStatus() ?? '') : ($rep['status'] ?? ''));
+                if (in_array($repStatus, ['resolved', 'done', 'closed'])) {
+                    $resolvedTime = strtotime(is_object($rep) ? ($rep->getCreatedAt() ?? $rep->getCreatedDate()) : ($rep['created_at'] ?? $rep['created_date'] ?? 'now'));
+                    break;
+                }
+            }
+        }
 
         // Elapsed / duration
         $currentTime = $resolvedTime ?: time();

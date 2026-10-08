@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use DateTime;
-use App\Models\TicketTransactionModel;
+use App\Models\TicketModel;
 
 class TicketMetricsService
 {
@@ -111,10 +111,10 @@ class TicketMetricsService
     /**
      * Get 7-day trend metrics for interactive chart
      *
-     * @param TicketTransactionModel $ticketModel
+     * @param TicketModel $ticketModel
      * @return array
      */
-    public function get7DaysTrend(TicketTransactionModel $ticketModel): array
+    public function get7DaysTrend(TicketModel $ticketModel): array
     {
         $trendDates = [];
         $trendIncoming = [];
@@ -129,14 +129,19 @@ class TicketMetricsService
             $inCount = (clone $ticketModel)->where('DATE(created_date)', $dayDate)->countAllResults();
             $trendIncoming[] = $inCount;
 
-            $resCount = (clone $ticketModel)->where('DATE(finish_date)', $dayDate)->where('ticket_status', 'closed')->countAllResults();
+            $db = \Config\Database::connect();
+            $resolvedRow = $db->table('ticket_response tr')
+                ->select('COUNT(DISTINCT tr.ticket_id) as total_resolved, SUM(CASE WHEN t.resolution_due_date IS NOT NULL AND tr.created_date <= t.resolution_due_date THEN 1 ELSE 0 END) as total_compliant')
+                ->join('ticket t', 't.id = tr.ticket_id', 'inner')
+                ->where('DATE(tr.created_date)', $dayDate)
+                ->whereIn('LOWER(tr.status)', ['closed', 'done', 'resolved'])
+                ->get()
+                ->getRowArray();
+
+            $resCount = (int) ($resolvedRow['total_resolved'] ?? 0);
+            $compCount = (int) ($resolvedRow['total_compliant'] ?? 0);
+
             $trendResolved[] = $resCount;
-
-            $compCount = (clone $ticketModel)->where('DATE(finish_date)', $dayDate)
-                ->where('ticket_status', 'closed')
-                ->where('finish_date <= due_date')
-                ->countAllResults();
-
             $slaPct = $resCount > 0 ? (int) round(($compCount / $resCount) * 100) : 100;
             $trendSla[] = $slaPct;
         }

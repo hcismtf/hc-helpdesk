@@ -48,8 +48,6 @@ document.getElementById('confirmBtn').onclick = function(e) {
   const requiredFields = [
     'emp_name',
     'emp_id',
-    'email',
-    'wa_no',
     'req_type',
     'subject'
   ];

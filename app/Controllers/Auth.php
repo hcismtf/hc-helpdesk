@@ -21,7 +21,7 @@ class Auth extends BaseController
     public function login()
     {
         if (session('isLoggedIn')) {
-            if (session('role') === 'superadmin' || !empty(session('user_permissions'))) {
+            if (\App\Services\AuthService::canAccessAdmin()) {
                 return redirect()->to('/admin/dashboard');
             }
             return redirect()->to('/');
@@ -145,12 +145,17 @@ class Auth extends BaseController
             'exp' => time() + (8 * 3600), // 8 hours
         ]);
 
-        // 6. Set CodeIgniter session
+        // Encrypt sensitive tokens (access_token, refresh_token, app_jwt)
+        $encryptedAccessToken = \App\Services\AuthService::encryptToken($accessToken);
+        $encryptedRefreshToken = \App\Services\AuthService::encryptToken($refreshToken);
+        $encryptedAppJwt = \App\Services\AuthService::encryptToken($appJwt);
+
+        // 6. Set CodeIgniter session with encrypted tokens
         session()->set([
             'isLoggedIn' => true,
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
-            'app_jwt' => $appJwt,
+            'access_token' => $encryptedAccessToken,
+            'refresh_token' => $encryptedRefreshToken,
+            'app_jwt' => $encryptedAppJwt,
             'user_id' => $localUser['id'],
             'employee_no' => $employeeNo,
             'username' => $employeeNo,
@@ -164,15 +169,15 @@ class Auth extends BaseController
             'user_permissions' => $permissionCodes,
         ]);
 
-        // Determine redirect: if user is admin with dashboard permission, can give link, otherwise stay on portal
-        $isAdmin = (strtolower($roleName) === 'superadmin' || in_array('dashboard', $permissionCodes, true));
+        // Determine redirect: if user is admin with authorized role, redirect to admin dashboard, otherwise stay on portal
+        $isAdmin = \App\Services\AuthService::canAccessAdmin();
 
         return $this->response->setJSON([
             'status' => 'success',
             'message' => 'Login berhasil! Selamat datang, ' . esc($localUser['name']),
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
-            'app_jwt' => $appJwt,
+            'access_token' => $encryptedAccessToken,
+            'refresh_token' => $encryptedRefreshToken,
+            'app_jwt' => $encryptedAppJwt,
             'is_admin' => $isAdmin,
             'redirect' => $isAdmin ? base_url('admin/dashboard') : base_url('/'),
             'user' => [
@@ -191,16 +196,19 @@ class Auth extends BaseController
      */
     public function refreshToken()
     {
-        $refreshToken = $this->request->getPost('refresh_token') ?? session('refresh_token');
+        $rawRefreshToken = $this->request->getPost('refresh_token') ?? session('refresh_token');
 
-        if (empty($refreshToken)) {
+        if (empty($rawRefreshToken)) {
             return $this->response->setStatusCode(400)->setJSON([
                 'status' => 'error',
                 'message' => 'Refresh token tidak ditemukan.'
             ]);
         }
 
-        $tokenData = $this->keycloakService->refreshToken($refreshToken);
+        // Decrypt refresh token before calling Keycloak service
+        $plainRefreshToken = \App\Services\AuthService::decryptToken($rawRefreshToken);
+
+        $tokenData = $this->keycloakService->refreshToken($plainRefreshToken);
 
         if (!$tokenData || !isset($tokenData['access_token'])) {
             return $this->response->setStatusCode(401)->setJSON([
@@ -209,16 +217,19 @@ class Auth extends BaseController
             ]);
         }
 
-        // Update session
-        session()->set('access_token', $tokenData['access_token']);
-        if (!empty($tokenData['refresh_token'])) {
-            session()->set('refresh_token', $tokenData['refresh_token']);
-        }
+        // Encrypt renewed tokens
+        $encryptedAccessToken = \App\Services\AuthService::encryptToken($tokenData['access_token']);
+        $newRefreshToken = $tokenData['refresh_token'] ?? $plainRefreshToken;
+        $encryptedRefreshToken = \App\Services\AuthService::encryptToken($newRefreshToken);
+
+        // Update session with encrypted tokens
+        session()->set('access_token', $encryptedAccessToken);
+        session()->set('refresh_token', $encryptedRefreshToken);
 
         return $this->response->setJSON([
             'status' => 'success',
-            'access_token' => $tokenData['access_token'],
-            'refresh_token' => $tokenData['refresh_token'] ?? $refreshToken,
+            'access_token' => $encryptedAccessToken,
+            'refresh_token' => $encryptedRefreshToken,
         ]);
     }
 

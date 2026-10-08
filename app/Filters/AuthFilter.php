@@ -6,6 +6,8 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Filters\FilterInterface;
 
+use App\Services\AuthService;
+
 class AuthFilter implements FilterInterface
 {
     /**
@@ -27,19 +29,15 @@ class AuthFilter implements FilterInterface
                 ]);
             }
 
-            return redirect()->to('/admin/login')->with('error', 'Silakan login terlebih dahulu.');
+            return redirect()->to('/')->with('error', 'Silakan login terlebih dahulu.');
         }
 
-        // 2. Wajib memiliki role_id (tidak boleh kosong / null / 0)
-        $roleId = session('role_id');
-        $role = strtolower(session('role') ?? '');
-        $isSuperadmin = ($role === 'superadmin');
-
-        if (!$isSuperadmin && (empty($roleId) || $role === 'user')) {
+        // 2. Wajib memiliki role administratif yang sah (role_id & role tertentu)
+        if (!AuthService::canAccessAdmin()) {
             if ($isAjax) {
                 return service('response')->setStatusCode(403)->setJSON([
                     'status'  => 'error',
-                    'message' => 'Akses ditolak: Akun Anda tidak memiliki hak akses administrator (role_id tidak ditemukan).'
+                    'message' => 'Akses ditolak: Akun Anda tidak memiliki hak akses administrator (role tidak diizinkan).'
                 ]);
             }
 

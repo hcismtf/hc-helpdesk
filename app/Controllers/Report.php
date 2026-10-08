@@ -17,10 +17,10 @@ class Report extends Controller
     {
         $query = $this->db->query("
             SELECT t.id, t.title, t.status, 
-                   s.priority, s.response_time, s.resolution_time,
+                   COALESCE(s.priority, t.sla_status) as priority, s.response_time, s.resolution_time,
                    TIMESTAMPDIFF(HOUR, t.created_date, NOW()) as hours_passed
-            FROM ticket_trx t
-            JOIN sla_configuration s ON t.priority = s.priority
+            FROM ticket t
+            LEFT JOIN sla_configuration s ON t.sla_id = s.id
         ");
 
         return $this->response->setJSON($query->getResult());

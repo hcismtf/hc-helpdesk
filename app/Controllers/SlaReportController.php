@@ -1,6 +1,6 @@
 <?php
 namespace App\Controllers;
-use App\Models\TicketTransactionModel;
+use App\Models\TicketModel;
 use App\Models\SlaConfigurationModel;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -20,13 +20,13 @@ class SlaReportController extends ResourceController
     public function priorityVsResponse()
     {
         $request = service('request');
-        $model = new TicketTransactionModel();
+        $model = new TicketModel();
         $slaModel = new SlaConfigurationModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
         $builder = $model->builder();
-        $builder->select('ticket_priority, COUNT(*) as total')
-                ->groupBy('ticket_priority');
+        $builder->select('sla_status as ticket_priority, COUNT(*) as total')
+                ->groupBy('sla_status');
         if ($startDate && $endDate) {
             $builder->where('DATE(created_date) >=', $startDate);
             $builder->where('DATE(created_date) <=', $endDate);
@@ -40,17 +40,10 @@ class SlaReportController extends ResourceController
     public function actualResponseTime()
     {
         $request = service('request');
-        $model = new TicketTransactionModel();
+        $model = new TicketModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
-        $builder = $model->builder();
-        $builder->select('id, TIMESTAMPDIFF(MINUTE, created_date, first_response_at) as response_time')
-                ->where('first_response_at IS NOT NULL');
-        if ($startDate && $endDate) {
-            $builder->where('DATE(created_date) >=', $startDate);
-            $builder->where('DATE(created_date) <=', $endDate);
-        }
-        $data = $builder->get()->getResultArray();
+        $data = $model->getActualResponseTime($startDate, $endDate);
         return $this->respond(['status' => 'success', 'data' => $data]);
     }
 
@@ -58,17 +51,10 @@ class SlaReportController extends ResourceController
     public function actualResolutionTime()
     {
         $request = service('request');
-        $model = new TicketTransactionModel();
+        $model = new TicketModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
-        $builder = $model->builder();
-        $builder->select('id, TIMESTAMPDIFF(MINUTE, created_date, finish_date) as resolution_time')
-                ->where('finish_date IS NOT NULL');
-        if ($startDate && $endDate) {
-            $builder->where('DATE(created_date) >=', $startDate);
-            $builder->where('DATE(created_date) <=', $endDate);
-        }
-        $data = $builder->get()->getResultArray();
+        $data = $model->getActualResolutionTime($startDate, $endDate);
         return $this->respond(['status' => 'success', 'data' => $data]);
     }
 
@@ -76,29 +62,24 @@ class SlaReportController extends ResourceController
     public function compliancePercentage()
     {
         $request = service('request');
-        $model = new TicketTransactionModel();
+        $model = new TicketModel();
         $slaModel = new SlaConfigurationModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
         $sla = $slaModel->findAll();
-        $builder = $model->builder();
-        $builder->select('id, ticket_priority, TIMESTAMPDIFF(MINUTE, created_date, first_response_at) as response_time')
-                ->where('first_response_at IS NOT NULL');
-        if ($startDate && $endDate) {
-            $builder->where('DATE(created_date) >=', $startDate);
-            $builder->where('DATE(created_date) <=', $endDate);
-        }
-        $tickets = $builder->get()->getResultArray();
+
+        $tickets = $model->getActualResponseTime($startDate, $endDate);
         $compliant = 0;
         $nonCompliant = 0;
         $slaMap = [];
         foreach ($sla as $row) {
             $slaMap[$row['priority']] = $row['response_time'];
+            $slaMap[$row['id']] = $row['response_time'];
         }
         foreach ($tickets as $ticket) {
-            $priority = $ticket['ticket_priority'];
-            $target = isset($slaMap[$priority]) ? $slaMap[$priority] : null;
-            if ($target !== null && $ticket['response_time'] <= $target) {
+            $key = $ticket['sla_id'] ?? null;
+            $target = isset($slaMap[$key]) ? $slaMap[$key] : null;
+            if ($target !== null && ($ticket['response_time'] ?? 999999) <= $target) {
                 $compliant++;
             } else {
                 $nonCompliant++;
@@ -115,17 +96,10 @@ class SlaReportController extends ResourceController
     public function averageTimes()
     {
         $request = service('request');
-        $model = new TicketTransactionModel();
+        $model = new TicketModel();
         $startDate = $request->getGet('start_date');
         $endDate = $request->getGet('end_date');
-        $builder = $model->builder();
-        $builder->select('ticket_priority, AVG(TIMESTAMPDIFF(MINUTE, created_date, first_response_at)) as avg_response, AVG(TIMESTAMPDIFF(MINUTE, created_date, finish_date)) as avg_resolution')
-                ->groupBy('ticket_priority');
-        if ($startDate && $endDate) {
-            $builder->where('DATE(created_date) >=', $startDate);
-            $builder->where('DATE(created_date) <=', $endDate);
-        }
-        $data = $builder->get()->getResultArray();
+        $data = $model->getAverageTimes($startDate, $endDate);
         return $this->respond(['status' => 'success', 'data' => $data]);
     }
 

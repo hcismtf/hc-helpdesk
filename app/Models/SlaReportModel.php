@@ -32,7 +32,7 @@ class SlaReportModel extends BaseModel
         $builder->select('priority, response_time');
         $targets = $builder->get()->getResultArray();
 
-        $trxModel = new TicketTransactionModel();
+        $trxModel = new TicketModel();
         $actuals = $trxModel->getAverageTimes($startDate, $endDate);
 
         $result = [];
@@ -61,7 +61,7 @@ class SlaReportModel extends BaseModel
         $builder->select('priority, resolution_time');
         $targets = $builder->get()->getResultArray();
 
-        $trxModel = new TicketTransactionModel();
+        $trxModel = new TicketModel();
         $actuals = $trxModel->getAverageTimes($startDate, $endDate);
 
         $result = [];

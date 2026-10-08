@@ -166,13 +166,13 @@
 
           <!-- Single Column Fields -->
           <div class="form-group">
-            <label for="email">Email MTF <span>*</span></label>
-            <input type="email" name="email" id="email" class="form-control" placeholder="masukkan email MTF, cth: john@mtf.co.id" required>
+            <label for="email">Email MTF <span class="note" style="font-weight: normal; font-size: 12px; color: #6b7280;">(Opsional - untuk notifikasi status)</span></label>
+            <input type="email" name="email" id="email" class="form-control" placeholder="masukkan email MTF, cth: john@mtf.co.id">
           </div>
           
           <div class="form-group">
-            <label for="wa_no">No. Handphone / Whatsapp <span>*</span></label>
-            <input type="text" name="wa_no" id="wa_no" class="form-control" placeholder="Masukkan No Handphone yang terdaftar pada whatsapp" inputmode="numeric" required>
+            <label for="wa_no">No. Handphone / Whatsapp <span class="note" style="font-weight: normal; font-size: 12px; color: #6b7280;">(Opsional)</span></label>
+            <input type="text" name="wa_no" id="wa_no" class="form-control" placeholder="Masukkan No Handphone yang terdaftar pada whatsapp" inputmode="numeric">
           </div>
           
           <div class="form-group">
