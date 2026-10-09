@@ -1,0 +1,35 @@
+// assets/scss/_variables.scss
+
+// 1. Color Palette
+$primary-navy: #0F2B5B;
+$primary-blue: #0F2B5B;
+$accent-blue: #2563EB;
+$accent-blue-hover: #1D4ED8;
+$accent-light-blue: #E0F2FE;
+
+// 2. Background & Borders
+$bg-page: #F8FAFC;
+$bg-card: #FFFFFF;
+$border-color: #E2E8F0;
+$border-light: #F1F5F9;
+
+// 3. Typography Colors
+$text-primary: #0F172A;
+$text-secondary: #475569;
+$text-muted: #64748B;
+$text-light: #94A3B8;
+
+// 4. Border Radius
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+$radius-xl: 18px;
+$radius-pill: 9999px;
+
+// 5. Typography Font Family
+$font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+// 6. Box Shadows
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);

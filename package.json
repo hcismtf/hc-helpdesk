@@ -1,0 +1,25 @@
+{
+  "name": "hc-helpdesk",
+  "version": "1.0.0",
+  "description": "CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.\r More information can be found at the [official site](https://codeigniter.com).",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "sass:watch": "sass --load-path=node_modules --watch assets/scss/app.scss:public/css/app.css",
+    "serve": "php spark serve --port 8082",
+    "dev": "concurrently \"npm run sass:watch\" \"npm run serve\"",
+    "build": "sass --load-path=node_modules --style=compressed --no-source-map assets/scss/app.scss:public/css/app.css"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bulma": "^1.0.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5",
+    "sass": "^1.105.1"
+  }
+}

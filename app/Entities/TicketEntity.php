@@ -10,14 +10,6 @@ class TicketEntity extends BaseEntity
   protected $dates = [
     'response_due_date',
     'resolution_due_date',
-
-    'response_date',
-    'completed_date',
-    'done_date',
-
-    'on_hold_date',
-    're_response_date',
-    're_completed_date',
   ];
 
   protected $casts = [
@@ -41,8 +33,6 @@ class TicketEntity extends BaseEntity
     'sla_status' => '?string',
     'sla_percentage' => '?float',
   ];
-
-  // --- Attributes Getter & Setter ---
 
   public function getTicketNo(): ?string
   {
@@ -209,8 +199,6 @@ class TicketEntity extends BaseEntity
     return $this;
   }
 
-  // --- Date Properties Getter & Setter ---
-
   public function getResponseDueDate(): ?Time
   {
     return isset($this->attributes['response_due_date'])
@@ -226,90 +214,15 @@ class TicketEntity extends BaseEntity
 
   public function getResolutionDueDate(): ?Time
   {
-    return $this->dates['resolution_due_date'] ?? $this->mutateDate($this->attributes['resolution_due_date'] ?? null);
+    return isset($this->attributes['resolution_due_date'])
+      ? $this->mutateDate($this->attributes['resolution_due_date'])
+      : null;
   }
 
   public function setResolutionDueDate(mixed $resolutionDueDate): self
   {
     $this->attributes['resolution_due_date'] = $resolutionDueDate;
     return $this;
-  }
-
-  public function getResponseDate(): ?Time
-  {
-    return $this->dates['response_date'] ?? $this->mutateDate($this->attributes['response_date'] ?? null);
-  }
-
-  public function setResponseDate(mixed $responseDate): self
-  {
-    $this->attributes['response_date'] = $responseDate;
-    return $this;
-  }
-
-  public function getCompletedDate(): ?Time
-  {
-    return $this->dates['completed_date'] ?? $this->mutateDate($this->attributes['completed_date'] ?? null);
-  }
-
-  public function setCompletedDate(mixed $completedDate): self
-  {
-    $this->attributes['completed_date'] = $completedDate;
-    return $this;
-  }
-
-  public function getDoneDate(): ?Time
-  {
-    return $this->dates['done_date'] ?? $this->mutateDate($this->attributes['done_date'] ?? null);
-  }
-
-  public function setDoneDate(mixed $doneDate): self
-  {
-    $this->attributes['done_date'] = $doneDate;
-    return $this;
-  }
-
-  public function getOnHoldDate(): ?Time
-  {
-    return $this->dates['on_hold_date'] ?? $this->mutateDate($this->attributes['on_hold_date'] ?? null);
-  }
-
-  public function setOnHoldDate(mixed $onHoldDate): self
-  {
-    $this->attributes['on_hold_date'] = $onHoldDate;
-    return $this;
-  }
-
-  public function getReResponseDate(): ?Time
-  {
-    return $this->dates['re_response_date'] ?? $this->mutateDate($this->attributes['re_response_date'] ?? null);
-  }
-
-  public function setReResponseDate(mixed $reResponseDate): self
-  {
-    $this->attributes['re_response_date'] = $reResponseDate;
-    return $this;
-  }
-
-  public function getReCompletedDate(): ?Time
-  {
-    return $this->dates['re_completed_date'] ?? $this->mutateDate($this->attributes['re_completed_date'] ?? null);
-  }
-
-  public function setReCompletedDate(mixed $reCompletedDate): self
-  {
-    $this->attributes['re_completed_date'] = $reCompletedDate;
-    return $this;
-  }
-
-  public function isEligibleForAutoClose(): bool
-  {
-    $status = TicketStatus::normalize($this->getStatus());
-    if ($status !== TicketStatus::RESOLVED || empty($this->attributes['completed_date'])) {
-      return false;
-    }
-
-    $resolvedTimestamp = strtotime((string) $this->attributes['completed_date']);
-    return (time() - $resolvedTimestamp) >= (24 * 3600);
   }
 
   public function isReopened(): bool

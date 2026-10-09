@@ -1,0 +1,22 @@
+@use "variables" as vars;
+
+@use "bulma/sass" with (
+  $primary: vars.$primary-navy,
+  $link: vars.$accent-blue,
+  $info: vars.$accent-light-blue,
+  $body-background-color: vars.$bg-page,
+  $body-color: vars.$text-primary,
+  $family-sans-serif: vars.$font-family,
+  $radius: vars.$radius-sm,
+  $radius-medium: vars.$radius-md,
+  $radius-large: vars.$radius-lg,
+  $card-background-color: vars.$bg-card,
+  $border: vars.$border-color
+);
+
+:root {
+  --primary-navy: #{vars.$primary-navy};
+  --accent-blue: #{vars.$accent-blue};
+  --bg-page: #{vars.$bg-page};
+  --shadow-md: #{vars.$shadow-md};
+}

@@ -1,0 +1,150 @@
+@use "../variables" as vars;
+
+.user-login-modal {
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 10000;
+
+  .user-login-card {
+    max-width: 638px;
+    width: 100%;
+    border-radius: vars.$radius-xl;
+    overflow: hidden;
+    box-shadow: vars.$shadow-lg;
+    background: vars.$bg-card;
+  }
+
+  .user-login-header {
+    background-color: vars.$bg-card;
+    border-bottom: 1px solid vars.$border-light;
+    padding: 1.5rem 1.75rem 1.15rem;
+
+    .user-login-brand-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: vars.$radius-md;
+      background: vars.$primary-navy;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 16px -4px rgba(15, 43, 91, 0.35);
+
+      img { width: 24px; height: 24px; }
+    }
+
+    .user-login-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+
+      .user-login-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: vars.$text-primary;
+        line-height: 1.25;
+        margin: 0;
+      }
+    }
+  }
+
+  .user-login-body {
+    padding: 1.5rem 1.75rem 1.75rem;
+  }
+
+  .hceazy-login-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #FAFAFC;
+    border-radius: vars.$radius-md;
+    border: 1px solid #EDF2F7;
+
+    .hceazy-logo-img { height: 36px; object-fit: contain; }
+  }
+
+  .input {
+    height: 48px;
+    border-radius: vars.$radius-md;
+    border-color: vars.$border-color;
+    &:focus {
+      border-color: vars.$primary-navy;
+      box-shadow: 0 0 0 3px rgba(15, 43, 91, 0.12);
+    }
+  }
+
+  .btn-submit-user-login {
+    height: 50px;
+    background-color: vars.$primary-navy;
+    color: #ffffff;
+    font-weight: 700;
+    border-radius: vars.$radius-md;
+    border: none;
+    box-shadow: 0 6px 16px -2px rgba(15, 43, 91, 0.35);
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background-color: darken(vars.$primary-navy, 5%);
+      transform: translateY(-1px);
+    }
+  }
+
+  .login-notice-box {
+    background: vars.$bg-page;
+    border: 1px solid vars.$border-color;
+    border-radius: vars.$radius-md;
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-start;
+  }
+
+  /* Responsive Bottom Sheet & Mobile Viewport */
+  @media (max-width: 640px) {
+    align-items: flex-end;
+    padding: 0;
+
+    .user-login-card {
+      max-width: 100%;
+      max-height: 92dvh;
+      border-radius: 20px 20px 0 0;
+      margin: 0;
+    }
+
+    .user-login-header {
+      padding: 12px 16px;
+      .user-login-brand-icon { width: 36px; height: 36px; }
+      .user-login-title { font-size: 15px; }
+    }
+
+    .user-login-body {
+      padding: 14px 18px 22px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .input { height: 44px; }
+    .btn-submit-user-login { height: 46px; }
+  }
+
+  &.keyboard-open {
+    .user-login-card { max-height: 98dvh; }
+    .user-login-title-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .user-login-subtitle,
+    .hceazy-login-banner,
+    .login-notice-box { display: none; }
+    .input { height: 40px; }
+    .btn-submit-user-login { height: 42px; margin-top: 8px; margin-bottom: 8px; }
+  }
+
+  @media (max-height: 540px) {
+    .user-login-card { max-height: 98dvh; }
+    .user-login-title-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .user-login-subtitle,
+    .hceazy-login-banner,
+    .login-notice-box { display: none; }
+    .input { height: 40px; }
+    .btn-submit-user-login { height: 42px; margin-top: 8px; margin-bottom: 8px; }
+  }
+}

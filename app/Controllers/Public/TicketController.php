@@ -22,9 +22,9 @@ class TicketController extends BaseController
 
     public function __construct()
     {
-        $this->ticketService    = new TicketService();
+        $this->ticketService = new TicketService();
         $this->requestTypeModel = new RequestTypeModel();
-        $this->faqModel         = new FaqModel();
+        $this->faqModel = new FaqModel();
     }
 
     /**
@@ -43,7 +43,7 @@ class TicketController extends BaseController
 
         return view('ticket_form', [
             'requestTypes' => $requestTypes,
-            'faqs'         => $faqs,
+            'faqs' => $faqs,
         ]);
     }
 
@@ -56,12 +56,11 @@ class TicketController extends BaseController
 
         // Validasi input: email & wa_no sekarang opsional (permit_empty)
         $rules = [
-            'emp_name' => 'required|min_length[2]|max_length[150]',
-            'emp_id'   => 'required|min_length[3]|max_length[50]',
-            'email'    => 'permit_empty|valid_email|max_length[150]',
-            'wa_no'    => 'permit_empty|min_length[8]|max_length[20]',
+            'emp_id' => 'required|min_length[3]|max_length[50]',
+            'email' => 'permit_empty|valid_email|max_length[150]',
+            'wa_no' => 'permit_empty|min_length[8]|max_length[20]',
             'req_type' => 'required',
-            'subject'  => 'required|min_length[3]|max_length[200]',
+            'subject' => 'required|min_length[3]|max_length[200]',
         ];
 
         if (!$this->validate($rules)) {
@@ -70,9 +69,9 @@ class TicketController extends BaseController
 
             if ($isAjax) {
                 return $this->response->setStatusCode(400)->setJSON([
-                    'status'  => 'error',
+                    'status' => 'error',
                     'message' => $errorMessage,
-                    'errors'  => $errors,
+                    'errors' => $errors,
                 ]);
             }
 
@@ -80,13 +79,12 @@ class TicketController extends BaseController
         }
 
         $payload = [
-            'emp_name'        => $this->request->getPost('emp_name'),
-            'emp_id'          => $this->request->getPost('emp_id'),
-            'email'           => $this->request->getPost('email'),
-            'wa_no'           => $this->request->getPost('wa_no'),
-            'req_type'        => $this->request->getPost('req_type'),
-            'subject'         => $this->request->getPost('subject'),
-            'message'         => $this->request->getPost('message'),
+            'emp_id' => $this->request->getPost('emp_id'),
+            'email' => $this->request->getPost('email'),
+            'wa_no' => $this->request->getPost('wa_no'),
+            'req_type' => $this->request->getPost('req_type'),
+            'subject' => $this->request->getPost('subject'),
+            'message' => $this->request->getPost('message'),
             'ticket_priority' => $this->request->getPost('ticket_priority') ?? 'medium',
         ];
 
@@ -97,8 +95,8 @@ class TicketController extends BaseController
 
             if ($isAjax) {
                 return $this->response->setJSON([
-                    'status'    => 'success',
-                    'message'   => 'Tiket berhasil dibuat dengan nomor: #' . $ticket->getTicketNo(),
+                    'status' => 'success',
+                    'message' => 'Tiket berhasil dibuat dengan nomor: #' . $ticket->getTicketNo(),
                     'ticket_no' => $ticket->getTicketNo(),
                     'ticket_id' => $ticket->getId(),
                 ]);
@@ -109,7 +107,7 @@ class TicketController extends BaseController
         } catch (InvalidArgumentException $e) {
             if ($isAjax) {
                 return $this->response->setStatusCode(400)->setJSON([
-                    'status'  => 'error',
+                    'status' => 'error',
                     'message' => $e->getMessage(),
                 ]);
             }
@@ -120,7 +118,7 @@ class TicketController extends BaseController
 
             if ($isAjax) {
                 return $this->response->setStatusCode(500)->setJSON([
-                    'status'  => 'error',
+                    'status' => 'error',
                     'message' => 'Terjadi kendala pada sistem saat membuat tiket. Silakan coba beberapa saat lagi.',
                 ]);
             }
@@ -147,15 +145,15 @@ class TicketController extends BaseController
         if ($this->request->isAJAX()) {
             return $this->response->setJSON([
                 'status' => 'success',
-                'data'   => [
-                    'id'                  => $ticket->getId(),
-                    'ticket_no'           => $ticket->getTicketNo(),
-                    'title'               => $ticket->getTitle(),
-                    'status'              => $ticket->getStatus(),
-                    'status_label'        => $ticket->getStatusLabel(),
-                    'response_due_date'   => $ticket->getResponseDueDate(),
+                'data' => [
+                    'id' => $ticket->getId(),
+                    'ticket_no' => $ticket->getTicketNo(),
+                    'title' => $ticket->getTitle(),
+                    'status' => $ticket->getStatus(),
+                    'status_label' => $ticket->getStatusLabel(),
+                    'response_due_date' => $ticket->getResponseDueDate(),
                     'resolution_due_date' => $ticket->getResolutionDueDate(),
-                    'created_date'        => $ticket->getCreatedDate(),
+                    'created_date' => $ticket->getCreatedDate(),
                 ]
             ]);
         }
