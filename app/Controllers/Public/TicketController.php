@@ -41,9 +41,27 @@ class TicketController extends BaseController
             ->orderBy('id', 'desc')
             ->findAll();
 
-        return view('ticket_form', [
+        // Ambil info user jika sedang login di session
+        $currentUser = null;
+        $session = session();
+        if ($session->get('logged_in')) {
+            $userModel = new \App\Models\UserModel();
+            $userId = $session->get('user_id') ?? $session->get('id');
+            if ($userId) {
+                $currentUser = $userModel->find($userId);
+            }
+        }
+
+        $categoryModel = new \App\Models\CategoryModel();
+        $categories = $categoryModel->getActiveCategories();
+
+        return view('pages/ticket_create', [
+            'title'        => 'Ajukan Tiket Layanan - HC Helpdesk MTF',
+            'activePage'   => 'ticket_create',
+            'categories'   => $categories,
             'requestTypes' => $requestTypes,
-            'faqs' => $faqs,
+            'faqs'         => $faqs,
+            'currentUser'  => $currentUser,
         ]);
     }
 
@@ -56,11 +74,12 @@ class TicketController extends BaseController
 
         // Validasi input: email & wa_no sekarang opsional (permit_empty)
         $rules = [
-            'emp_id' => 'required|min_length[3]|max_length[50]',
-            'email' => 'permit_empty|valid_email|max_length[150]',
-            'wa_no' => 'permit_empty|min_length[8]|max_length[20]',
+            'emp_name' => 'permit_empty|max_length[150]',
+            'emp_id'   => 'required|min_length[3]|max_length[50]',
+            'email'    => 'permit_empty|valid_email|max_length[150]',
+            'wa_no'    => 'permit_empty|min_length[8]|max_length[20]',
             'req_type' => 'required',
-            'subject' => 'required|min_length[3]|max_length[200]',
+            'subject'  => 'required|min_length[3]|max_length[200]',
         ];
 
         if (!$this->validate($rules)) {
@@ -69,22 +88,30 @@ class TicketController extends BaseController
 
             if ($isAjax) {
                 return $this->response->setStatusCode(400)->setJSON([
-                    'status' => 'error',
-                    'message' => $errorMessage,
-                    'errors' => $errors,
+                    'status'     => 'error',
+                    'message'    => $errorMessage,
+                    'errors'     => $errors,
+                    'csrf_token' => csrf_hash(),
                 ]);
             }
 
             return redirect()->back()->withInput()->with('error', $errorMessage);
         }
 
+        $empId   = trim((string) $this->request->getPost('emp_id'));
+        $empName = trim((string) $this->request->getPost('emp_name'));
+        if (empty($empName)) {
+            $empName = $empId;
+        }
+
         $payload = [
-            'emp_id' => $this->request->getPost('emp_id'),
-            'email' => $this->request->getPost('email'),
-            'wa_no' => $this->request->getPost('wa_no'),
-            'req_type' => $this->request->getPost('req_type'),
-            'subject' => $this->request->getPost('subject'),
-            'message' => $this->request->getPost('message'),
+            'emp_name'        => $empName,
+            'emp_id'          => $empId,
+            'email'           => $this->request->getPost('email'),
+            'wa_no'           => $this->request->getPost('wa_no'),
+            'req_type'        => $this->request->getPost('req_type'),
+            'subject'         => $this->request->getPost('subject'),
+            'message'         => $this->request->getPost('message'),
             'ticket_priority' => $this->request->getPost('ticket_priority') ?? 'medium',
         ];
 
@@ -93,16 +120,39 @@ class TicketController extends BaseController
         try {
             $ticket = $this->ticketService->createTicket($payload, $file);
 
+            // Jika belum login, autologin akun pemilik tiket agar dapat langsung mengakses /dashboard
+            if (!session('isLoggedIn')) {
+                $userModel = new \App\Models\UserModel();
+                $matchedUser = $userModel->where('employee_no', $empId)->first();
+                if ($matchedUser) {
+                    $uId = is_object($matchedUser) ? $matchedUser->getId() : ($matchedUser['id'] ?? null);
+                    $uName = is_object($matchedUser) ? $matchedUser->getName() : ($matchedUser['name'] ?? $empName);
+                    $uEmail = is_object($matchedUser) ? $matchedUser->getEmail() : ($matchedUser['email'] ?? ($payload['email'] ?? null));
+
+                    session()->set([
+                        'isLoggedIn'   => true,
+                        'user_id'      => $uId,
+                        'employee_no'  => $empId,
+                        'username'     => $empId,
+                        'name'         => $uName,
+                        'email'        => $uEmail,
+                        'role'         => 'USER',
+                        'role_name'    => 'USER',
+                    ]);
+                }
+            }
+
             if ($isAjax) {
                 return $this->response->setJSON([
-                    'status' => 'success',
-                    'message' => 'Tiket berhasil dibuat dengan nomor: #' . $ticket->getTicketNo(),
+                    'status'    => 'success',
+                    'message'   => 'Tiket berhasil dibuat dengan nomor: #' . $ticket->getTicketNo(),
                     'ticket_no' => $ticket->getTicketNo(),
                     'ticket_id' => $ticket->getId(),
+                    'redirect'  => base_url('dashboard'),
                 ]);
             }
 
-            return view('components/success_confirm');
+            return redirect()->to(base_url('dashboard'));
 
         } catch (InvalidArgumentException $e) {
             if ($isAjax) {

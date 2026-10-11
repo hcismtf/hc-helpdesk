@@ -11,13 +11,15 @@ use CodeIgniter\I18n\Time;
 class TicketResponseEntity extends BaseEntity
 {
   protected $casts = [
-    'ticket_id'   => 'string',
-    'user_id'     => '?string',
+    'ticket_id' => 'string',
+    'user_id' => '?string',
     'author_name' => '?string',
-    'reply'       => 'string',
+    'reply' => 'string',
+    'action_notes' => '?string',
+    'reply_notes' => '?string',
     'is_internal' => 'boolean',
-    'status'      => '?string',
-    'priority'    => '?string',
+    'status' => '?string',
+    'priority' => '?string',
     'assigned_to' => '?string',
   ];
 
@@ -64,6 +66,30 @@ class TicketResponseEntity extends BaseEntity
   public function setReply(string $reply): self
   {
     $this->attributes['reply'] = $reply;
+    return $this;
+  }
+
+  public function getActionNotes(): ?string
+  {
+    return $this->attributes['action_notes'] ?? $this->attributes['reply_notes'] ?? null;
+  }
+
+  public function setActionNotes(?string $actionNotes): self
+  {
+    $this->attributes['action_notes'] = $actionNotes;
+    $this->attributes['reply_notes'] = $actionNotes;
+    return $this;
+  }
+
+  public function getReplyNotes(): ?string
+  {
+    return $this->attributes['reply_notes'] ?? $this->attributes['action_notes'] ?? null;
+  }
+
+  public function setReplyNotes(?string $replyNotes): self
+  {
+    $this->attributes['reply_notes'] = $replyNotes;
+    $this->attributes['action_notes'] = $replyNotes;
     return $this;
   }
 

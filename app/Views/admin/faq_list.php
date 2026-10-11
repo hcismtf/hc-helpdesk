@@ -17,7 +17,7 @@
                             </svg>
                         </button>
 
-                        <?= view('components/action_dropdown', [
+                        <?= view('components/common/_action_dropdown', [
                             'id' => 'faq_action_' . $faq['id'],
                             'items' => [
                                 [

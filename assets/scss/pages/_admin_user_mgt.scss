@@ -1,0 +1,41 @@
+@use "../variables" as vars;
+
+/* =============================================================================
+   User Management Page Stylesheet (Layout & Search Candidate Dropdown)
+   ============================================================================= */
+
+.settings-page-wrapper {
+    width: 100%;
+    margin: 0;
+    padding-bottom: 40px;
+}
+
+/* User & Candidate Dropdown Component */
+.candidate-results-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.candidate-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover {
+        background: #f8fafc;
+    }
+}

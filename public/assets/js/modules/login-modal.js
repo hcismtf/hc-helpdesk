@@ -1,120 +1,225 @@
 /**
  * Module: HC User Login Modal Handler
+ * Clean Architecture, Smooth Bottom-Sheet & Zero-Glitch Mobile Virtual Keyboard
  */
-const UserLoginModal = (() => {
-  const modalEl = document.getElementById('userLoginModal');
-  const formEl = document.getElementById('userLoginForm');
-  const alertEl = document.getElementById('userLoginAlert');
-  const alertMsgEl = document.getElementById('userLoginAlertMessage');
-  const submitBtn = document.getElementById('btnUserLoginSubmit');
-  const nipInput = document.getElementById('userLoginNip');
-  const pwdInput = document.getElementById('userLoginPassword');
-  const eyeIcon = document.getElementById('userPasswordEyeIcon');
 
-  function open() {
-    if (!modalEl) return;
-    hideAlert();
-    modalEl.classList.add('is-active');
-    document.documentElement.classList.add('is-clipped'); // Native Bulma body scroll lock
-    setTimeout(() => { if (nipInput) nipInput.focus(); }, 100);
+function openUserLoginModal() {
+  var modal = document.getElementById('userLoginModal');
+  var alertBox = document.getElementById('userLoginAlert');
+
+  if (alertBox) {
+    alertBox.style.display = 'none';
+    alertBox.textContent = '';
   }
 
-  function close() {
-    if (!modalEl) return;
-    modalEl.classList.remove('is-active');
-    document.documentElement.classList.remove('is-clipped');
+  if (modal) {
+    modal.style.display = 'flex';
+    setTimeout(function () {
+      modal.classList.add('show');
+      var nipInput = document.getElementById('userLoginNip');
+      if (nipInput) nipInput.focus();
+    }, 10);
+    document.body.style.overflow = 'hidden';
   }
+}
 
-  function showAlert(msg) {
-    if (!alertEl || !alertMsgEl) return;
-    alertMsgEl.textContent = msg;
-    alertEl.classList.remove('is-hidden');
+function closeUserLoginModal() {
+  var modal = document.getElementById('userLoginModal');
+  if (modal) {
+    modal.classList.remove('show');
+    setTimeout(function () {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }, 250);
   }
+}
 
-  function hideAlert() {
-    if (alertEl) alertEl.classList.add('is-hidden');
+function handleUserLoginBackdropClick(e) {
+  if (e && e.target && e.target.id === 'userLoginModal') {
+    closeUserLoginModal();
   }
+}
 
-  function togglePassword() {
-    if (!pwdInput || !eyeIcon) return;
-    const isPass = pwdInput.type === 'password';
-    pwdInput.type = isPass ? 'text' : 'password';
-    eyeIcon.className = isPass ? 'fas fa-eye-slash has-text-grey' : 'fas fa-eye has-text-grey';
-  }
+function toggleUserPasswordVisibility() {
+  var pwdInput = document.getElementById('userLoginPassword');
+  var eyeIcon = document.getElementById('userPasswordEyeIcon');
+  if (!pwdInput) return;
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    hideAlert();
-
-    const username = (nipInput.value || '').trim();
-    const password = pwdInput.value || '';
-    const csrfToken = document.getElementById('userLoginCsrf')?.value;
-
-    if (!username || !password) {
-      showAlert('Harap masukkan Username (NIP) dan kata sandi Anda.');
-      return;
+  if (pwdInput.type === 'password') {
+    pwdInput.type = 'text';
+    if (eyeIcon) {
+      eyeIcon.classList.remove('fa-eye');
+      eyeIcon.classList.add('fa-eye-slash');
     }
+  } else {
+    pwdInput.type = 'password';
+    if (eyeIcon) {
+      eyeIcon.classList.remove('fa-eye-slash');
+      eyeIcon.classList.add('fa-eye');
+    }
+  }
+}
 
-    submitBtn.classList.add('is-loading');
-    submitBtn.disabled = true;
+function handleUserLoginSubmit(e) {
+  e.preventDefault();
+  var form = document.getElementById('userLoginForm');
+  var btn = document.getElementById('btnUserLoginSubmit');
+  var btnText = document.getElementById('userLoginBtnText');
+  var btnArrow = document.getElementById('userLoginBtnArrow');
+  var btnSpinner = document.getElementById('userLoginBtnSpinner');
+  var alertBox = document.getElementById('userLoginAlert');
 
-    const bodyData = new URLSearchParams({ username, password });
-    if (csrfToken) bodyData.append('<?= csrf_token() ?>', csrfToken);
+  var nip = (document.getElementById('userLoginNip').value || '').trim();
+  var password = document.getElementById('userLoginPassword').value || '';
 
-    fetch(loginUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: bodyData.toString()
-      })
-      .then(res => res.json())
-      .then(res => {
-        submitBtn.classList.remove('is-loading');
-        submitBtn.disabled = false;
+  if (!nip || !password) {
+    if (alertBox) {
+      alertBox.textContent = 'Harap masukkan Username (NIP) dan kata sandi Anda.';
+      alertBox.style.display = 'block';
+    }
+    return;
+  }
 
-        if (res.status === 'success') {
-          if (res.access_token) {
-            try {
-              localStorage.setItem('user_access_token', res.access_token);
-              if (res.refresh_token) localStorage.setItem('user_refresh_token', res.refresh_token);
-            } catch (err) {}
-          }
-          window.location.href = res.redirect || window.location.href;
-        } else {
-          showAlert(res.message || 'Username atau kata sandi tidak valid.');
-        }
-      })
-      .catch(() => {
-        submitBtn.classList.remove('is-loading');
-        submitBtn.disabled = false;
-        showAlert('Terjadi kesalahan jaringan/sistem. Silakan coba beberapa saat lagi.');
+  // Set loading
+  if (btn) btn.disabled = true;
+  if (btnText) btnText.textContent = 'Memverifikasi...';
+  if (btnArrow) btnArrow.style.display = 'none';
+  if (btnSpinner) btnSpinner.style.display = 'inline-block';
+  if (alertBox) alertBox.style.display = 'none';
+
+  var loginUrl = (form && form.dataset.loginUrl) ? form.dataset.loginUrl : '/login';
+  var csrfName = (form && form.dataset.csrfTokenName) ? form.dataset.csrfTokenName : 'csrf_test_name';
+  var csrfInput = document.getElementById('userLoginCsrf');
+  var csrfToken = csrfInput ? csrfInput.value : '';
+
+  var formData = new URLSearchParams();
+  formData.append('username', nip);
+  formData.append('password', password);
+  if (csrfToken) {
+    formData.append(csrfName, csrfToken);
+  }
+
+  fetch(loginUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: formData.toString()
+  })
+    .then(function (res) {
+      return res.json().then(function (data) {
+        return { status: res.status, ok: res.ok, data: data };
       });
+    })
+    .then(function (result) {
+      if (result.ok && result.data.status === 'success') {
+        if (btnText) btnText.textContent = 'Berhasil Masuk!';
+        if (result.data.access_token) {
+          try {
+            localStorage.setItem('user_access_token', result.data.access_token);
+            if (result.data.refresh_token) {
+              localStorage.setItem('user_refresh_token', result.data.refresh_token);
+            }
+            if (result.data.app_jwt) {
+              localStorage.setItem('user_jwt', result.data.app_jwt);
+            }
+            // Simpan data users table ke localStorage dengan nama 'userRef' (Terenkripsi)
+            if (result.data.user && typeof CryptoHelper !== 'undefined') {
+              CryptoHelper.setUserRef(result.data.user);
+            }
+          } catch (err) { }
+        }
+        setTimeout(function () {
+          if (result.data.redirect) {
+            window.location.href = result.data.redirect;
+          } else {
+            window.location.reload();
+          }
+        }, 500);
+      } else {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.textContent = 'Masuk ke Portal HC Helpdesk Karyawan';
+        if (btnArrow) btnArrow.style.display = 'inline-block';
+        if (btnSpinner) btnSpinner.style.display = 'none';
+        if (alertBox) {
+          alertBox.textContent = result.data.message || 'Username atau Kata Sandi salah.';
+          alertBox.style.display = 'block';
+        }
+      }
+    })
+    .catch(function () {
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = 'Masuk ke Portal HC Helpdesk Karyawan';
+      if (btnArrow) btnArrow.style.display = 'inline-block';
+      if (btnSpinner) btnSpinner.style.display = 'none';
+      if (alertBox) {
+        alertBox.textContent = 'Terjadi kesalahan sistem / jaringan. Silakan coba kembali.';
+        alertBox.style.display = 'block';
+      }
+    });
+}
+
+// Detect Virtual Keyboard on Mobile via VisualViewport & Focus events
+(function () {
+  var modalBackdrop = document.getElementById('userLoginModal');
+  var inputs = [document.getElementById('userLoginNip'), document.getElementById('userLoginPassword')];
+
+  function setKeyboardState(isOpen) {
+    if (!modalBackdrop) return;
+    if (isOpen) {
+      modalBackdrop.classList.add('keyboard-open');
+    } else {
+      modalBackdrop.classList.remove('keyboard-open');
+    }
   }
 
-  function initKeyboardWatchers() {
-    if (!window.visualViewport) return;
-    const initialH = window.visualViewport.height;
+  if (window.visualViewport) {
+    var initialHeight = window.visualViewport.height;
+    window.visualViewport.addEventListener('resize', function () {
+      if (window.innerWidth <= 640) {
+        var isKeyboardActive = (initialHeight - window.visualViewport.height) > 120;
+        setKeyboardState(isKeyboardActive);
+      }
+    });
+  }
 
-    window.visualViewport.addEventListener('resize', () => {
-      if (window.innerWidth <= 640 && modalEl) {
-        const isKeyboard = (initialH - window.visualViewport.height) > 120;
-        modalEl.classList.toggle('keyboard-open', isKeyboard);
+  inputs.forEach(function (input) {
+    if (!input) return;
+    input.addEventListener('focus', function () {
+      if (window.innerWidth <= 640) {
+        setKeyboardState(true);
+        setTimeout(function () {
+          input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modalEl?.classList.contains('is-active')) {
-        close();
-      }
+    input.addEventListener('blur', function () {
+      setTimeout(function () {
+        var activeEl = document.activeElement;
+        if (!inputs.includes(activeEl)) {
+          setKeyboardState(false);
+        }
+      }, 150);
     });
-  }
-
-  initKeyboardWatchers();
-
-  return { open, close, togglePassword, handleSubmit };
+  });
 })();
 
-window.openUserLoginModal = UserLoginModal.open;
-window.closeUserLoginModal = UserLoginModal.close;
+// Escape key closes modal
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    var modal = document.getElementById('userLoginModal');
+    if (modal && modal.style.display === 'flex') {
+      closeUserLoginModal();
+    }
+  }
+});
+
+// Namespace alias for consistency
+window.UserLoginModal = {
+  open: openUserLoginModal,
+  close: closeUserLoginModal,
+  togglePassword: toggleUserPasswordVisibility,
+  handleSubmit: handleUserLoginSubmit
+};

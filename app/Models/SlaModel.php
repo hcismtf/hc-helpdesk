@@ -3,7 +3,7 @@ namespace App\Models;
 
 class SlaModel extends BaseModel
 {
-    protected $table = 'sla_configuration';
+    protected $table = 'sla';
     protected $primaryKey = 'id';
     protected $allowedFields = [
         'priority',

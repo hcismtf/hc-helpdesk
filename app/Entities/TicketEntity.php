@@ -18,7 +18,11 @@ class TicketEntity extends BaseEntity
     'sla_id' => 'string',
     'title' => 'string',
     'description' => 'string',
+
     'status' => 'string',
+    'current_stage' => '?string',
+    'stage_progress' => '?int',
+    'status_note' => '?string',
 
     'reporter_id' => '?string',
     'reporter_email' => '?string',
@@ -97,6 +101,39 @@ class TicketEntity extends BaseEntity
   public function setStatus(string $status): self
   {
     $this->attributes['status'] = $status;
+    return $this;
+  }
+
+  public function getCurrentStage(): ?string
+  {
+    return $this->attributes['current_stage'] ?? null;
+  }
+
+  public function setCurrentStage(?string $currentStage): self
+  {
+    $this->attributes['current_stage'] = $currentStage;
+    return $this;
+  }
+
+  public function getStageProgress(): ?int
+  {
+    return isset($this->attributes['stage_progress']) ? (int) $this->attributes['stage_progress'] : null;
+  }
+
+  public function setStageProgress(?int $stageProgress): self
+  {
+    $this->attributes['stage_progress'] = $stageProgress !== null ? (int) $stageProgress : null;
+    return $this;
+  }
+
+  public function getStatusNote(): ?string
+  {
+    return $this->attributes['status_note'] ?? null;
+  }
+
+  public function setStatusNote(?string $statusNote): self
+  {
+    $this->attributes['status_note'] = $statusNote;
     return $this;
   }
 

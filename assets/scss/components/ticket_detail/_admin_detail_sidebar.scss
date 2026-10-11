@@ -1,0 +1,241 @@
+@use "../../variables" as vars;
+
+/* =============================================================================
+   Admin Ticket Detail: Sidebar Cards (Properties, SLA & Requester Profile)
+   ============================================================================= */
+
+.sidebar-property-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+
+    .sidebar-card-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f1f5f9;
+
+        .btn-icon-action {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #64748b;
+            padding: 2px 4px;
+
+            &:hover {
+                color: #0f172a;
+            }
+        }
+    }
+
+    .property-group-block {
+        margin-bottom: 14px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        .property-label-small {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+    }
+
+    .specialist-profile-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .specialist-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            .specialist-avatar {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: #0f2b5b;
+                color: #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .specialist-name {
+                font-size: 13px;
+                font-weight: 700;
+                color: #0f172a;
+            }
+
+            .specialist-sub {
+                font-size: 11px;
+                color: #64748b;
+            }
+        }
+
+        .btn-reassign-link {
+            border: none;
+            background: transparent;
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    .sla-progress-card-block {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px;
+
+        .sla-progress-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+
+            .sla-resolution-title {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 12px;
+                font-weight: 700;
+                color: #0f172a;
+            }
+
+            .sla-percent-badge {
+                font-size: 10px;
+                font-weight: 800;
+                padding: 2px 6px;
+                border-radius: 4px;
+                background: #dcfce7;
+                color: #15803d;
+            }
+        }
+
+        .sla-progress-track {
+            width: 100%;
+            height: 6px;
+            border-radius: 9999px;
+            background: #e2e8f0;
+            overflow: hidden;
+            margin-bottom: 8px;
+
+            .sla-progress-fill {
+                height: 100%;
+                border-radius: 9999px;
+                transition: width 0.3s ease;
+            }
+        }
+
+        .sla-progress-footer-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #64748b;
+
+            .sla-time-compliant {
+                color: #059669 !important;
+                font-weight: 700;
+            }
+
+            .sla-time-overdue {
+                color: #dc2626 !important;
+                font-weight: 700;
+            }
+        }
+    }
+
+    .lifecycle-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        .lifecycle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+
+            .lifecycle-item-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                color: #64748b;
+            }
+
+            .lifecycle-item-val {
+                font-weight: 600;
+                color: #1e293b;
+            }
+        }
+    }
+
+    /* Requester Specific */
+    .requester-avatar-large {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #eff6ff;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .requester-email-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 12px;
+        color: #334155;
+        margin-bottom: 12px;
+    }
+
+    .btn-contact-action {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #334155;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.15s ease;
+
+        &:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+    }
+}

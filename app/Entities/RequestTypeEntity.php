@@ -5,12 +5,17 @@ namespace App\Entities;
 class RequestTypeEntity extends BaseEntity
 {
   protected $casts = [
-    'category_id' => 'string',
-    'code' => 'string',
-    'name' => 'string',
-    'default_sla_id' => '?string',
+    'category_id'       => '?string',
+    'sla_id'            => '?string',
+    'code'              => '?string',
+    'name'              => 'string',
+    'description'       => '?string',
+    'badge_tag'         => '?string',
+    'is_popular'        => 'boolean',
+    'default_sla_id'    => '?string',
     'requires_approval' => 'boolean',
-    'is_active' => 'boolean',
+    'is_active'         => 'boolean',
+    'status'            => 'string',
   ];
 
   public function determineInitialStatus(): string
@@ -62,6 +67,61 @@ class RequestTypeEntity extends BaseEntity
     return $this;
   }
 
+  public function getSlaId(): ?string
+  {
+    return $this->attributes['sla_id'] ?? null;
+  }
+
+  public function setSlaId(?string $slaId): self
+  {
+    $this->attributes['sla_id'] = $slaId;
+    return $this;
+  }
+
+  public function getDescription(): ?string
+  {
+    return $this->attributes['description'] ?? null;
+  }
+
+  public function setDescription(?string $description): self
+  {
+    $this->attributes['description'] = $description;
+    return $this;
+  }
+
+  public function getBadgeTag(): ?string
+  {
+    return $this->attributes['badge_tag'] ?? null;
+  }
+
+  public function setBadgeTag(?string $badgeTag): self
+  {
+    $this->attributes['badge_tag'] = $badgeTag;
+    return $this;
+  }
+
+  public function getIsPopular(): bool
+  {
+    return (bool) ($this->attributes['is_popular'] ?? false);
+  }
+
+  public function setIsPopular(bool $isPopular): self
+  {
+    $this->attributes['is_popular'] = $isPopular;
+    return $this;
+  }
+
+  public function getStatus(): string
+  {
+    return (string) ($this->attributes['status'] ?? 'Active');
+  }
+
+  public function setStatus(string $status): self
+  {
+    $this->attributes['status'] = $status;
+    return $this;
+  }
+
   public function getRequiresApproval(): bool
   {
     return (bool) ($this->attributes['requires_approval'] ?? false);
@@ -83,4 +143,4 @@ class RequestTypeEntity extends BaseEntity
     $this->attributes['is_active'] = $isActive;
     return $this;
   }
-}
+}

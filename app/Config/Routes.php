@@ -15,6 +15,7 @@ $routes->get('beranda', 'Home::index');
 $routes->post('track-ticket', 'Home::trackTicket');
 $routes->get('faq', 'PusatBantuan::pusat_bantuan');
 $routes->get('pusat-bantuan', 'PusatBantuan::pusat_bantuan');
+$routes->get('dashboard', '\App\Controllers\User\DashboardController::index');
 
 $routes->group('ticket', static function ($routes) {
 	$routes->get('/', '\App\Controllers\Public\TicketController::create');
@@ -22,14 +23,19 @@ $routes->group('ticket', static function ($routes) {
 	$routes->post('store', '\App\Controllers\Public\TicketController::store');
 	$routes->get('track', '\App\Controllers\Public\TicketController::track');
 	$routes->get('faq', 'PusatBantuan::pusat_bantuan');
-	$routes->get('detail/(:segment)', 'admin\TicketAdminController::ticket_detail/$1');
+	$routes->get('detail/(:segment)', '\App\Controllers\User\TicketController::show/$1', ['filter' => 'userauth']);
 });
 
-// User / Employee Tickets (Wajib Login)
-$routes->group('my', ['namespace' => 'App\Controllers\User', 'filter' => 'auth'], static function ($routes) {
+// Attachment Preview & Download (Transparent in-flight gzip decompress)
+$routes->get('attachment/view/(:any)', '\App\Controllers\AttachmentController::view/$1');
+$routes->get('attachment/download/(:any)', '\App\Controllers\AttachmentController::download/$1');
+
+// User / Employee Tickets (Wajib Login Karyawan / UserAuth)
+$routes->group('my', ['namespace' => 'App\Controllers\User', 'filter' => 'userauth'], static function ($routes) {
 	$routes->get('tickets', 'TicketController::index');
 	$routes->get('ticket/(:segment)', 'TicketController::show/$1');
 	$routes->post('ticket/(:segment)/reply', 'TicketController::reply/$1');
+	$routes->post('ticket/(:segment)/close', 'TicketController::close/$1');
 });
 
 // General Authentication & User Login (Popup /)
@@ -55,6 +61,10 @@ $routes->group('admin', ['namespace' => 'App\Controllers\admin', 'filter' => 'au
 	$routes->get('/', 'DashboardController::dashboard');
 	$routes->get('dashboard', 'DashboardController::dashboard');
 	$routes->get('system_settings', 'SystemSettingsController::system_settings', ['filter' => 'perm:settings.read']);
+	$routes->get('system_settings/roles', 'SystemSettingsController::roles_category', ['filter' => 'perm:role.read']);
+	$routes->get('system_settings/sla', 'SystemSettingsController::sla_policies', ['filter' => 'perm:sla.read']);
+	$routes->get('system_settings/request_types', 'SystemSettingsController::request_types', ['filter' => 'perm:request_type.read']);
+	$routes->get('system_settings/faqs', 'SystemSettingsController::faqs', ['filter' => 'perm:faq.read']);
 
 	// --- Tickets Management ---
 	$routes->group('', static function ($routes) {
@@ -63,6 +73,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\admin', 'filter' => 'au
 		$routes->get('view/(:any)', 'TicketAdminController::view/$1', ['filter' => 'perm:ticket.read']);
 		$routes->post('send_reply/(:segment)', 'TicketAdminController::send_reply/$1', ['filter' => 'perm:ticket.reply']);
 		$routes->post('update_ticket_status', 'TicketAdminController::update_ticket_status', ['filter' => 'perm:ticket.status']);
+		$routes->post('update_ticket_sla', 'TicketAdminController::update_ticket_sla', ['filter' => 'perm:ticket.update']);
 	});
 
 	// --- FAQ Management ---
@@ -90,12 +101,19 @@ $routes->group('admin', ['namespace' => 'App\Controllers\admin', 'filter' => 'au
 		$routes->post('delete_user_role', 'SystemSettingsController::delete_user_role', ['filter' => 'perm:role.delete']);
 	});
 
-	// --- Request Type Management ---
+	// --- Request Type & Category Management ---
 	$routes->group('', static function ($routes) {
 		$routes->get('get_request_type_list', 'SystemSettingsController::get_request_type_list', ['filter' => 'perm:request_type.read']);
 		$routes->post('add_request_type', 'SystemSettingsController::add_request_type', ['filter' => 'perm:request_type.create']);
 		$routes->post('edit_request_type', 'SystemSettingsController::edit_request_type', ['filter' => 'perm:request_type.update']);
 		$routes->post('delete_request_type', 'SystemSettingsController::delete_request_type', ['filter' => 'perm:request_type.delete']);
+
+		// Main Category (Topik HC)
+		$routes->get('get_category_list', 'SystemSettingsController::get_category_list', ['filter' => 'perm:request_type.read']);
+		$routes->get('get_category_detail/(:segment)', 'SystemSettingsController::get_category_detail/$1', ['filter' => 'perm:request_type.read']);
+		$routes->post('add_category', 'SystemSettingsController::add_category', ['filter' => 'perm:request_type.create']);
+		$routes->post('edit_category', 'SystemSettingsController::edit_category', ['filter' => 'perm:request_type.update']);
+		$routes->post('delete_category', 'SystemSettingsController::delete_category', ['filter' => 'perm:request_type.delete']);
 	});
 
 	// --- Permission Management ---
@@ -108,8 +126,13 @@ $routes->group('admin', ['namespace' => 'App\Controllers\admin', 'filter' => 'au
 
 	// --- User Management ---
 	$routes->group('', static function ($routes) {
-		$routes->get('user_mgt', 'UserManagementController::user_mgt', ['filter' => 'perm:user.read']);
+		$routes->get('system_settings/users', 'UserManagementController::user_mgt', ['filter' => 'perm:user.read']);
+		$routes->get('user_mgt', static function() {
+			return redirect()->to(base_url('admin/system_settings/users'));
+		});
 		$routes->get('get_user', 'UserManagementController::get_user', ['filter' => 'perm:user.read']);
+		$routes->get('get_all_users_list', 'UserManagementController::get_all_users_list', ['filter' => 'perm:user.read']);
+		$routes->get('search_candidate_users', 'UserManagementController::search_candidate_users', ['filter' => 'perm:user.read']);
 		$routes->post('add_user', 'UserManagementController::add_user', ['filter' => 'perm:user.create']);
 		$routes->post('edit_user', 'UserManagementController::edit_user', ['filter' => 'perm:user.update']);
 		$routes->post('delete_user', 'UserManagementController::delete_user', ['filter' => 'perm:user.delete']);

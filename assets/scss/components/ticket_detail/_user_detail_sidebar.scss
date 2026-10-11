@@ -1,0 +1,400 @@
+@use "../../variables" as vars;
+
+/* =============================================================================
+   User Ticket Detail Sidebar Widgets & Animations
+   ============================================================================= */
+
+.sidebar-widget {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+
+  .widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .widget-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #475569;
+      margin: 0;
+    }
+
+    .widget-badge {
+      font-size: 11.5px;
+      font-weight: 600;
+
+      &.badge-online {
+        color: #10b981;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+
+        &::before {
+          content: '';
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #10b981;
+        }
+      }
+
+      &.badge-sla-time {
+        color: #d97706;
+        font-weight: 700;
+      }
+    }
+  }
+
+  // Widget 1: PIC Profile
+  &.widget-pic-profile {
+    .pic-card-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+
+      .pic-avatar {
+        position: relative;
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+
+        img,
+        .avatar-placeholder {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+
+        .avatar-placeholder {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          font-weight: 700;
+        }
+      }
+
+      .pic-meta-info {
+        .pic-name {
+          font-size: 15px;
+          font-weight: 700;
+          color: #0f172a;
+          margin-bottom: 2px;
+        }
+
+        .pic-role {
+          font-size: 12.5px;
+          font-weight: 600;
+          color: #4f46e5;
+          margin-bottom: 1px;
+        }
+
+        .pic-dept {
+          font-size: 12px;
+          color: #64748b;
+        }
+      }
+    }
+
+    .pic-actions-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .btn-teams-chat {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: #eff2fe;
+        border: 1px solid #dbe2fd;
+        color: #4338ca;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: #e0e7ff;
+          color: #3730a3;
+        }
+
+        i {
+          font-size: 15px;
+        }
+      }
+
+      .btn-email-link {
+        text-align: center;
+        font-size: 12.5px;
+        color: #64748b;
+        text-decoration: none;
+        padding: 4px;
+
+        &:hover {
+          color: #0f172a;
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  // Widget 2: Stepper (Pelacakan Tahapan)
+  &.widget-stepper-tracker {
+    .stepper-timeline-list {
+      position: relative;
+      padding-left: 28px;
+      margin-bottom: 20px;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 14px;
+        bottom: 14px;
+        width: 2px;
+        background: #e2e8f0;
+      }
+
+      .stepper-node-item {
+        position: relative;
+        margin-bottom: 22px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .node-icon-bullet {
+          position: absolute;
+          left: -28px;
+          top: 0;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          z-index: 2;
+
+          &.node-completed {
+            background: #10b981;
+            color: #ffffff;
+            box-shadow: 0 0 0 3px #d1fae5;
+          }
+
+          &.node-active {
+            background: #7c3aed;
+            color: #ffffff;
+            box-shadow: 0 0 0 4px #ede9fe;
+            animation: pulseRing 1.8s infinite;
+          }
+
+          &.node-pending {
+            background: #f1f5f9;
+            color: #94a3b8;
+            border: 1px solid #cbd5e1;
+          }
+        }
+
+        .node-title {
+          font-size: 13.5px;
+          font-weight: 700;
+          color: #0f172a;
+          line-height: 1.3;
+          margin-bottom: 2px;
+        }
+
+        .node-subtext {
+          font-size: 12px;
+          color: #64748b;
+          line-height: 1.4;
+        }
+      }
+    }
+
+    .sla-commitment-footer {
+      border-top: 1px solid #f1f5f9;
+      padding-top: 14px;
+
+      .sla-progress-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 6px;
+
+        .sla-spent-bold {
+          font-weight: 700;
+          color: #1e293b;
+        }
+      }
+
+      .sla-progress-bar-bg {
+        width: 100%;
+        height: 7px;
+        border-radius: 9999px;
+        background: #e2e8f0;
+        overflow: hidden;
+
+        .sla-progress-fill {
+          height: 100%;
+          border-radius: 9999px;
+          background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
+          transition: width 0.4s ease;
+        }
+      }
+    }
+  }
+
+  // Widget 3: Device & Account Spec
+  &.widget-device-info {
+    .spec-list-table {
+      display: flex;
+      flex-direction: column;
+
+      .spec-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 12.5px;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .spec-label {
+          color: #64748b;
+        }
+
+        .spec-value {
+          font-weight: 600;
+          color: #0f172a;
+          text-align: right;
+
+          &.font-mono {
+            font-family: monospace;
+          }
+        }
+      }
+    }
+  }
+
+  // Widget 4: Related Help & Hotline
+  &.widget-related-faqs {
+    .faq-links-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+
+      .faq-item-link {
+        display: block;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        text-decoration: none;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: #ffffff;
+          border-color: #cbd5e1;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+        }
+
+        .faq-link-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: #1e293b;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 3px;
+
+          i {
+            color: #94a3b8;
+            font-size: 11px;
+          }
+        }
+
+        .faq-link-desc {
+          font-size: 11.5px;
+          color: #64748b;
+          line-height: 1.4;
+        }
+      }
+    }
+
+    .hotline-emergency-banner {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .hotline-star-icon {
+        color: #d97706;
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+
+      .hotline-text-wrap {
+        .hotline-title {
+          font-size: 12.5px;
+          font-weight: 700;
+          color: #78350f;
+          margin-bottom: 1px;
+        }
+
+        .hotline-number {
+          font-size: 12px;
+          color: #92400e;
+
+          strong {
+            font-weight: 700;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Keyframe Animations
+@keyframes pulsePurple {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes pulseRing {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(124, 58, 237, 0.35);
+  }
+}

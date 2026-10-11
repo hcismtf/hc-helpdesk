@@ -177,11 +177,11 @@ class AuthService
 
         // 5. Cek jika memiliki permission administratif di sistem
         $adminPermKeywords = [
-            'ticket:read', 'ticket:update', 'ticket:reply', 'ticket:status', 'ticket:delete',
-            'settings:read', 'settings.read', 'role:read', 'role.read', 'role:create', 'role:update', 'role:delete',
-            'user:read', 'user.read', 'user:create', 'user:update', 'user:delete',
-            'sla:read', 'sla.read', 'sla:create', 'sla:update', 'sla:delete',
-            'request_type:read', 'request_type.read', 'report:read', 'report.read', 'report:export',
+            'ticket:read', 'ticket.read', 'ticket:update', 'ticket.update', 'ticket:reply', 'ticket.reply', 'ticket:status', 'ticket.status', 'ticket:delete', 'ticket.delete',
+            'settings:read', 'settings.read', 'role:read', 'role.read', 'role:create', 'role.create', 'role:update', 'role.update', 'role:delete', 'role.delete',
+            'user:read', 'user.read', 'user:create', 'user.create', 'user:update', 'user.update', 'user:delete', 'user.delete',
+            'sla:read', 'sla.read', 'sla:create', 'sla.create', 'sla:update', 'sla.update', 'sla:delete', 'sla.delete',
+            'request_type:read', 'request_type.read', 'report:read', 'report.read', 'report:export', 'report.export',
             'dev:access', 'dev.access', 'dashboard', 'tickets', 'system_settings', 'user_management', 'reports'
         ];
         foreach ($adminPermKeywords as $keyword) {

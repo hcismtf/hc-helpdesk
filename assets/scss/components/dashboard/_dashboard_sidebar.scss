@@ -1,0 +1,299 @@
+// assets/scss/components/dashboard/_dashboard_sidebar.scss
+@use "../../variables" as vars;
+
+.dashboard-sidebar-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-widget {
+  padding: 20px;
+
+  .widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .widget-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .widget-icon-box {
+        width: 28px;
+        height: 28px;
+        border-radius: vars.$radius-sm;
+        background-color: #EEF2FF;
+        color: #4F46E5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+
+        &.icon-box-green {
+          background-color: #DCFCE7;
+          color: #16A34A;
+        }
+      }
+
+      .widget-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: vars.$primary-navy;
+        margin: 0;
+      }
+    }
+
+    .widget-header-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: #4F46E5;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  // 1. SLA List
+  .sla-service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .sla-service-item {
+      border: 1px solid #EDF2F7;
+      border-radius: vars.$radius-md;
+      padding: 12px 14px;
+      background-color: #FFFFFF;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #CBD5E1;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      }
+
+      .sla-item-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+
+        .sla-item-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: vars.$text-primary;
+          margin: 0;
+        }
+
+        .sla-badge {
+          font-size: 10px;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 4px;
+
+          &.sla-badge-success {
+            background-color: #ECFDF5;
+            color: #059669;
+            border: 1px solid #A7F3D0;
+          }
+
+          &.sla-badge-warning {
+            background-color: #FFFBEB;
+            color: #D97706;
+            border: 1px solid #FDE68A;
+          }
+
+          &.sla-badge-info {
+            background-color: #EFF6FF;
+            color: #2563EB;
+            border: 1px solid #BFDBFE;
+          }
+
+          &.sla-badge-neutral {
+            background-color: #F8FAFC;
+            color: #64748B;
+            border: 1px solid #E2E8F0;
+          }
+        }
+      }
+
+      .sla-item-desc {
+        font-size: 11px;
+        color: vars.$text-muted;
+        line-height: 1.4;
+        margin: 0 0 8px 0;
+      }
+
+      .sla-item-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+
+        .sla-achievement {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: vars.$text-secondary;
+          font-weight: 500;
+
+          .sla-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #16A34A;
+          }
+        }
+
+        .btn-sla-apply {
+          font-weight: 700;
+          color: #4F46E5;
+          text-decoration: none;
+          font-size: 11px;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Quick Help Widget
+  .widget-search-box {
+    position: relative;
+
+    .widget-search-input {
+      width: 100%;
+      padding: 8px 12px 8px 32px;
+      border: 1px solid vars.$border-color;
+      border-radius: vars.$radius-md;
+      font-size: 12px;
+      color: vars.$text-primary;
+      background-color: #FFFFFF;
+      outline: none;
+
+      &::placeholder {
+        color: vars.$text-light;
+      }
+
+      &:focus {
+        border-color: #4F46E5;
+      }
+    }
+
+    .widget-search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: vars.$text-light;
+    }
+  }
+
+  .quick-article-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .quick-article-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      border-radius: vars.$radius-md;
+      color: vars.$text-secondary;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+
+      .article-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .article-icon {
+          color: vars.$text-muted;
+          font-size: 13px;
+        }
+
+        .article-title {
+          line-height: 1.3;
+        }
+      }
+
+      .article-chevron {
+        color: vars.$text-light;
+        font-size: 10px;
+        transition: transform 0.2s ease;
+      }
+
+      &:hover {
+        background-color: #F8FAFC;
+        color: #4F46E5;
+
+        .article-icon {
+          color: #4F46E5;
+        }
+
+        .article-chevron {
+          transform: translateX(2px);
+          color: #4F46E5;
+        }
+      }
+    }
+  }
+
+  // Urgent Support Banner
+  .urgent-support-banner {
+    background-color: #EEF2FF;
+    border: 1px solid #E0E7FF;
+    border-radius: vars.$radius-md;
+    padding: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+
+    .urgent-icon-wrapper {
+      width: 32px;
+      height: 32px;
+      border-radius: vars.$radius-sm;
+      background-color: #FFFFFF;
+      color: #4F46E5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .urgent-text-content {
+      .urgent-heading {
+        font-size: 11px;
+        font-weight: 800;
+        color: #3730A3;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 3px;
+      }
+
+      .urgent-desc {
+        font-size: 11px;
+        color: #4338CA;
+        line-height: 1.4;
+        margin: 0;
+
+        strong {
+          color: #1E1B4B;
+        }
+      }
+    }
+  }
+}

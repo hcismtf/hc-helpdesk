@@ -27,27 +27,72 @@ class TicketDetailService
     public function buildDetailViewData(array $ticket, array $repliesRaw, array $attachments, UserModel $userModel): array
     {
         // 1. Resolve Assigned Specialist
-        $assignedUser = null;
-        $assignedSpecialist = [
-            'name'       => 'Unassigned',
-            'initials'   => '--',
-            'department' => 'Helpdesk Support',
-            'role_title' => 'Support Specialist',
-            'id'         => null
-        ];
+        $resolvePicUser = function(?string $userId, string $defaultDept, string $defaultRole) use ($userModel, $repliesRaw): array {
+            $picData = [
+                'name'       => 'Unassigned',
+                'initials'   => '--',
+                'department' => $defaultDept,
+                'role_title' => $defaultRole,
+                'id'         => null,
+                'is_assigned'=> false,
+            ];
 
-        if (!empty($ticket['assigned_to'])) {
-            $assignedUser = $userModel->getUserWithRole($ticket['assigned_to']);
-            if ($assignedUser) {
-                $assignedSpecialist = [
-                    'name'       => $assignedUser['name'],
-                    'initials'   => strtoupper(substr(trim($assignedUser['name']), 0, 2)),
-                    'department' => 'Technical Support',
-                    'role_title' => $assignedUser['role_name'] ?? 'Support Specialist',
-                    'id'         => $assignedUser['id']
+            if (empty($userId)) {
+                return $picData;
+            }
+
+            $u = $userModel->getUserWithRole($userId);
+            if (!$u) {
+                $uRow = $userModel->where('employee_no', $userId)->orWhere('username', $userId)->first();
+                if ($uRow) {
+                    $u = $userModel->getUserWithRole($uRow['id']);
+                }
+            }
+
+            if ($u) {
+                $nameParts = preg_split('/\s+/', trim((string) $u['name']));
+                $initials = (count($nameParts) >= 2) 
+                    ? strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1))
+                    : strtoupper(substr($nameParts[0], 0, 2));
+
+                $roleTitle = !empty($u['role_name'])
+                    ? $u['role_name']
+                    : (!empty($u['job_title'])
+                        ? $u['job_title']
+                        : (!empty($u['position']) ? $u['position'] : $defaultRole));
+
+                $picData = [
+                    'name'       => $u['name'],
+                    'initials'   => $initials,
+                    'department' => $defaultDept,
+                    'role_title' => $roleTitle,
+                    'id'         => $u['id'],
+                    'is_assigned'=> true,
                 ];
             }
+
+            return $picData;
+        };
+
+        // PIC Helpdesk ID
+        $picHelpdeskId = !empty($ticket['pic_helpdesk_id']) ? $ticket['pic_helpdesk_id'] : (!empty($ticket['assigned_to']) ? $ticket['assigned_to'] : null);
+        // Fallback dari replies jika belum tersimpan langsung
+        if (empty($picHelpdeskId) && !empty($repliesRaw)) {
+            for ($i = count($repliesRaw) - 1; $i >= 0; $i--) {
+                $r = $repliesRaw[$i];
+                $rAssigned = is_object($r) ? ($r->assigned_to ?? null) : ($r['assigned_to'] ?? null);
+                if (!empty($rAssigned)) {
+                    $picHelpdeskId = $rAssigned;
+                    break;
+                }
+            }
         }
+        $assignedPicHelpdesk = $resolvePicUser($picHelpdeskId, 'Helpdesk Support', 'PIC Helpdesk');
+        $assignedSpecialist = $assignedPicHelpdesk; // backward compatibility
+
+        // PIC Developer / BA ID (Optional)
+        $picDevBaId = !empty($ticket['pic_dev_ba_id']) ? $ticket['pic_dev_ba_id'] : null;
+        $assignedPicDevBa = $resolvePicUser($picDevBaId, 'Development & BA', 'Developer / BA');
 
         // 2. SLA Calculations
         $priority = strtolower($ticket['ticket_priority'] ?? 'medium');
@@ -79,7 +124,7 @@ class TicketDetailService
             foreach ($repliesRaw as $rep) {
                 $repStatus = strtolower(is_object($rep) ? ($rep->getStatus() ?? '') : ($rep['status'] ?? ''));
                 if (in_array($repStatus, ['resolved', 'done', 'closed'])) {
-                    $resolvedTime = strtotime(is_object($rep) ? ($rep->getCreatedAt() ?? $rep->getCreatedDate()) : ($rep['created_at'] ?? $rep['created_date'] ?? 'now'));
+                    $resolvedTime = strtotime(is_object($rep) ? (string) ($rep->getCreatedDate() ?? 'now') : ($rep['created_date'] ?? ($rep['created_at'] ?? 'now')));
                     break;
                 }
             }
@@ -123,23 +168,125 @@ class TicketDetailService
         $commentsCount = 0;
         $auditCount = 0;
 
+        // Ambil riwayat dari ticket_audit_log
+        try {
+            $auditModel = new \App\Models\TicketAuditLogModel();
+            $auditLogs = $auditModel->where('ticket_id', $ticket['id'])->orderBy('created_date', 'asc')->findAll();
+            
+            // Helper cache lokal untuk mencari nama user berdasarkan ID atau NIP
+            $userNameCache = [];
+            $getUserName = function(?string $raw) use (&$userNameCache, $userModel): string {
+                if (empty($raw) || $raw === '-' || $raw === 'Unassigned') return 'Unassigned';
+                if (isset($userNameCache[$raw])) return $userNameCache[$raw];
+
+                // Coba cari by ID UUID
+                $found = $userModel->find($raw);
+                if (!$found) {
+                    // Coba cari by employee_no (NIP) atau username
+                    $found = $userModel->where('employee_no', $raw)->orWhere('username', $raw)->first();
+                }
+
+                if ($found) {
+                    $name = is_object($found) ? ($found->name ?? $found->getName()) : ($found['name'] ?? $raw);
+                    $userNameCache[$raw] = $name;
+                    return $name;
+                }
+
+                $userNameCache[$raw] = $raw;
+                return $raw;
+            };
+
+            foreach ($auditLogs as $al) {
+                $auditCount++;
+                $alDate = is_object($al) ? (string) $al->getCreatedDate() : ($al['created_date'] ?? date('Y-m-d H:i:s'));
+                $rawActor = is_object($al) ? $al->getActorName() : ($al['actor_name'] ?? 'System');
+                $reason = is_object($al) ? $al->getReasonNotes() : ($al['reason_notes'] ?? '');
+                $field = is_object($al) ? $al->getFieldName() : ($al['field_name'] ?? '');
+                $oldV = is_object($al) ? $al->getOldValue() : ($al['old_value'] ?? '');
+                $newV = is_object($al) ? $al->getNewValue() : ($al['new_value'] ?? '');
+
+                // Pastikan nama actor adalah Nama Lengkap (bukan NIP / ID numerik)
+                $actor = $getUserName($rawActor);
+
+                // Jika field adalah assigned_to atau specialist, resolve old_value & new_value ke Nama Lengkap
+                if (in_array(strtolower((string)$field), ['assigned_to', 'specialist', 'pic', 'assignee'])) {
+                    $fieldLabel = 'specialist';
+                    $oldVLabel = $getUserName($oldV);
+                    $newVLabel = $getUserName($newV);
+                } elseif (strtolower((string)$field) === 'status') {
+                    $fieldLabel = 'status';
+                    $oldVLabel = \App\Entities\TicketStatus::getLabel($oldV);
+                    $newVLabel = \App\Entities\TicketStatus::getLabel($newV);
+                } elseif (strtolower((string)$field) === 'priority') {
+                    $fieldLabel = 'priority';
+                    $oldVLabel = ucfirst(strtolower((string)$oldV));
+                    $newVLabel = ucfirst(strtolower((string)$newV));
+                } else {
+                    $fieldLabel = str_replace('_', ' ', (string)$field);
+                    $oldVLabel = $oldV ?: '-';
+                    $newVLabel = $newV ?: '-';
+                }
+
+                $text = "{$actor} changed {$fieldLabel} from '{$oldVLabel}' to '{$newVLabel}'";
+                if (!empty($reason)) {
+                    $text .= " &bull; Note: {$reason}";
+                }
+
+                $activities[] = [
+                    'type'           => 'audit',
+                    'text'           => $text,
+                    'created_at'     => $alDate,
+                    'time_ago'       => $this->timeAgo($alDate),
+                    'formatted_date' => date('d M Y, H:i', strtotime($alDate)) . ' WIB'
+                ];
+            }
+        } catch (\Throwable $e) {
+            log_message('warning', 'Gagal memuat audit logs: ' . $e->getMessage());
+        }
+
+        $internalNotesCount = 0;
+        $publicCommentsCount = 0;
+
         foreach ($repliesRaw as $r) {
-            $text = $r['reply'] ?? '';
-            $isSystem = (strpos($text, 'Status changed to') !== false || strpos($text, 'Assigned to') !== false);
+            $text = is_object($r) ? ($r->getReply() ?? $r->reply ?? '') : ($r['reply'] ?? '');
+            $isInternal = (int) (is_object($r) ? ($r->isInternal() ? 1 : 0) : ($r['is_internal'] ?? 0));
+            $isSystem = (stripos($text, 'Status changed to') !== false 
+                || stripos($text, 'changed status to') !== false 
+                || stripos($text, 'Assigned to') !== false
+                || stripos($text, 'assigned specialist') !== false);
+
+            $replyDate = is_object($r) 
+                ? (string) ($r->getCreatedDate() ?? $r->created_date ?? date('Y-m-d H:i:s')) 
+                : ($r['created_date'] ?? ($r['created_at'] ?? date('Y-m-d H:i:s')));
 
             if ($isSystem) {
+                // Bersihkan embel-embel "via Kanban Board" atau "via Kanban"
+                $cleanText = preg_replace('/\s+via\s+Kanban(\s+Board)?/i', '', $text);
+                
+                // Jika teks belum mencantumkan siapa pengubahnya, cantumkan author_name
+                $authorName = is_object($r) ? ($r->getAuthorName() ?? $r->author_name) : ($r['author_name'] ?? null);
+                if (!empty($authorName) && !str_starts_with($cleanText, $authorName) && stripos($cleanText, 'Status changed to') === 0) {
+                    $cleanText = $authorName . ' ' . lcfirst($cleanText);
+                }
+
                 $auditCount++;
                 $activities[] = [
                     'type'       => 'audit',
-                    'text'       => $text,
-                    'created_at' => $r['created_at'],
-                    'time_ago'   => $this->timeAgo($r['created_at']),
-                    'formatted_date' => date('d M Y, H:i', strtotime($r['created_at'])) . ' WIB'
+                    'text'       => $cleanText,
+                    'created_at' => $replyDate,
+                    'time_ago'   => $this->timeAgo($replyDate),
+                    'formatted_date' => date('d M Y, H:i', strtotime($replyDate)) . ' WIB'
                 ];
             } else {
                 $commentsCount++;
-                $responseAuthor = $r['author_name'] ?? null;
-                $responseUserId = $r['user_id'] ?? ($r['submitted_by'] ?? null);
+                if ($isInternal === 1) {
+                    $internalNotesCount++;
+                } else {
+                    $publicCommentsCount++;
+                }
+
+                $responseAuthor = is_object($r) ? ($r->getAuthorName() ?? $r->author_name) : ($r['author_name'] ?? null);
+                $responseUserId = is_object($r) ? ($r->getUserId() ?? $r->user_id) : ($r['user_id'] ?? ($r['submitted_by'] ?? null));
 
                 $isUser = ($responseUserId === 'user')
                     || (!empty($responseUserId) && $responseUserId == ($ticket['reporter_id'] ?? ''))
@@ -158,26 +305,30 @@ class TicketDetailService
                         }
                     }
                     $authorName = $responseAuthor ?: ($assignedSpecialist['name'] !== 'Unassigned' ? $assignedSpecialist['name'] : 'Support Agent');
-                    $roleBadge = 'Support Lead';
-                    $badgeClass = 'badge-support';
-                    $avatarBg = 'avatar-am';
+                    $roleBadge = $isInternal ? 'Internal Staff' : 'Support Lead';
+                    $badgeClass = $isInternal ? 'badge-internal' : 'badge-support';
+                    $avatarBg = $isInternal ? 'avatar-internal' : 'avatar-am';
                 }
 
                 $activities[] = [
                     'type'           => 'comment',
                     'is_user'        => $isUser,
+                    'is_internal'    => $isInternal === 1,
                     'author'         => $authorName,
                     'initials'       => strtoupper(substr(trim($authorName), 0, 2)),
                     'avatar_bg'      => $avatarBg,
                     'role_badge'     => $roleBadge,
                     'badge_class'    => $badgeClass,
-                    'created_at'     => $r['created_at'],
-                    'formatted_date' => date('d M Y, H:i', strtotime($r['created_at'])) . ' WIB',
-                    'time_ago'       => $this->timeAgo($r['created_at']),
+                    'created_at'     => $replyDate,
+                    'formatted_date' => date('d M Y, H:i', strtotime($replyDate)) . ' WIB',
+                    'time_ago'       => $this->timeAgo($replyDate),
                     'text'           => $text
                 ];
             }
         }
+
+        // Urutkan seluruh activities berdasarkan timestamp ascending
+        usort($activities, fn($a, $b) => strtotime($a['created_at']) <=> strtotime($b['created_at']));
 
         // 4. Requester Profile & Avatar Initials
         $reqName = $ticket['emp_name'] ?? 'Employee';
@@ -186,6 +337,8 @@ class TicketDetailService
         return [
             'ticket'               => $ticket,
             'assignedSpecialist'   => $assignedSpecialist,
+            'picHelpdesk'          => $assignedPicHelpdesk,
+            'picDevBa'             => $assignedPicDevBa,
             'sla' => [
                 'resolution_hours' => $slaResolutionHours,
                 'response_hours'   => $slaResponseHours,
@@ -196,7 +349,11 @@ class TicketDetailService
                 'badge_text'       => $slaBadgeText,
                 'badge_class'      => $slaBadgeClass,
                 'first_response'   => $firstResponseFormatted,
-                'resolved_time'    => $resolvedFormatted
+                'resolved_time'    => $resolvedFormatted,
+                'created_ts'       => $createdTime,
+                'target_ts'        => (int) $targetResolutionTime,
+                'resolved_ts'      => $resolvedTime,
+                'is_finished'      => !empty($resolvedTime)
             ],
             'lifecycle' => [
                 'created'          => !empty($ticket['created_date']) ? date('d M Y, H:i', strtotime($ticket['created_date'])) : '-',
@@ -216,6 +373,8 @@ class TicketDetailService
             ],
             'activities'           => $activities,
             'commentsCount'        => $commentsCount,
+            'internalNotesCount'   => $internalNotesCount,
+            'publicCommentsCount'  => $publicCommentsCount,
             'auditCount'           => $auditCount,
             'attachments'          => $attachments
         ];
@@ -227,9 +386,15 @@ class TicketDetailService
      * @param string $datetime
      * @return string
      */
-    public function timeAgo(string $datetime): string
+    public function timeAgo(?string $datetime = null): string
     {
+        if (empty($datetime)) {
+            return 'Just now';
+        }
         $time = strtotime($datetime);
+        if (!$time) {
+            return 'Just now';
+        }
         $diff = max(0, time() - $time);
 
         if ($diff < 60) return 'Just now';

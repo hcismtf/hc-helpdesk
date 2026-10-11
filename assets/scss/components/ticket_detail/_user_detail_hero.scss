@@ -1,0 +1,270 @@
+@use "../../variables" as vars;
+
+/* =============================================================================
+   Ticket Detail Hero Card & Breadcrumb Navigation (User Experience)
+   ============================================================================= */
+
+// 1. Navigation / Breadcrumbs Row
+.detail-nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  .breadcrumbs-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    color: #64748b;
+
+    a {
+      color: #64748b;
+      text-decoration: none;
+      transition: color 0.15s ease;
+
+      &:hover {
+        color: #1e293b;
+      }
+
+      i {
+        font-size: 13px;
+      }
+    }
+
+    .crumb-sep {
+      color: #cbd5e1;
+      font-size: 12px;
+    }
+
+    .crumb-active {
+      color: #0f172a;
+      font-weight: 600;
+      background: #f1f5f9;
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+  }
+
+  .detail-nav-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    .btn-nav-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 9999px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: #334155;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+      &:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #0f172a;
+      }
+
+      i {
+        font-size: 12px;
+      }
+
+      &.btn-danger-outline {
+        color: #dc2626;
+        border-color: #fecaca;
+        background: #ffffff;
+
+        &:hover {
+          background: #fef2f2;
+          border-color: #fca5a5;
+        }
+      }
+    }
+  }
+}
+
+// 2. Ticket Header Hero Card
+.ticket-hero-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+
+  .hero-main-content {
+    flex: 1;
+    min-width: 320px;
+
+    .hero-tags-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+
+      .hero-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+
+        &.tag-ticket-no {
+          background: #f1f5f9;
+          color: #475569;
+          border: 1px solid #e2e8f0;
+          font-family: monospace;
+        }
+
+        &.tag-status-purple {
+          background: #f3e8ff;
+          color: #7e22ce;
+          border: 1px solid #e9d5ff;
+
+          .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #9333ea;
+            animation: pulsePurple 1.8s infinite;
+          }
+        }
+
+        &.tag-status-blue {
+          background: #e0f2fe;
+          color: #0369a1;
+          border: 1px solid #bae6fd;
+        }
+
+        &.tag-status-green {
+          background: #dcfce7;
+          color: #15803d;
+          border: 1px solid #bbf7d0;
+        }
+
+        &.tag-priority-urgent {
+          background: #fee2e2;
+          color: #dc2626;
+          border: 1px solid #fecaca;
+        }
+
+        &.tag-priority-high {
+          background: #ffedd5;
+          color: #c2410c;
+          border: 1px solid #fed7aa;
+        }
+
+        &.tag-category {
+          background: #eff6ff;
+          color: #1d4ed8;
+          border: 1px solid #dbeafe;
+        }
+      }
+    }
+
+    .hero-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.35;
+      margin-bottom: 12px;
+    }
+
+    .hero-meta-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 18px;
+      font-size: 13px;
+      color: #64748b;
+
+      .meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        i {
+          color: #94a3b8;
+          font-size: 13px;
+        }
+
+        strong {
+          color: #1e293b;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .hero-sla-box {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid #fde68a;
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 250px;
+    box-shadow: 0 2px 4px rgba(217, 119, 6, 0.06);
+
+    .sla-icon-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #fde68a;
+      border: 1px solid #fcd34d;
+      color: #b45309;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .sla-text-content {
+      .sla-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: #92400e;
+        margin-bottom: 2px;
+      }
+
+      .sla-value {
+        font-size: 18px;
+        font-weight: 800;
+        color: #78350f;
+        line-height: 1.2;
+
+        .sla-sub {
+          font-size: 12px;
+          font-weight: 500;
+          color: #92400e;
+          margin-left: 4px;
+        }
+      }
+    }
+  }
+}

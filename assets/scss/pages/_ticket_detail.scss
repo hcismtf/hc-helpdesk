@@ -1,0 +1,22 @@
+@use "../variables" as vars;
+
+/* =============================================================================
+   User Ticket Detail Page Orchestrator (Layout Only)
+   ============================================================================= */
+
+.ticket-detail-page {
+  padding-bottom: 48px;
+  width: 100%;
+
+  // 3. Two-Column Layout Grid
+  .ticket-detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 370px;
+    gap: 24px;
+    align-items: start;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}

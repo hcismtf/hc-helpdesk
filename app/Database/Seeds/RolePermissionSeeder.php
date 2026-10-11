@@ -40,11 +40,14 @@ class RolePermissionSeeder extends Seeder
       $roleId = $roleMap[$roleName];
 
       foreach ($permissionCodes as $code) {
-        if (isset($permissionMap[$code])) {
+        $dotCode = str_replace(':', '.', $code);
+        $colonCode = str_replace('.', ':', $code);
+        $permId = $permissionMap[$dotCode] ?? ($permissionMap[$colonCode] ?? ($permissionMap[$code] ?? null));
+        if ($permId) {
           $insertBatch[] = [
             'id' => $authService->generateUUIDv4(),
             'role_id' => $roleId,
-            'permission_id' => $permissionMap[$code],
+            'permission_id' => $permId,
             'created_by' => 'SYSTEM',
             'modified_by' => 'SYSTEM',
             'created_date' => $now,
@@ -115,6 +118,7 @@ class RolePermissionSeeder extends Seeder
 
     // 3. Eksekusi Insert Batch
     if (!empty($insertBatch)) {
+      $db->table('role_permissions')->emptyTable();
       // Gunakan chunk jika permissions sangat banyak agar tidak kena limit placeholder SQL
       $chunks = array_chunk($insertBatch, 100);
       foreach ($chunks as $chunk) {

@@ -23,6 +23,8 @@ class TicketService
     protected SlaModel $slaModel;
     protected UserModel $userModel;
     protected TicketEmailService $emailService;
+    protected AttachmentService $attachmentService;
+    protected \App\Services\Queue\RabbitMQService $rabbitMQService;
 
     public function __construct(
         ?TicketModel $ticketModel = null,
@@ -30,14 +32,18 @@ class TicketService
         ?RequestTypeModel $requestTypeModel = null,
         ?SlaModel $slaModel = null,
         ?UserModel $userModel = null,
-        ?TicketEmailService $emailService = null
+        ?TicketEmailService $emailService = null,
+        ?AttachmentService $attachmentService = null,
+        ?\App\Services\Queue\RabbitMQService $rabbitMQService = null
     ) {
-        $this->ticketModel      = $ticketModel ?? new TicketModel();
-        $this->attachmentModel  = $attachmentModel ?? new TicketAttachmentModel();
-        $this->requestTypeModel = $requestTypeModel ?? new RequestTypeModel();
-        $this->slaModel         = $slaModel ?? new SlaModel();
-        $this->userModel        = $userModel ?? new UserModel();
-        $this->emailService     = $emailService ?? new TicketEmailService();
+        $this->ticketModel       = $ticketModel ?? new TicketModel();
+        $this->attachmentModel   = $attachmentModel ?? new TicketAttachmentModel();
+        $this->requestTypeModel  = $requestTypeModel ?? new RequestTypeModel();
+        $this->slaModel          = $slaModel ?? new SlaModel();
+        $this->userModel         = $userModel ?? new UserModel();
+        $this->emailService      = $emailService ?? new TicketEmailService();
+        $this->attachmentService = $attachmentService ?? new AttachmentService($this->attachmentModel);
+        $this->rabbitMQService   = $rabbitMQService ?? new \App\Services\Queue\RabbitMQService();
     }
 
     /**
@@ -261,66 +267,21 @@ class TicketService
     }
 
     /**
-     * Menyimpan attachment tiket secara aman
+     * Menyimpan attachment tiket secara aman via AttachmentService & RabbitMQ
      */
     protected function saveTicketAttachment(string $ticketId, UploadedFile $file, string $actor): void
     {
-        $uploadDir = FCPATH . 'uploads/images-attachment/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
+        $attachmentResult = $this->attachmentService->processUpload($ticketId, $file, $actor);
 
-        $randomName = $file->getRandomName();
-        $mime = $file->getMimeType();
-        $size = $file->getSize();
-        $origName = $file->getClientName();
-
-        // Optimasi kompresi gambar jika > 1MB
-        if ($size > (1024 * 1024) && str_starts_with($mime, 'image/')) {
-            $srcPath = $file->getTempName();
-            $dstPath = $uploadDir . $randomName;
-
-            if ($mime === 'image/jpeg') {
-                $image = @imagecreatefromjpeg($srcPath);
-                if ($image) {
-                    imagejpeg($image, $dstPath, 75);
-                    imagedestroy($image);
-                } else {
-                    $file->move($uploadDir, $randomName);
-                }
-            } elseif ($mime === 'image/png') {
-                $image = @imagecreatefrompng($srcPath);
-                if ($image) {
-                    imagepng($image, $dstPath, 7);
-                    imagedestroy($image);
-                } else {
-                    $file->move($uploadDir, $randomName);
-                }
-            } else {
-                $file->move($uploadDir, $randomName);
-            }
-        } else {
-            $file->move($uploadDir, $randomName);
-        }
-
-        // Enkripsi path & filename jika encrypter aktif
-        try {
-            $encrypter = \Config\Services::encrypter();
-            $encryptedName = bin2hex($encrypter->encrypt($origName));
-            $encryptedPath = bin2hex($encrypter->encrypt($randomName));
-        } catch (\Throwable $e) {
-            $encryptedName = $origName;
-            $encryptedPath = $randomName;
-        }
-
-        $this->attachmentModel->insert([
-            'ticket_id'    => $ticketId,
-            'file_name'    => $encryptedName,
-            'file_path'    => $encryptedPath,
-            'file_size'    => $size,
-            'file_type'    => $mime,
-            'created_by'   => $actor,
-            'created_date' => date('Y-m-d H:i:s'),
+        // Kirimkan background processing job ke RabbitMQ
+        $this->rabbitMQService->publishAttachmentJob([
+            'ticket_id'     => $ticketId,
+            'original_name' => $attachmentResult['original_name'],
+            'stored_file'   => $attachmentResult['stored_file'],
+            'size'          => $attachmentResult['size'],
+            'mime'          => $attachmentResult['mime'],
+            'actor'         => $actor,
+            'timestamp'     => time(),
         ]);
     }
 

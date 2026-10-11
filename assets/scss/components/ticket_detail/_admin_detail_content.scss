@@ -1,0 +1,260 @@
+@use "../../variables" as vars;
+
+/* =============================================================================
+   Admin Ticket Detail: Headline & Incident Description Cards
+   ============================================================================= */
+
+/* 1. Headline Card */
+.ticket-headline-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+
+    .ticket-meta-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        .meta-dev-tag {
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            font-family: monospace;
+        }
+
+        .meta-source-text {
+            font-size: 12.5px;
+            color: #64748b;
+        }
+
+        .meta-time-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12.5px;
+            color: #64748b;
+        }
+    }
+
+    .ticket-subject-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 14px 0;
+        line-height: 1.35;
+        letter-spacing: -0.2px;
+    }
+
+    .ticket-badge-strip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+
+            &.pill-priority-low {
+                background: #f1f5f9;
+                color: #475569;
+                border: 1px solid #e2e8f0;
+            }
+
+            &.pill-priority-medium {
+                background: #fff7ed;
+                color: #c2410c;
+                border: 1px solid #fed7aa;
+            }
+
+            &.pill-priority-high {
+                background: #fef2f2;
+                color: #dc2626;
+                border: 1px solid #fecaca;
+            }
+
+            &.pill-priority-urgent {
+                background: #450a0a;
+                color: #fee2e2;
+                border: 1px solid #991b1b;
+            }
+
+            &.pill-type {
+                background: #f8fafc;
+                color: #475569;
+                border: 1px solid #e2e8f0;
+            }
+
+            &.pill-sla-ontrack {
+                background: #ecfdf5;
+                color: #059669;
+                border: 1px solid #a7f3d0;
+            }
+
+            &.pill-sla-breached {
+                background: #fef2f2;
+                color: #dc2626;
+                border: 1px solid #fecaca;
+            }
+        }
+    }
+}
+
+/* 2. Incident Description Card & Attachments */
+.incident-description-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+
+    .incident-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #f1f5f9;
+
+        .incident-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .incident-icon-pill {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: #eff6ff;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .incident-title-text {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
+
+        .incident-sub-text {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .incident-tag-code {
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 11.5px;
+            font-family: monospace;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+    }
+
+    .incident-body-content {
+        font-size: 14px;
+        line-height: 1.65;
+        color: #334155;
+    }
+
+    .attachments-wrapper {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px dashed #e2e8f0;
+
+        .attachments-header-row {
+            margin-bottom: 12px;
+            .attachments-count-title {
+                font-size: 13px;
+                font-weight: 700;
+                color: #0f172a;
+            }
+        }
+
+        .attachments-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .attachment-file-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            transition: all 0.15s ease;
+
+            &:hover {
+                background: #f1f5f9;
+                border-color: #cbd5e1;
+            }
+
+            .attachment-file-icon {
+                color: #2563eb;
+                flex-shrink: 0;
+            }
+
+            .attachment-file-info {
+                min-width: 0;
+                flex: 1;
+
+                .attachment-file-name {
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #0f172a;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .attachment-file-meta {
+                    font-size: 11px;
+                    color: #64748b;
+                }
+
+                .attachment-card-links {
+                    margin-top: 4px;
+                    font-size: 11.5px;
+                    display: flex;
+                    gap: 6px;
+
+                    a {
+                        color: #2563eb;
+                        text-decoration: none;
+                        font-weight: 600;
+
+                        &:hover {
+                            text-decoration: underline;
+                        }
+                    }
+
+                    span {
+                        color: #94a3b8;
+                    }
+                }
+            }
+        }
+    }
+}

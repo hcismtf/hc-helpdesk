@@ -36,6 +36,7 @@ class Filters extends BaseFilters
         'performance' => PerformanceMetrics::class,
         'perm' => \App\Filters\PermissionFilter::class,
         'auth' => \App\Filters\AuthFilter::class,
+        'userauth' => \App\Filters\UserAuthFilter::class,
         'devicesecurity' => \App\Filters\DeviceSecurityFilter::class,
         'apikeyfilter' => \App\Filters\ApiKeyFilter::class,
     ];

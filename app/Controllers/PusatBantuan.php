@@ -15,9 +15,11 @@ class PusatBantuan extends BaseController
         $faqModel = new FaqModel();
         $dbFaqs = $faqModel->orderBy('id', 'desc')->findAll();
 
-        return view('pusat_bantuan', [
-            'message' => $message,
-            'dbFaqs'  => $dbFaqs,
+        return view('pages/faq', [
+            'title'      => 'FAQ & Help Center - HC Helpdesk PT Mandiri Tunas Finance',
+            'activePage' => 'faq',
+            'message'    => $message,
+            'dbFaqs'     => $dbFaqs,
         ]);
     }
 

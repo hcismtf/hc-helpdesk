@@ -1,7 +1,6 @@
 @use "variables" as vars;
 
-@use "bulma/sass" with (
-  $primary: vars.$primary-navy,
+@use "bulma/sass" with ($primary: vars.$primary-navy,
   $link: vars.$accent-blue,
   $info: vars.$accent-light-blue,
   $body-background-color: vars.$bg-page,
@@ -11,12 +10,160 @@
   $radius-medium: vars.$radius-md,
   $radius-large: vars.$radius-lg,
   $card-background-color: vars.$bg-card,
-  $border: vars.$border-color
-);
+  $border: vars.$border-color);
+
+// Modular Component Styles
+// 1. Common / Shared Components
+@use "components/common/navbar";
+@use "components/common/login_modal";
+@use "components/common/modals";
+@use "components/common/corporate_values";
+@use "components/common/dropdown_select";
+@use "components/common/data_table";
+@use "components/common/badges";
+
+// 2. Landing Page Components
+@use "components/landing/hero_banner";
+@use "components/landing/quick_actions";
+@use "components/landing/track_ticket_card";
+@use "components/landing/services_carousel";
+
+// 3. FAQ Page Components
+@use "components/faq/faq_hero";
+@use "components/faq/faq_categories";
+@use "components/faq/faq_accordion";
+@use "components/faq/faq_sidebar";
+
+// 4. User Dashboard Components
+@use "components/dashboard/greeting_header";
+@use "components/dashboard/stat_cards";
+@use "components/dashboard/recent_tickets";
+@use "components/dashboard/dashboard_sidebar";
+
+// 5. Ticket Create Components
+@use "components/ticket_create/wizard_stepper";
+@use "components/ticket_create/form_steps";
+@use "components/ticket_create/ticket_sidebar";
+@use "components/ticket_create/async_toast";
+
+// 6. Ticket Detail Components (User & Admin)
+@use "components/ticket_detail/user_detail_hero";
+@use "components/ticket_detail/user_detail_content";
+@use "components/ticket_detail/user_detail_composer";
+@use "components/ticket_detail/user_detail_sidebar";
+@use "components/ticket_detail/admin_detail_topbar";
+@use "components/ticket_detail/admin_detail_content";
+@use "components/ticket_detail/admin_detail_conversation";
+@use "components/ticket_detail/admin_detail_sidebar";
+@use "components/ticket_detail/admin_detail_modals";
+
+// 7. Admin Panel Reusable Components
+@use "components/admin/sidebar";
+@use "components/admin/header";
+@use "components/admin/sla_banner";
+@use "components/admin/metric_cards";
+@use "components/admin/control_strip";
+@use "components/admin/kanban_board";
+@use "components/admin/admin_table_view";
+@use "components/admin/admin_modals";
+@use "components/admin/create_ticket_modal";
+
+// Page-specific Layout Styles
+@use "pages/landing";
+@use "pages/faq";
+@use "pages/dashboard";
+@use "pages/ticket_create";
+@use "pages/ticket_detail";
+@use "pages/admin_ticket_detail";
+@use "pages/admin_ticket_dashboard";
+@use "pages/admin_roles_category";
+@use "pages/admin_request_types_category";
+@use "pages/admin_user_mgt";
+@use "pages/admin_system_settings";
+@use "pages/admin_layout";
+@use "pages/admin_dashboard";
 
 :root {
   --primary-navy: #{vars.$primary-navy};
+  --primary-blue: #{vars.$primary-blue};
   --accent-blue: #{vars.$accent-blue};
+  --accent-blue-hover: #{vars.$accent-blue-hover};
+  --accent-light-blue: #{vars.$accent-light-blue};
   --bg-page: #{vars.$bg-page};
+  --bg-card: #{vars.$bg-card};
+  --border-color: #{vars.$border-color};
+  --border-light: #{vars.$border-light};
+  --text-primary: #{vars.$text-primary};
+  --text-secondary: #{vars.$text-secondary};
+  --text-muted: #{vars.$text-muted};
+  --text-light: #{vars.$text-light};
+  --radius-sm: #{vars.$radius-sm};
+  --radius-md: #{vars.$radius-md};
+  --radius-lg: #{vars.$radius-lg};
+  --radius-pill: #{vars.$radius-pill};
+  --shadow-sm: #{vars.$shadow-sm};
   --shadow-md: #{vars.$shadow-md};
+  --shadow-lg: #{vars.$shadow-lg};
 }
+
+// Global Layout & Typography Helpers (Aligned with Bulma Container)
+.main-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+  width: 100%;
+  flex: 1;
+  box-sizing: border-box;
+
+  @media (min-width: 1400px) {
+    max-width: 1400px;
+    padding: 32px 32px 56px;
+  }
+
+  @media (min-width: 1200px) and (max-width: 1399px) {
+    max-width: 1240px;
+    padding: 26px 24px 48px;
+  }
+
+  @media (min-width: 1100px) and (max-width: 1199px) {
+    max-width: 100%;
+    padding: 22px 20px 40px;
+  }
+
+  @media (min-width: 769px) and (max-width: 1099px) {
+    max-width: 100%;
+    padding: 22px 20px 44px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px 14px 40px;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px 10px 36px;
+    max-width: 100vw;
+  }
+}
+
+.section-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: vars.$accent-blue;
+  background-color: vars.$accent-light-blue;
+  padding: 4px 10px;
+  border-radius: vars.$radius-sm;
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: vars.$text-primary;
+  margin-bottom: 6px;
+  letter-spacing: -0.2px;
+}

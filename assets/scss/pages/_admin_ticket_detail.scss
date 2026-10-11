@@ -1,0 +1,36 @@
+@use "../variables" as vars;
+
+/* =============================================================================
+   Enterprise Admin Ticket Detail Page Orchestrator (Layout Only)
+   ============================================================================= */
+
+.ticket-detail-page {
+    width: 100%;
+    margin: 0 auto;
+    padding-bottom: 60px;
+}
+
+/* 2-Column Main Layout Grid */
+.ticket-detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 24px;
+    align-items: start;
+
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ticket-main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+.ticket-sidebar-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}

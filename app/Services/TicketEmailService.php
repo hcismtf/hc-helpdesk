@@ -215,15 +215,27 @@ class TicketEmailService
             }
         }
 
+        $smtpHost = getenv('email.SMTPHost') ?: '';
+        $smtpUser = getenv('email.SMTPUser') ?: '';
+        $smtpPass = getenv('email.SMTPPass') ?: '';
+
+        // Jika SMTP belum dikonfigurasi nyata atau masih placeholder lokal, jangan memblokir antrean pembuatan tiket
+        if (empty($smtpHost) || empty($smtpPass) || $smtpUser === 'support@example.com' || $smtpHost === 'smtp.office365.com') {
+            log_message('debug', 'SMTP credentials not configured for local dev; skipping blocking email dispatch.');
+            return true;
+        }
+
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
-            $mail->Host = getenv('email.SMTPHost') ?: 'smtp.office365.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = getenv('email.SMTPUser') ?: 'support@example.com';
-            $mail->Password = getenv('email.SMTPPass') ?: '';
-            $mail->SMTPSecure = getenv('email.SMTPCrypto') ?: 'tls';
-            $mail->Port = (int) (getenv('email.SMTPPort') ?: 587);
+            $mail->Host        = $smtpHost;
+            $mail->SMTPAuth    = true;
+            $mail->Username    = $smtpUser;
+            $mail->Password    = $smtpPass;
+            $mail->SMTPSecure  = getenv('email.SMTPCrypto') ?: 'tls';
+            $mail->Port        = (int) (getenv('email.SMTPPort') ?: 587);
+            $mail->Timeout     = 2; // Maksimal 2 detik timeout agar proses tiket selalu instan
+            $mail->Timelimit   = 3;
 
             $mail->setFrom(
                 getenv('email.fromEmail') ?: 'support@example.com',

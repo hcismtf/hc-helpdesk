@@ -2,11 +2,10 @@
     <table class="settings-modern-table">
         <thead>
             <tr>
-                <th style="width: 18%;">PRIORITY TIER</th>
-                <th style="width: 18%;">TARGET 1ST RESPONSE</th>
-                <th style="width: 18%;">TARGET RESOLUTION</th>
-                <th style="width: 24%;">ESCALATION TRIGGER</th>
-                <th style="width: 12%; text-align: center;">ACTIONS</th>
+                <th style="width: 28%;">PRIORITY TIER</th>
+                <th style="width: 28%;">TARGET 1ST RESPONSE</th>
+                <th style="width: 28%;">TARGET RESOLUTION</th>
+                <th style="width: 16%; text-align: center;">ACTIONS</th>
             </tr>
         </thead>
         <tbody>
@@ -32,12 +31,6 @@
                                 <span class="sla-time-sub">Resolution max</span>
                             </div>
                         </td>
-                        <td>
-                            <div class="sla-trigger-cell">
-                                <span class="trigger-label"><?= esc($sla['escalation_trigger'] ?? 'Standard ticket queue handling') ?></span>
-                                <span class="trigger-sub"><?= esc($sla['business_hours'] ?? 'Standard Workdays') ?></span>
-                            </div>
-                        </td>
                         <td style="text-align: center;">
                             <div class="row-action-buttons">
                                 <button type="button" class="btn-icon-action btn-edit-role"
@@ -54,7 +47,7 @@
                                     </svg>
                                 </button>
 
-                                <?= view('components/action_dropdown', [
+                                <?= view('components/common/_action_dropdown', [
                                     'id' => 'sla_action_' . $sla['id'],
                                     'items' => [
                                         [
@@ -76,7 +69,7 @@
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="5">
+                    <td colspan="4">
                         <div class="settings-empty-state">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5">
                                 <circle cx="12" cy="12" r="10"></circle>
@@ -91,14 +84,18 @@
     </table>
 </div>
 
-<?php if (isset($totalPages) && $totalPages > 1): ?>
-<div class="pagination-footer-wrapper">
-    <div class="faq-pagination-row">
-        <button class="faq-page-btn" <?= ($page ?? 1) <= 1 ? 'disabled' : '' ?> onclick="loadSlaList(<?= ($page ?? 1) - 1 ?>, <?= $perPage ?? 10 ?>)">&lt;</button>
-        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-            <button class="faq-page-btn <?= $i == ($page ?? 1) ? 'active' : '' ?>" onclick="loadSlaList(<?= $i ?>, <?= $perPage ?? 10 ?>)"><?= $i ?></button>
-        <?php endfor; ?>
-        <button class="faq-page-btn" <?= ($page ?? 1) >= $totalPages ? 'disabled' : '' ?> onclick="loadSlaList(<?= ($page ?? 1) + 1 ?>, <?= $perPage ?? 10 ?>)">&gt;</button>
+<?php if (!empty($paginationHTML)): ?>
+    <div class="settings-table-pagination">
+        <?= $paginationHTML ?>
     </div>
-</div>
+<?php elseif (isset($totalPages) && $totalPages > 1): ?>
+    <div class="pagination-footer-wrapper">
+        <div class="faq-pagination-row">
+            <button class="faq-page-btn" <?= ($page ?? 1) <= 1 ? 'disabled' : '' ?> onclick="loadSlaList(<?= ($page ?? 1) - 1 ?>, <?= $perPage ?? 5 ?>)">&lt;</button>
+            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                <button class="faq-page-btn <?= $i == ($page ?? 1) ? 'active' : '' ?>" onclick="loadSlaList(<?= $i ?>, <?= $perPage ?? 5 ?>)"><?= $i ?></button>
+            <?php endfor; ?>
+            <button class="faq-page-btn" <?= ($page ?? 1) >= $totalPages ? 'disabled' : '' ?> onclick="loadSlaList(<?= ($page ?? 1) + 1 ?>, <?= $perPage ?? 5 ?>)">&gt;</button>
+        </div>
+    </div>
 <?php endif; ?>

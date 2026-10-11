@@ -1,6 +1,6 @@
-<?php include(APPPATH . 'Views/components/success_confirm.php'); ?>
-<?php include(APPPATH . 'Views/components/warning_confirm.php'); ?>
-<?php include(APPPATH . 'Views/components/error_confirm.php'); ?>
+<?php include(APPPATH . 'Views/components/common/_success_confirm.php'); ?>
+<?php include(APPPATH . 'Views/components/common/_warning_confirm.php'); ?>
+<?php include(APPPATH . 'Views/components/common/_error_confirm.php'); ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -15,11 +15,11 @@
     <div class="main-content">
         <div class="container">
             <!-- Top Header Component -->
-            <?= view('components/admin_header', [
+            <?= view('components/admin/admin_header', [
                 'breadcrumbRoot'   => 'Helpdesk Admin',
                 'breadcrumbActive' => 'Reports',
                 'pageTitle'        => 'Report & Export',
-                'showCreateTicket' => false,
+                'showCreateTicket' => true,
                 'showNotif'        => true,
             ]) ?>
 

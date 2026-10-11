@@ -52,6 +52,10 @@ class SystemSettingsController extends BaseController
         $rolesData = $this->settingsService->getEnrichedRoles(1, 10);
         $slasData = $this->settingsService->getEnrichedSlas(1, 10);
 
+        $categoryModel = new \App\Models\CategoryModel();
+        $categories = $categoryModel->getActiveCategories();
+        $allSlas = $slaModel->orderBy('priority', 'asc')->findAll();
+
         $data = [
             'username' => session('username') ?? '[user name]',
             'role' => session('role') ?? 'Superadmin',
@@ -63,12 +67,171 @@ class SystemSettingsController extends BaseController
             'permissions' => $permissions,
             'requestTypes' => $requestTypes,
             'usedRequestTypeIds' => $usedRequestTypeIds,
+            'categories' => $categories,
+            'allSlas' => $allSlas,
             'page' => $page,
             'perPage' => $perPage,
-            'totalPages' => $totalPages
+            'totalPages' => $totalPages,
+            'active' => 'settings',
+            'subActive' => $this->request->getGet('tab') ?? 'roles',
         ];
 
-        return view('admin/System_settings', $data);
+        return view('admin/system_settings', $data);
+    }
+
+    /**
+     * Dedicated Roles & Permissions Management Page
+     * Khusus untuk mengelola Roles tanpa tab navigasi ke SLA atau FAQ.
+     */
+    public function roles_category()
+    {
+        $perPage = (int) ($this->request->getGet('per_page') ?? 5);
+        $page    = (int) ($this->request->getGet('page') ?? 1);
+
+        $rolesData    = $this->settingsService->getEnrichedRoles($page, $perPage);
+        $permissionModel = new PermissionModel();
+        $permissions     = $permissionModel->orderBy('name', 'asc')->findAll();
+
+        $paginationHTML = $this->generatePaginationHTML(
+            $page, 
+            $rolesData['totalPages'], 
+            base_url('admin/system_settings/roles'), 
+            '&per_page=' . $perPage,
+            $rolesData['total'],
+            $perPage
+        );
+
+        return view('admin/roles_category', [
+            'username'       => session('username') ?? '[user name]',
+            'role'           => session('role') ?? 'Superadmin',
+            'rolesData'      => $rolesData,
+            'permissions'    => $permissions,
+            'paginationHTML' => $paginationHTML,
+            'page'           => $page,
+            'perPage'        => $perPage,
+            'totalPages'     => $rolesData['totalPages'],
+            'active'         => 'settings',
+            'subActive'      => 'roles_category',
+        ]);
+    }
+
+    /**
+     * Dedicated Standalone SLA Policies Management Page
+     */
+    public function sla_policies()
+    {
+        $perPage = (int) ($this->request->getGet('per_page') ?? 5);
+        $page    = (int) ($this->request->getGet('page') ?? 1);
+
+        $slasData = $this->settingsService->getEnrichedSlas($page, $perPage);
+
+        $paginationHTML = $this->generatePaginationHTML(
+            $page,
+            $slasData['totalPages'],
+            base_url('admin/system_settings/sla'),
+            '&per_page=' . $perPage,
+            $slasData['total'],
+            $perPage
+        );
+
+        return view('admin/sla_policies', [
+            'username'       => session('username') ?? '[user name]',
+            'role'           => session('role') ?? 'Superadmin',
+            'slasData'       => $slasData,
+            'paginationHTML' => $paginationHTML,
+            'page'           => $page,
+            'perPage'        => $perPage,
+            'totalPages'     => $slasData['totalPages'],
+            'active'         => 'settings',
+            'subActive'      => 'sla_policies',
+        ]);
+    }
+
+    /**
+     * Dedicated Standalone Request Category / Types Page
+     */
+    public function request_types()
+    {
+        $perPage = (int) ($this->request->getGet('per_page') ?? 5);
+        $page    = (int) ($this->request->getGet('page') ?? 1);
+
+        $data = $this->settingsService->getEnrichedRequestTypes($page, $perPage);
+
+        $paginationHTML = $this->generatePaginationHTML(
+            $page,
+            $data['totalPages'],
+            base_url('admin/system_settings/request_types'),
+            '&per_page=' . $perPage,
+            $data['total'],
+            $perPage
+        );
+
+        $mainCatData = $this->settingsService->getEnrichedCategories(1, 5);
+
+        $mainCategoryPaginationHTML = $this->generatePaginationHTML(
+            1,
+            $mainCatData['totalPages'],
+            base_url('admin/system_settings/request_types'),
+            '&tab=main_category&per_page=5',
+            $mainCatData['total'],
+            5
+        );
+
+        return view('admin/request_types_category', [
+            'username'                   => session('username') ?? '[user name]',
+            'role'                       => session('role') ?? 'Superadmin',
+            'types'                      => $data['types'],
+            'categories'                 => $data['categories'],
+            'mainCategories'             => $mainCatData['categories'],
+            'mainCategoryTotal'          => $mainCatData['total'],
+            'mainCategoryTotalPages'     => $mainCatData['totalPages'],
+            'mainCategoryPage'           => 1,
+            'mainCategoryPerPage'        => 5,
+            'mainCategoryPaginationHTML' => $mainCategoryPaginationHTML,
+            'slas'                       => $data['slas'],
+            'paginationHTML'             => $paginationHTML,
+            'page'                       => $page,
+            'perPage'                    => $perPage,
+            'totalPages'                 => $data['totalPages'],
+            'total'                      => $data['total'],
+            'active'                     => 'settings',
+            'subActive'                  => 'request_category',
+        ]);
+    }
+
+    /**
+     * Dedicated Standalone FAQ Management Page
+     */
+    public function faqs()
+    {
+        $perPage = (int) ($this->request->getGet('per_page') ?? 5);
+        $page    = (int) ($this->request->getGet('page') ?? 1);
+
+        $faqModel = new FaqModel();
+        $total = $faqModel->countAll();
+        $faqs = $faqModel->orderBy('id', 'desc')->findAll($perPage, ($page - 1) * $perPage);
+        $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+
+        $paginationHTML = $this->generatePaginationHTML(
+            $page,
+            $totalPages,
+            base_url('admin/system_settings/faqs'),
+            '&per_page=' . $perPage,
+            $total,
+            $perPage
+        );
+
+        return view('admin/faq_management', [
+            'username'       => session('username') ?? '[user name]',
+            'role'           => session('role') ?? 'Superadmin',
+            'faqs'           => $faqs,
+            'paginationHTML' => $paginationHTML,
+            'page'           => $page,
+            'perPage'        => $perPage,
+            'totalPages'     => $totalPages,
+            'active'         => 'settings',
+            'subActive'      => 'faq_management',
+        ]);
     }
 
     // =========================================================================
@@ -114,14 +277,21 @@ class SystemSettingsController extends BaseController
     public function get_faq_list()
     {
         $faqModel = new FaqModel();
-        $perPage = (int) ($this->request->getGet('per_page') ?? 10);
+        $perPage = (int) ($this->request->getGet('per_page') ?? 5);
         $page = (int) ($this->request->getGet('page') ?? 1);
 
         $total = $faqModel->countAll();
         $faqs = $faqModel->orderBy('id', 'desc')->findAll($perPage, ($page - 1) * $perPage);
-        $totalPages = $perPage > 0 ? ceil($total / $perPage) : 1;
+        $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
 
-        $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/system_settings'), '&per_page=' . $perPage);
+        $paginationHTML = $this->generatePaginationHTML(
+            $page,
+            $totalPages,
+            base_url('admin/system_settings/faqs'),
+            '&per_page=' . $perPage,
+            $total,
+            $perPage
+        );
 
         return view('admin/faq_list', [
             'faqs' => $faqs,
@@ -223,11 +393,18 @@ class SystemSettingsController extends BaseController
 
     public function get_user_role_list()
     {
-        $perPage = (int) ($this->request->getGet('per_page') ?? 10);
+        $perPage = (int) ($this->request->getGet('per_page') ?? 5);
         $page = (int) ($this->request->getGet('page') ?? 1);
 
         $data = $this->settingsService->getEnrichedRoles($page, $perPage);
-        $paginationHTML = $this->generatePaginationHTML($page, $data['totalPages'], base_url('admin/system_settings'), '&per_page=' . $perPage);
+        $paginationHTML = $this->generatePaginationHTML(
+            $page, 
+            $data['totalPages'], 
+            base_url('admin/system_settings/roles'), 
+            '&per_page=' . $perPage,
+            $data['total'],
+            $perPage
+        );
 
         return view('admin/user_role_list', [
             'roles' => $data['roles'],
@@ -244,20 +421,25 @@ class SystemSettingsController extends BaseController
 
     public function get_request_type_list()
     {
-        $requestTypeModel = new RequestTypeModel();
-        $perPage = (int) ($this->request->getGet('per_page') ?? 10);
+        $perPage = (int) ($this->request->getGet('per_page') ?? 5);
         $page = (int) ($this->request->getGet('page') ?? 1);
 
-        $total = $requestTypeModel->countAll();
-        $types = $requestTypeModel->orderBy('id', 'desc')->findAll($perPage, ($page - 1) * $perPage);
-        $totalPages = $perPage > 0 ? ceil($total / $perPage) : 1;
-
-        $paginationHTML = $this->generatePaginationHTML($page, $totalPages, base_url('admin/system_settings'), '&per_page=' . $perPage);
+        $data = $this->settingsService->getEnrichedRequestTypes($page, $perPage);
+        $paginationHTML = $this->generatePaginationHTML(
+            $page, 
+            $data['totalPages'], 
+            base_url('admin/system_settings/request_types'), 
+            '&per_page=' . $perPage,
+            $data['total'],
+            $perPage
+        );
 
         return view('admin/request_type', [
-            'types' => $types,
+            'types' => $data['types'],
+            'categories' => $data['categories'],
+            'slas' => $data['slas'],
             'page' => $page,
-            'totalPages' => $totalPages,
+            'totalPages' => $data['totalPages'],
             'perPage' => $perPage,
             'paginationHTML' => $paginationHTML
         ]);
@@ -276,14 +458,23 @@ class SystemSettingsController extends BaseController
     public function add_request_type()
     {
         $name = $this->request->getPost('name');
+        $categoryId = $this->request->getPost('category_id') ?: null;
+        $slaId = $this->request->getPost('sla_id') ?: null;
+        $badgeTag = $this->request->getPost('badge_tag');
+        $isPopular = $this->request->getPost('is_popular') ? 1 : 0;
         $description = $this->request->getPost('description');
-        $status = $this->request->getPost('status');
+        $status = $this->request->getPost('status') ?? 'Active';
         $createdBy = session('username') ?? 'admin';
 
         $requestTypeModel = new RequestTypeModel();
         $requestTypeModel->insert([
+            'id' => \Ramsey\Uuid\Uuid::uuid4()->toString(),
+            'category_id' => $categoryId,
             'name' => $name,
             'description' => $description,
+            'sla_id' => $slaId,
+            'badge_tag' => $badgeTag,
+            'is_popular' => $isPopular,
             'status' => $status,
             'created_by' => $createdBy,
             'created_date' => date('Y-m-d H:i:s'),
@@ -298,6 +489,10 @@ class SystemSettingsController extends BaseController
     {
         $id = $this->request->getPost('id');
         $name = $this->request->getPost('name');
+        $categoryId = $this->request->getPost('category_id') ?: null;
+        $slaId = $this->request->getPost('sla_id') ?: null;
+        $badgeTag = $this->request->getPost('badge_tag');
+        $isPopular = $this->request->getPost('is_popular') ? 1 : 0;
         $description = $this->request->getPost('description');
         $status = $this->request->getPost('status');
         $modifiedBy = session('username') ?? 'admin';
@@ -305,8 +500,12 @@ class SystemSettingsController extends BaseController
 
         $model = new RequestTypeModel();
         $model->update($id, [
+            'category_id' => $categoryId,
             'name' => $name,
             'description' => $description,
+            'sla_id' => $slaId,
+            'badge_tag' => $badgeTag,
+            'is_popular' => $isPopular,
             'status' => $status,
             'modified_by' => $modifiedBy,
             'modified_date' => $modifiedDate
@@ -329,7 +528,7 @@ class SystemSettingsController extends BaseController
             'status' => $status
         ]);
 
-        return redirect()->to(base_url('admin/System_settings?tab=request-type'));
+        return redirect()->to(base_url('admin/system_settings?tab=request-type'));
     }
 
     public function delete_request_type()
@@ -342,6 +541,137 @@ class SystemSettingsController extends BaseController
     }
 
     // =========================================================================
+    // Main Category (Topik HC) Management
+    // =========================================================================
+
+    public function get_category_list()
+    {
+        $perPage = (int) ($this->request->getGet('per_page') ?? 5);
+        $page    = (int) ($this->request->getGet('page') ?? 1);
+
+        $data = $this->settingsService->getEnrichedCategories($page, $perPage);
+        $paginationHTML = $this->generatePaginationHTML(
+            $page,
+            $data['totalPages'],
+            base_url('admin/system_settings/request_types'),
+            '&tab=main_category&per_page=' . $perPage,
+            $data['total'],
+            $perPage
+        );
+
+        return view('admin/request_main_category', [
+            'categories'     => $data['categories'],
+            'page'           => $page,
+            'totalPages'     => $data['totalPages'],
+            'perPage'        => $perPage,
+            'paginationHTML' => $paginationHTML
+        ]);
+    }
+
+    public function get_category_detail($id)
+    {
+        $categoryModel = new \App\Models\CategoryModel();
+        $cat = $categoryModel->find($id);
+        if ($cat) {
+            return $this->response->setJSON(['success' => true, 'data' => is_array($cat) ? $cat : $cat->toArray()]);
+        }
+        return $this->response->setJSON(['success' => false, 'message' => 'Category not found']);
+    }
+
+    public function add_category()
+    {
+        $name        = trim((string) $this->request->getPost('name'));
+        $code        = trim((string) $this->request->getPost('code'));
+        $description = trim((string) $this->request->getPost('description'));
+        $icon        = trim((string) $this->request->getPost('icon')) ?: 'fa-solid fa-folder';
+        $color       = trim((string) $this->request->getPost('color')) ?: '#2563EB';
+        $sortOrder   = (int) ($this->request->getPost('sort_order') ?? 0);
+        $isActive    = (int) ($this->request->getPost('is_active') ?? 1);
+        $createdBy   = session('username') ?? 'admin';
+
+        if (empty($name)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Nama kategori wajib diisi!']);
+        }
+
+        $categoryModel = new \App\Models\CategoryModel();
+        $id = \Ramsey\Uuid\Uuid::uuid4()->toString();
+
+        $categoryModel->insert([
+            'id'            => $id,
+            'code'          => strtoupper($code ?: substr(preg_replace('/[^a-zA-Z0-9]/', '', $name), 0, 10)),
+            'name'          => $name,
+            'description'   => $description,
+            'icon'          => $icon,
+            'color'         => $color,
+            'sort_order'    => $sortOrder,
+            'is_active'     => $isActive,
+            'created_by'    => $createdBy,
+            'created_date'  => date('Y-m-d H:i:s'),
+            'modified_by'   => $createdBy,
+            'modified_date' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    public function edit_category()
+    {
+        $id          = $this->request->getPost('id');
+        $name        = trim((string) $this->request->getPost('name'));
+        $code        = trim((string) $this->request->getPost('code'));
+        $description = trim((string) $this->request->getPost('description'));
+        $icon        = trim((string) $this->request->getPost('icon')) ?: 'fa-solid fa-folder';
+        $color       = trim((string) $this->request->getPost('color')) ?: '#2563EB';
+        $sortOrder   = (int) ($this->request->getPost('sort_order') ?? 0);
+        $isActive    = (int) ($this->request->getPost('is_active') ?? 1);
+        $modifiedBy  = session('username') ?? 'admin';
+
+        if (empty($id) || empty($name)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Data tidak lengkap']);
+        }
+
+        $categoryModel = new \App\Models\CategoryModel();
+        $categoryModel->update($id, [
+            'code'          => strtoupper($code),
+            'name'          => $name,
+            'description'   => $description,
+            'icon'          => $icon,
+            'color'         => $color,
+            'sort_order'    => $sortOrder,
+            'is_active'     => $isActive,
+            'modified_by'   => $modifiedBy,
+            'modified_date' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    public function delete_category()
+    {
+        $id = $this->request->getPost('id');
+        if (empty($id)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'ID kategori tidak valid']);
+        }
+
+        // Cek apakah ada Sub Category yang sedang menggunakan category ini
+        $db = \Config\Database::connect();
+        $usedCount = $db->table('request_sub_category')->where('category_id', $id)->countAllResults();
+        if ($usedCount > 0) {
+            return $this->response->setJSON([
+                'success' => false,
+                'invalid' => true,
+                'message' => "Kategori ini masih digunakan oleh {$usedCount} Request Type (Sub Kategori). Silakan pindahkan atau hapus sub-kategori terkait terlebih dahulu."
+            ]);
+        }
+
+        $categoryModel = new \App\Models\CategoryModel();
+        $categoryModel->delete($id);
+
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    // =========================================================================
+
     // SLA Settings Management
     // =========================================================================
 
@@ -368,14 +698,24 @@ class SystemSettingsController extends BaseController
     public function get_sla_list()
     {
         $page = (int) ($this->request->getGet('page') ?? 1);
-        $perPage = (int) ($this->request->getGet('per_page') ?? 10);
+        $perPage = (int) ($this->request->getGet('per_page') ?? 5);
         $data = $this->settingsService->getEnrichedSlas($page, $perPage);
+
+        $paginationHTML = $this->generatePaginationHTML(
+            $page,
+            $data['totalPages'],
+            base_url('admin/system_settings/sla'),
+            '&per_page=' . $perPage,
+            $data['total'],
+            $perPage
+        );
 
         return view('admin/sla_settings', [
             'slas' => $data['slas'],
             'page' => $page,
             'perPage' => $perPage,
-            'totalPages' => $data['totalPages']
+            'totalPages' => $data['totalPages'],
+            'paginationHTML' => $paginationHTML
         ]);
     }
 

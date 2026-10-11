@@ -31,4 +31,8 @@
 <?= view('components/modals/_user_login_modal') ?>
 <script src="<?= base_url('assets/js/modules/login-modal.js') ?>"></script>
 
+<!-- 5. Global Floating Async Ticket Toast -->
+<?= view('components/user/ticket_create/_async_upload_toast') ?>
+<script src="<?= base_url('assets/js/modules/async-toast-global.js?v=' . time()) ?>"></script>
+
 <?= $this->endSection() ?>

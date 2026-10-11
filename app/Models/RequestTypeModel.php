@@ -1,13 +1,7 @@
 <?php
 namespace App\Models;
 
-class RequestTypeModel extends BaseModel
+class RequestTypeModel extends RequestSubCategoryModel
 {
-    protected $table = 'request_type';
-    protected $primaryKey = 'id';
-    protected $allowedFields = [
-        'name',
-        'description',
-        'status',
-    ];
+    // Alias of RequestSubCategoryModel for backward compatibility
 }

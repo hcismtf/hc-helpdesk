@@ -1,0 +1,51 @@
+@use "../variables" as vars;
+
+/* =========================================================
+   Admin Layout Foundation (Layout Grid & Margins Only)
+   ========================================================= */
+
+html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+    box-sizing: border-box;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f8fafc;
+    font-family: vars.$font-family;
+    -webkit-font-smoothing: antialiased;
+    color: vars.$text-primary;
+}
+
+.main-content {
+    margin-left: 72px;
+    padding: 24px 36px;
+    box-sizing: border-box;
+    min-height: 100vh;
+    transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar.open ~ .main-content,
+body.sidebar-open .main-content,
+html.sidebar-is-open .main-content {
+    margin-left: 265px;
+}
+
+html.sidebar-is-closed .main-content {
+    margin-left: 72px !important;
+}
+
+body.preload .main-content {
+    transition: none !important;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 16px;
+    }
+}

@@ -1,0 +1,42 @@
+@use "../variables" as vars;
+
+// Landing Page Layout Grid & Responsive Styles
+.top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) 380px;
+  gap: 24px;
+  align-items: stretch;
+
+  @media (min-width: 1400px) {
+    grid-template-columns: minmax(0, 1.85fr) 380px;
+    gap: 28px;
+  }
+
+  @media (min-width: 1200px) and (max-width: 1399px) {
+    grid-template-columns: minmax(0, 1.75fr) 350px;
+    gap: 22px;
+  }
+
+  @media (min-width: 1100px) and (max-width: 1199px) {
+    grid-template-columns: minmax(0, 1.4fr) 330px;
+    gap: 16px;
+  }
+
+  @media (max-width: 1099px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.hero-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

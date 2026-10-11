@@ -25,6 +25,9 @@ class TicketModel extends BaseModel
         'title',
         'description',
         'status',
+        'current_stage',
+        'stage_progress',
+        'status_note',
         'reporter_id',
         'reporter_email',
         'reporter_phone',
@@ -68,8 +71,8 @@ class TicketModel extends BaseModel
         if ($currentTicket) {
             $currentStatus = TicketStatus::normalize(
                 is_object($currentTicket)
-                    ? ($currentTicket->getStatus() ?? $currentTicket->status ?? '')
-                    : ($currentTicket['status'] ?? '')
+                ? ($currentTicket->getStatus() ?? $currentTicket->status ?? '')
+                : ($currentTicket['status'] ?? '')
             );
         }
 
@@ -142,8 +145,8 @@ class TicketModel extends BaseModel
             ticket.sla_id, 
             TIMESTAMPDIFF(MINUTE, ticket.created_date, MIN(tr.created_date)) as response_time
         ")
-        ->join('ticket_response tr', 'tr.ticket_id = ticket.id', 'inner')
-        ->groupBy('ticket.id, ticket.sla_id, ticket.created_date');
+            ->join('ticket_response tr', 'tr.ticket_id = ticket.id', 'inner')
+            ->groupBy('ticket.id, ticket.sla_id, ticket.created_date');
 
         if ($startDate && $endDate) {
             $builder->where('DATE(ticket.created_date) >=', $startDate)
@@ -168,9 +171,9 @@ class TicketModel extends BaseModel
             ticket.sla_id, 
             TIMESTAMPDIFF(MINUTE, ticket.created_date, MIN(tr.created_date)) as resolution_time
         ")
-        ->join('ticket_response tr', 'tr.ticket_id = ticket.id', 'inner')
-        ->whereIn('LOWER(tr.status)', ['resolved', 'done', 'closed'])
-        ->groupBy('ticket.id, ticket.sla_id, ticket.created_date');
+            ->join('ticket_response tr', 'tr.ticket_id = ticket.id', 'inner')
+            ->whereIn('LOWER(tr.status)', ['resolved', 'done', 'closed'])
+            ->groupBy('ticket.id, ticket.sla_id, ticket.created_date');
 
         if ($startDate && $endDate) {
             $builder->where('DATE(ticket.created_date) >=', $startDate)
@@ -205,8 +208,8 @@ class TicketModel extends BaseModel
                   AND LOWER(tr2.status) IN ('resolved', 'done', 'closed')
             ))) as avg_resolution
         ")
-        ->join('sla_configuration s', 's.id = ticket.sla_id', 'left')
-        ->groupBy("COALESCE(s.priority, ticket.sla_status)");
+            ->join('sla_configuration s', 's.id = ticket.sla_id', 'left')
+            ->groupBy("COALESCE(s.priority, ticket.sla_status)");
 
         if ($startDate && $endDate) {
             $builder->where('DATE(ticket.created_date) >=', $startDate)

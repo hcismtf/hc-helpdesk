@@ -20,6 +20,6 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.5",
-    "sass": "^1.105.1"
+    "sass": "^1.99.0"
   }
 }

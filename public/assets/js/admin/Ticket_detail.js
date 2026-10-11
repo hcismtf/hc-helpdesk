@@ -1,12 +1,18 @@
 function showAttachmentModal(url) {
-            document.getElementById('attachmentModalImg').src = url;
-            // Ambil nama file dari url
-            var filename = url.split('/').pop();
-            document.getElementById('attachmentModalFilename').textContent = filename;
-            document.getElementById('attachmentModal').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            document.addEventListener('keydown', escCloseAttachmentModal);
-        }
+    if (url.toLowerCase().indexOf('.pdf') !== -1 || url.indexOf('/pdf/') !== -1) {
+        window.open(url, '_blank');
+        return;
+    }
+    var modalImg = document.getElementById('attachmentModalImg');
+    if (modalImg) modalImg.src = url;
+    var filename = url.split('/').pop();
+    var modalFilename = document.getElementById('attachmentModalFilename');
+    if (modalFilename) modalFilename.textContent = filename;
+    var modal = document.getElementById('attachmentModal');
+    if (modal) modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', escCloseAttachmentModal);
+}
         function closeAttachmentModal() {
             document.getElementById('attachmentModal').style.display = 'none';
             document.getElementById('attachmentModalImg').src = '';

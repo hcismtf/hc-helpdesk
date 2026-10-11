@@ -1,0 +1,61 @@
+@use "../../variables" as vars;
+
+/* =========================================================
+   REUSABLE STATUS & PRIORITY BADGES
+   ========================================================= */
+.status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+
+    &.status-open {
+        background: #fef3c7;
+        color: #b45309;
+    }
+
+    &.status-in_progress {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    &.status-done,
+    &.status-closed {
+        background: #d1fae5;
+        color: #047857;
+    }
+
+    &.status-pending {
+        background: #f1f5f9;
+        color: #475569;
+    }
+}
+
+.priority-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+
+    &.priority-Urgent,
+    &.priority-High {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    &.priority-Medium {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    &.priority-Low {
+        background: #eff6ff;
+        color: vars.$accent-blue;
+    }
+}

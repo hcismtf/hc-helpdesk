@@ -62,7 +62,7 @@ abstract class BaseController extends Controller
     }
 
     
-    protected function generatePaginationHTML($currentPage, $totalPages, $baseUrl, $additionalParams = '')
+    protected function generatePaginationHTML($currentPage, $totalPages, $baseUrl, $additionalParams = '', $totalRecords = null, $perPage = null)
     {
         $currentPage = (int) $currentPage;
         $totalPages = (int) $totalPages;
@@ -72,13 +72,21 @@ abstract class BaseController extends Controller
         if ($currentPage > $totalPages) $currentPage = $totalPages;
 
         $separator = (strpos($baseUrl, '?') !== false) ? '&' : '?';
-        $html = '<ul class="pagination">';
+        
+        $html = '<div class="modern-pagination-container">';
+        $html .= '<ul class="pagination modern-pagination-list">';
 
         // Previous button
         if ($currentPage > 1) {
-            $html .= '<li class="page-item"><a class="page-link page-prev" href="' . $baseUrl . $separator . 'page=' . ($currentPage - 1) . $additionalParams . '" title="Previous Page">‹ Back</a></li>';
+            $html .= '<li class="page-item"><a class="page-link page-nav-arrow page-prev" href="' . $baseUrl . $separator . 'page=' . ($currentPage - 1) . $additionalParams . '" title="Previous Page">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                <span>Previous</span>
+            </a></li>';
         } else {
-            $html .= '<li class="page-item disabled"><span class="page-link page-prev">‹ Back</span></li>';
+            $html .= '<li class="page-item disabled"><span class="page-link page-nav-arrow page-prev">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                <span>Previous</span>
+            </span></li>';
         }
 
         // Smart pagination with window
@@ -87,7 +95,7 @@ abstract class BaseController extends Controller
         $end = min($totalPages, $currentPage + $range);
 
         if ($start > 1) {
-            $html .= '<li class="page-item"><a class="page-link" href="' . $baseUrl . $separator . 'page=1' . $additionalParams . '">1</a></li>';
+            $html .= '<li class="page-item"><a class="page-link page-num-btn" href="' . $baseUrl . $separator . 'page=1' . $additionalParams . '">1</a></li>';
             if ($start > 2) {
                 $html .= '<li class="page-item disabled"><span class="page-link page-ellipsis">…</span></li>';
             }
@@ -95,9 +103,9 @@ abstract class BaseController extends Controller
 
         for ($i = $start; $i <= $end; $i++) {
             if ($i == $currentPage) {
-                $html .= '<li class="page-item active"><span class="page-link">' . $i . '</span></li>';
+                $html .= '<li class="page-item active"><span class="page-link page-num-btn is-active">' . $i . '</span></li>';
             } else {
-                $html .= '<li class="page-item"><a class="page-link" href="' . $baseUrl . $separator . 'page=' . $i . $additionalParams . '">' . $i . '</a></li>';
+                $html .= '<li class="page-item"><a class="page-link page-num-btn" href="' . $baseUrl . $separator . 'page=' . $i . $additionalParams . '">' . $i . '</a></li>';
             }
         }
 
@@ -105,17 +113,34 @@ abstract class BaseController extends Controller
             if ($end < $totalPages - 1) {
                 $html .= '<li class="page-item disabled"><span class="page-link page-ellipsis">…</span></li>';
             }
-            $html .= '<li class="page-item"><a class="page-link" href="' . $baseUrl . $separator . 'page=' . $totalPages . $additionalParams . '">' . $totalPages . '</a></li>';
+            $html .= '<li class="page-item"><a class="page-link page-num-btn" href="' . $baseUrl . $separator . 'page=' . $totalPages . $additionalParams . '">' . $totalPages . '</a></li>';
         }
 
         // Next button
         if ($currentPage < $totalPages) {
-            $html .= '<li class="page-item"><a class="page-link page-next" href="' . $baseUrl . $separator . 'page=' . ($currentPage + 1) . $additionalParams . '" title="Next Page">Next ›</a></li>';
+            $html .= '<li class="page-item"><a class="page-link page-nav-arrow page-next" href="' . $baseUrl . $separator . 'page=' . ($currentPage + 1) . $additionalParams . '" title="Next Page">
+                <span>Next</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a></li>';
         } else {
-            $html .= '<li class="page-item disabled"><span class="page-link page-next">Next ›</span></li>';
+            $html .= '<li class="page-item disabled"><span class="page-link page-nav-arrow page-next">
+                <span>Next</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </span></li>';
         }
 
         $html .= '</ul>';
+
+        // Showing results info if total count is provided
+        if ($totalRecords !== null) {
+            $perPageCount = $perPage ?? 10;
+            $startItem = min($totalRecords, (($currentPage - 1) * $perPageCount) + 1);
+            $endItem = min($totalRecords, $currentPage * $perPageCount);
+            if ($totalRecords == 0) $startItem = 0;
+            $html .= '<div class="pagination-results-info">Showing ' . number_format($endItem) . ' of ' . number_format($totalRecords) . ' results</div>';
+        }
+
+        $html .= '</div>';
         return $html;
     }
 }

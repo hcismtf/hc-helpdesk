@@ -6,9 +6,21 @@ class Home extends BaseController
 {
     public function index(): string
     {
+        $db = \Config\Database::connect();
+        $popularServices = $db->table('request_sub_category')
+            ->select('request_sub_category.*, request_category.name as category_name, request_category.color as category_color, sla.resolution_time as sla_hours')
+            ->join('request_category', 'request_category.id = request_sub_category.category_id', 'left')
+            ->join('sla', 'sla.id = request_sub_category.sla_id', 'left')
+            ->where('request_sub_category.status', 'Active')
+            ->where('request_sub_category.is_popular', 1)
+            ->orderBy('request_sub_category.created_date', 'asc')
+            ->get()
+            ->getResultArray();
+
         $data = [
-            'title' => 'HC Helpdesk - Portal Bantuan Divisi Human Capital MTF',
-            'activePage' => 'home', // Dipakai navbar untuk menandai tab aktif
+            'title'           => 'HC Helpdesk - Portal Bantuan Divisi Human Capital MTF',
+            'activePage'      => 'home',
+            'popularServices' => $popularServices,
         ];
 
         return view('pages/landing', $data);

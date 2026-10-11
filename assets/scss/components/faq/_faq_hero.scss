@@ -1,0 +1,210 @@
+@use "../../variables" as vars;
+
+// FAQ Hero Search Section Component
+.faq-hero-section {
+  text-align: center;
+  padding: 44px 20px 36px;
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+
+  // Background glowing ambients (blue on left, warm on right)
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    left: -200px;
+    width: 380px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.49) 0%, rgba(37, 99, 235, 0.25) 50%, transparent 75%);
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(35px);
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50px;
+    right: -200px;
+    width: 380px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.49) 0%, rgba(251, 191, 36, 0.25) 50%, transparent 25%);
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(35px);
+    z-index: 0;
+  }
+}
+
+.faq-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: vars.$primary-navy;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 16px;
+  border-radius: vars.$radius-pill;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 2;
+}
+
+.faq-hero-title {
+  font-size: 34px;
+  font-weight: 800;
+  color: vars.$text-primary;
+  line-height: 1.25;
+  letter-spacing: -0.6px;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 2;
+
+  .highlight-blue {
+    color: vars.$accent-blue;
+  }
+}
+
+.faq-hero-desc {
+  font-size: 13.5px;
+  color: vars.$text-secondary;
+  line-height: 1.65;
+  max-width: 660px;
+  margin: 0 auto 28px;
+  position: relative;
+  z-index: 2;
+}
+
+// Search Box
+.faq-search-box {
+  background-color: #FFFFFF;
+  border: 1px solid vars.$border-color;
+  border-radius: vars.$radius-lg;
+  padding: 6px 8px 6px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  max-width: 680px;
+  margin: 0 auto 16px;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 2;
+
+  &:focus-within {
+    border-color: vars.$accent-blue;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12), 0 8px 20px rgba(15, 23, 42, 0.08);
+  }
+
+  .faq-search-icon {
+    color: #94A3B8;
+    font-size: 16px;
+  }
+
+  .faq-search-input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: vars.$text-primary;
+    outline: none;
+
+    &::placeholder {
+      color: #94A3B8;
+      font-size: 13px;
+    }
+  }
+
+  .btn-faq-search {
+    background-color: vars.$primary-navy;
+    color: #FFFFFF;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 10px 22px;
+    border-radius: vars.$radius-md;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    white-space: nowrap;
+
+    &:hover {
+      background-color: #0A1E40;
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// Popular Keywords
+.faq-popular-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  position: relative;
+  z-index: 2;
+
+  .popular-label {
+    color: vars.$text-muted;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 4px;
+  }
+
+  .keyword-chip {
+    background-color: #FFFFFF;
+    border: 1px solid vars.$border-color;
+    color: #334155;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: vars.$radius-pill;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+
+    &:hover {
+      background-color: #EFF6FF;
+      border-color: #BFDBFE;
+      color: vars.$accent-blue-hover;
+      transform: translateY(-1px);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .faq-hero-section {
+    padding: 26px 14px 22px;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+
+  .faq-hero-title {
+    font-size: 23px;
+    line-height: 1.3;
+    margin-bottom: 10px;
+
+    br {
+      display: none;
+    }
+  }
+
+  .faq-hero-desc {
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+}

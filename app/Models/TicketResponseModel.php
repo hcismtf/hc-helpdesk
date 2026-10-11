@@ -22,6 +22,8 @@ class TicketResponseModel extends BaseModel
         'user_id',
         'author_name',
         'reply',
+        'action_notes',
+        'reply_notes',
         'is_internal',
         'status',
         'priority',

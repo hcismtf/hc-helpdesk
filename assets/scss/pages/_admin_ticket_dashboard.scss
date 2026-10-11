@@ -1,0 +1,12 @@
+@use "../variables" as vars;
+
+/* =========================================================
+   Ticket Dashboard & List View Page Layout
+   ========================================================= */
+
+.ticket-dashboard-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}

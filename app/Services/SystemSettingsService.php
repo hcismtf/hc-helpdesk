@@ -19,6 +19,7 @@ class SystemSettingsService
     protected RequestTypeModel $requestTypeModel;
     protected SlaModel $slaModel;
     protected UserModel $userModel;
+    protected \App\Models\CategoryModel $categoryModel;
 
     public function __construct()
     {
@@ -29,6 +30,7 @@ class SystemSettingsService
         $this->requestTypeModel = new RequestTypeModel();
         $this->slaModel = new SlaModel();
         $this->userModel = new UserModel();
+        $this->categoryModel = new \App\Models\CategoryModel();
     }
 
     /**
@@ -177,6 +179,65 @@ class SystemSettingsService
             'totalPages' => $totalPages,
             'page' => $page,
             'perPage' => $perPage
+        ];
+    }
+
+    /**
+     * Get enriched request types with category and SLA relations
+     */
+    public function getEnrichedRequestTypes(int $page = 1, int $perPage = 10): array
+    {
+        $db = \Config\Database::connect();
+        $total = $this->requestTypeModel->countAll();
+        $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+
+        $types = $db->table('request_sub_category')
+            ->select('request_sub_category.*, request_category.name as category_name, request_category.icon as category_icon, request_category.color as category_color, sla.priority as sla_priority, sla.resolution_time as sla_hours')
+            ->join('request_category', 'request_category.id = request_sub_category.category_id', 'left')
+            ->join('sla', 'sla.id = request_sub_category.sla_id', 'left')
+            ->orderBy('request_sub_category.created_date', 'desc')
+            ->limit($perPage, ($page - 1) * $perPage)
+            ->get()
+            ->getResultArray();
+
+        $categories = $db->table('request_category')->where('is_active', 1)->orderBy('sort_order', 'asc')->get()->getResultArray();
+        $slas = $this->slaModel->orderBy('id', 'asc')->findAll();
+
+        return [
+            'types'      => $types,
+            'categories' => $categories,
+            'slas'       => $slas,
+            'total'      => $total,
+            'totalPages' => $totalPages,
+            'page'       => $page,
+            'perPage'    => $perPage,
+        ];
+    }
+
+    /**
+     * Get enriched categories with sub-categories count and pagination
+     */
+    public function getEnrichedCategories(int $page = 1, int $perPage = 5): array
+    {
+        $db = \Config\Database::connect();
+        $total = $db->table('request_category')->countAllResults();
+        $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+
+        $categories = $db->table('request_category')
+            ->select('request_category.*, COUNT(request_sub_category.id) as sub_category_count')
+            ->join('request_sub_category', 'request_sub_category.category_id = request_category.id', 'left')
+            ->groupBy('request_category.id')
+            ->orderBy('request_category.sort_order', 'asc')
+            ->limit($perPage, ($page - 1) * $perPage)
+            ->get()
+            ->getResultArray();
+
+        return [
+            'categories' => $categories,
+            'total'      => $total,
+            'totalPages' => $totalPages,
+            'page'       => $page,
+            'perPage'    => $perPage,
         ];
     }
 }

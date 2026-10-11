@@ -26,13 +26,38 @@
                         </div>
                     </td>
                     <td>
+                        <?php 
+                            $perms = $role['permissions'] ?? [];
+                            $totalPerms = count($perms);
+                            $visibleLimit = 4;
+                            $visiblePerms = array_slice($perms, 0, $visibleLimit);
+                            $hiddenPerms = array_slice($perms, $visibleLimit);
+                            $extraCount = count($hiddenPerms);
+                        ?>
                         <div class="modules-chip-container">
-                            <?php if (!empty($role['permissions'])): ?>
-                                <?php foreach ($role['permissions'] as $p): ?>
+                            <?php if ($totalPerms > 0): ?>
+                                <?php foreach ($visiblePerms as $p): ?>
                                     <span class="module-chip chip-<?= esc(strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $p['name']))) ?>">
                                         <?= esc($p['name']) ?>
                                     </span>
                                 <?php endforeach; ?>
+
+                                <?php if ($extraCount > 0): ?>
+                                    <!-- Hoverable Extra Permissions Pill & Popover Tooltip -->
+                                    <div class="permissions-more-pill-wrap">
+                                        <span class="module-chip chip-more-count">+<?= $extraCount ?> more</span>
+                                        <div class="permissions-popover-tooltip">
+                                            <div class="popover-tooltip-header">
+                                                <span>All Permissions (<?= $totalPerms ?>)</span>
+                                            </div>
+                                            <div class="popover-chips-grid">
+                                                <?php foreach ($perms as $p): ?>
+                                                    <span class="module-chip popover-chip"><?= esc($p['name']) ?></span>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <span class="module-chip chip-none">No Access</span>
                             <?php endif; ?>
@@ -82,7 +107,7 @@
                             </button>
 
                             <!-- Reusable Action Dropdown Component (Matches 3-Dots Menu) -->
-                            <?= view('components/action_dropdown', [
+                            <?= view('components/common/_action_dropdown', [
                                 'id' => 'role_action_' . $role['id'],
                                 'items' => [
                                     [
@@ -107,18 +132,21 @@
         </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="pagination-footer-wrapper">
-        <?= isset($paginationHTML) ? $paginationHTML : '' ?>
-    </div>
+    <!-- Pagination Footer -->
+    <?php if (!empty($paginationHTML)): ?>
+        <div class="settings-table-pagination">
+            <?= $paginationHTML ?>
+        </div>
+    <?php endif; ?>
+
 <?php else: ?>
-    <div class="settings-empty-state">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-        </svg>
-        <p>Belum ada data User Role yang terdaftar.</p>
+    <div class="empty-state-card">
+        <div class="empty-state-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+        </div>
+        <div class="empty-state-title">No User Roles Configured</div>
+        <div class="empty-state-desc">Create your first role to assign module permissions and access control.</div>
     </div>
 <?php endif; ?>

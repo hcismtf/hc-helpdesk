@@ -1,0 +1,211 @@
+@use "../../variables" as vars;
+
+// FAQ Sidebar Cards Component (340px Fixed)
+.faq-sidebar {
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+.faq-help-card {
+  background-color: #FFFFFF;
+  border: 1px solid vars.$border-color;
+  border-radius: vars.$radius-xl;
+  padding: 26px 22px;
+  box-shadow: vars.$shadow-sm;
+  position: relative;
+  overflow: hidden;
+
+  // Soft Decorative Corner Glow
+  &::after {
+    content: '';
+    position: absolute;
+    right: -70px;
+    top: -50px;
+    width: 220px;
+    height: 200px;
+    background: radial-gradient(circle, #0F2B5B 0%, #1E3A8A 45%, rgba(30, 58, 138, 0) 75%);
+    border-radius: 50%;
+    opacity: 0.25;
+    pointer-events: none;
+    filter: blur(25px);
+  }
+}
+
+.faq-help-icon-box {
+  width: 44px;
+  height: 44px;
+  background-color: vars.$primary-navy;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #60A5FA;
+  font-size: 19px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+}
+
+.faq-help-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: vars.$text-primary;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.faq-help-desc {
+  font-size: 12px;
+  color: vars.$text-secondary;
+  line-height: 1.6;
+  margin-bottom: 18px;
+  position: relative;
+  z-index: 2;
+}
+
+.btn-sidebar-primary {
+  width: 100%;
+  background-color: vars.$primary-navy;
+  color: #FFFFFF !important;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: vars.$radius-md;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  position: relative;
+  z-index: 2;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  white-space: nowrap;
+
+  &:hover {
+    background-color: #0A1E40;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-sidebar-secondary {
+  width: 100%;
+  background-color: #FFFFFF;
+  border: 1px solid vars.$border-color;
+  color: #334155 !important;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 11px;
+  border-radius: vars.$radius-md;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  margin-top: 10px;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 2;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: #F8FAFC;
+    border-color: #CBD5E1;
+    color: vars.$primary-navy !important;
+  }
+}
+
+.faq-hotline-card {
+  background-color: #FFFFFF;
+  border: 1px solid vars.$border-color;
+  border-radius: vars.$radius-xl;
+  padding: 24px 22px;
+  box-shadow: vars.$shadow-sm;
+}
+
+.hotline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: vars.$text-primary;
+  margin-bottom: 14px;
+
+  i {
+    color: #D97706;
+  }
+}
+
+.hotline-box {
+  background-color: #F8FAFC;
+  border: 1px solid vars.$border-color;
+  border-radius: vars.$radius-md;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+
+  &.box-wa {
+    background-color: #F0FDF4;
+    border-color: #BBF7D0;
+
+    .hotline-box-label {
+      color: #16A34A;
+    }
+
+    .hotline-box-val {
+      color: #15803D;
+      font-size: 15px;
+    }
+  }
+}
+
+.hotline-box-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: vars.$text-muted;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hotline-box-val {
+  font-size: 17px;
+  font-weight: 800;
+  color: vars.$text-primary;
+  margin-top: 2px;
+  letter-spacing: 0.3px;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+.hotline-hours {
+  font-size: 11px;
+  color: vars.$text-muted;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 12px;
+  line-height: 1.4;
+
+  strong {
+    color: vars.$text-secondary;
+  }
+}
+
+@media (max-width: 1024px) {
+  .faq-sidebar {
+    width: 100%;
+  }
+}

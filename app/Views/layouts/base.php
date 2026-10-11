@@ -21,6 +21,8 @@
 
 <body class="<?= esc($bodyClass ?? '') ?>">
   <?= $this->renderSection('layout_content') ?>
+  <script src="<?= base_url('assets/js/modules/crypto-helper.js') ?>"></script>
+  <script src="<?= base_url('assets/js/modules/rich-dropdown.js') ?>"></script>
   <script src="<?= base_url('js/navbar.js') ?>"></script>
   <?= $this->renderSection('scripts') ?>
 </body>

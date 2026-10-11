@@ -17,11 +17,13 @@ class TicketAdminController extends BaseController
 {
     protected TicketAdminService $ticketAdminService;
     protected RequestTypeModel $requestTypeModel;
+    protected \App\Models\SlaModel $slaModel;
 
     public function __construct()
     {
         $this->ticketAdminService = new TicketAdminService();
         $this->requestTypeModel   = new RequestTypeModel();
+        $this->slaModel           = new \App\Models\SlaModel();
     }
 
     /**
@@ -32,6 +34,8 @@ class TicketAdminController extends BaseController
         $perPage = max(1, (int) ($this->request->getGet('per_page') ?? 12));
         $page    = max(1, (int) ($this->request->getGet('page') ?? 1));
 
+        $scope = trim($this->request->getGet('scope') ?? '');
+
         $filters = [
             'start'    => $this->request->getGet('start'),
             'end'      => $this->request->getGet('end'),
@@ -39,6 +43,7 @@ class TicketAdminController extends BaseController
             'type'     => $this->request->getGet('type'),
             'status'   => $this->request->getGet('status'),
             'search'   => trim($this->request->getGet('search') ?? ''),
+            'scope'    => $scope,
         ];
 
         $userContext = $this->buildUserContext();
@@ -50,6 +55,9 @@ class TicketAdminController extends BaseController
             ->where('status', 'Active')
             ->orderBy('name', 'ASC')
             ->findAll();
+
+        // Ambil daftar SLA Categories untuk quick dropdown
+        $slaList = $this->slaModel->orderBy('priority', 'ASC')->findAll();
 
         // Bangun pagination URL query string
         $additionalParams = '&per_page=' . $perPage;
@@ -75,12 +83,14 @@ class TicketAdminController extends BaseController
             'totalPages'     => $data['totalPages'],
             'totalRecords'   => $data['totalRecords'],
             'active'         => 'tickets',
+            'subActive'      => ($scope === 'my') ? 'my_tickets' : 'all_tickets',
             'requestTypes'   => $requestTypes,
+            'slaList'        => $slaList,
         ]));
     }
 
     /**
-     * AJAX endpoint: Update status tiket dari drag & drop Kanban board
+     * AJAX endpoint: Update status tiket dari drag & drop Kanban board atau Table dropdown
      */
     public function update_ticket_status()
     {
@@ -88,23 +98,62 @@ class TicketAdminController extends BaseController
             return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
         }
 
-        $ticketId  = $this->request->getPost('ticket_id');
-        $rawStatus = trim($this->request->getPost('status') ?? '');
+        $ticketId    = $this->request->getPost('ticket_id');
+        $rawStatus   = trim($this->request->getPost('status') ?? '');
+        $reasonNotes = trim($this->request->getPost('reason_notes') ?? '');
 
         if (empty($ticketId) || empty($rawStatus)) {
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'ID tiket dan status wajib diisi.']);
         }
 
         $actorId   = (string) (session('user_id') ?? 'system');
-        $actorName = (string) (session('username') ?? 'Admin');
+        $actorName = (string) (session('name') ?? session('username') ?? 'Admin');
 
         try {
-            $result = $this->ticketAdminService->updateTicketStatus($ticketId, $rawStatus, $actorId, $actorName);
+            $result = $this->ticketAdminService->updateTicketStatus($ticketId, $rawStatus, $actorId, $actorName, $reasonNotes);
 
             return $this->response->setJSON([
                 'status'     => 'success',
                 'message'    => 'Status tiket berhasil diubah menjadi: ' . $result['label'],
                 'new_status' => $result['new_status'],
+            ]);
+
+        } catch (InvalidArgumentException $e) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * AJAX endpoint: Update SLA tiket dari Table dropdown
+     */
+    public function update_ticket_sla()
+    {
+        if (!session('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+
+        $ticketId = $this->request->getPost('ticket_id');
+        $slaInput = trim($this->request->getPost('sla') ?? $this->request->getPost('priority') ?? '');
+
+        if (empty($ticketId) || empty($slaInput)) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'ID tiket dan SLA wajib diisi.']);
+        }
+
+        $actorId   = (string) (session('user_id') ?? 'system');
+        $actorName = (string) (session('name') ?? session('username') ?? 'Admin');
+
+        try {
+            $result = $this->ticketAdminService->updateTicketSla($ticketId, $slaInput, $actorId, $actorName);
+
+            return $this->response->setJSON([
+                'status'       => 'success',
+                'message'      => 'SLA tiket berhasil diubah menjadi: ' . $result['new_priority'],
+                'new_priority' => $result['new_priority'],
+                'sla_id'       => $result['sla_id'],
+                'due_date'     => $result['due_date'],
+                'seconds_left' => $result['seconds_left'],
             ]);
 
         } catch (InvalidArgumentException $e) {
@@ -127,6 +176,10 @@ class TicketAdminController extends BaseController
 
         $userContext = $this->buildUserContext();
 
+        if (!$userContext['is_staff']) {
+            return redirect()->to(base_url('my/ticket/' . $id));
+        }
+
         try {
             $data = $this->ticketAdminService->getTicketDetailData((string) $id, $userContext);
 
@@ -140,9 +193,11 @@ class TicketAdminController extends BaseController
             ]));
 
         } catch (InvalidArgumentException $e) {
+            log_message('error', '[TicketAdminController::ticket_detail] ' . $e->getMessage());
             return redirect()->to('/')->with('error', $e->getMessage());
         } catch (Throwable $e) {
-            return redirect()->to('/admin/ticket_dashboard')->with('error', 'Tiket tidak ditemukan.');
+            log_message('error', '[TicketAdminController::ticket_detail] ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return redirect()->to('/admin/ticket_dashboard')->with('error', 'Tiket tidak ditemukan atau terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
@@ -158,11 +213,12 @@ class TicketAdminController extends BaseController
             'status'      => $this->request->getPost('status'),
             'priority'    => $this->request->getPost('priority'),
             'assigned_to' => $this->request->getPost('assigned_to'),
+            'is_internal' => (int) ($this->request->getPost('is_internal') ?? 0),
         ];
 
         $sessionData = [
             'user_id'  => session('user_id'),
-            'username' => session('username') ?? 'Admin',
+            'username' => session('name') ?? session('username') ?? 'Admin',
         ];
 
         try {
@@ -180,10 +236,22 @@ class TicketAdminController extends BaseController
      */
     public function view($filename)
     {
-        $basePath = FCPATH . 'uploads/images-attachment/';
-        $filePath = realpath($basePath . $filename);
+        $candidatePaths = [
+            FCPATH . 'uploads/' . ltrim($filename, '/\\'),
+            FCPATH . 'uploads/images-attachment/' . ltrim($filename, '/\\'),
+            FCPATH . 'uploads/attachments/' . ltrim($filename, '/\\'),
+        ];
 
-        if ($filePath === false || !str_starts_with($filePath, realpath($basePath)) || !is_file($filePath)) {
+        $filePath = false;
+        foreach ($candidatePaths as $candidate) {
+            $real = realpath($candidate);
+            if ($real !== false && is_file($real) && str_starts_with($real, realpath(FCPATH . 'uploads'))) {
+                $filePath = $real;
+                break;
+            }
+        }
+
+        if ($filePath === false) {
             throw PageNotFoundException::forPageNotFound('Berkas tidak ditemukan.');
         }
 
@@ -200,16 +268,44 @@ class TicketAdminController extends BaseController
      */
     protected function buildUserContext(): array
     {
-        $role  = strtolower(session('role') ?? '');
-        $perms = session('user_permissions') ?? [];
+        $roleRaw     = (string) (session('role') ?? session('role_name') ?? '');
+        $cleanRole   = strtolower(trim((string) preg_replace('/[^a-zA-Z0-9]/', '', $roleRaw)));
+        $perms       = session('user_permissions') ?? session('permissions') ?? [];
+        $username    = (string) (session('username') ?? session('employee_no') ?? '');
 
-        $isStaff = ($role === 'superadmin' || in_array('ticket:read', $perms, true) || in_array('tickets', $perms, true));
+        // 1. Superadmin check (role name, atau superadmin config)
+        $isSuperadmin = ($cleanRole === 'superadmin');
+        try {
+            if (function_exists('config')) {
+                $superConfig = config('Superadmin');
+                if (!empty($superConfig->username) && strtolower($username) === strtolower($superConfig->username)) {
+                    $isSuperadmin = true;
+                }
+            }
+        } catch (\Throwable $e) {}
+
+        // 2. Permission check: ticket:read, ticket.read, tickets, ticket:update, ticket:reply, ticket:status
+        $hasTicketPerm = in_array('ticket:read', $perms, true)
+            || in_array('ticket.read', $perms, true)
+            || in_array('tickets', $perms, true)
+            || in_array('ticket:update', $perms, true)
+            || in_array('ticket.update', $perms, true)
+            || in_array('ticket:reply', $perms, true)
+            || in_array('ticket.reply', $perms, true)
+            || in_array('ticket:status', $perms, true)
+            || in_array('ticket.status', $perms, true);
+
+        // 3. Admin access check via AuthService
+        $isStaff = $isSuperadmin || $hasTicketPerm || \App\Services\AuthService::canAccessAdmin();
 
         return [
-            'is_staff'    => $isStaff,
-            'user_id'     => session('user_id') ?? '',
-            'employee_no' => session('employee_no') ?? session('username') ?? '',
-            'name'        => session('name') ?? '',
+            'is_staff'      => $isStaff,
+            'is_superadmin' => $isSuperadmin,
+            'user_id'       => session('user_id') ?? '',
+            'employee_no'   => $username,
+            'name'          => session('name') ?? '',
+            'permissions'   => $perms,
+            'role'          => $cleanRole,
         ];
     }
 }
