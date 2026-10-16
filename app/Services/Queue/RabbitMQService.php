@@ -26,13 +26,13 @@ class RabbitMQService
         ?int $port = null,
         ?string $user = null,
         ?string $password = null,
-        string $queueName = 'hc_ticket_attachments'
+        string $queueName = 'hcHelpdesk'
     ) {
-        $this->host      = $host ?? env('RABBITMQ_HOST', 'localhost');
-        $this->port      = $port ?? (int) env('RABBITMQ_PORT', 5672);
-        $this->user      = $user ?? env('RABBITMQ_USER', 'guest');
-        $this->password  = $password ?? env('RABBITMQ_PASSWORD', 'guest');
-        $this->vhost     = env('RABBITMQ_VHOST', '/');
+        $this->host = $host ?? env('RABBITMQ_HOST', 'localhost');
+        $this->port = $port ?? (int) env('RABBITMQ_PORT', 5672);
+        $this->user = $user ?? env('RABBITMQ_USER', 'guest');
+        $this->password = $password ?? env('RABBITMQ_PASSWORD', 'guest');
+        $this->vhost = env('RABBITMQ_VHOST', '/');
         $this->queueName = $queueName;
     }
 
@@ -109,7 +109,7 @@ class RabbitMQService
             $messageBody = json_encode($payload, JSON_THROW_ON_ERROR);
             $msg = new AMQPMessage($messageBody, [
                 'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-                'content_type'  => 'application/json',
+                'content_type' => 'application/json',
             ]);
 
             $channel->basic_publish($msg, '', $this->queueName);

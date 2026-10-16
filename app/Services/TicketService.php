@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Entities\TicketEntity;
 use App\Entities\TicketStatus;
+use App\Entities\RequestTypeEntity;
 use App\Models\TicketModel;
 use App\Models\TicketAttachmentModel;
 use App\Models\RequestTypeModel;
@@ -36,14 +37,14 @@ class TicketService
         ?AttachmentService $attachmentService = null,
         ?\App\Services\Queue\RabbitMQService $rabbitMQService = null
     ) {
-        $this->ticketModel       = $ticketModel ?? new TicketModel();
-        $this->attachmentModel   = $attachmentModel ?? new TicketAttachmentModel();
-        $this->requestTypeModel  = $requestTypeModel ?? new RequestTypeModel();
-        $this->slaModel          = $slaModel ?? new SlaModel();
-        $this->userModel         = $userModel ?? new UserModel();
-        $this->emailService      = $emailService ?? new TicketEmailService();
+        $this->ticketModel = $ticketModel ?? new TicketModel();
+        $this->attachmentModel = $attachmentModel ?? new TicketAttachmentModel();
+        $this->requestTypeModel = $requestTypeModel ?? new RequestTypeModel();
+        $this->slaModel = $slaModel ?? new SlaModel();
+        $this->userModel = $userModel ?? new UserModel();
+        $this->emailService = $emailService ?? new TicketEmailService();
         $this->attachmentService = $attachmentService ?? new AttachmentService($this->attachmentModel);
-        $this->rabbitMQService   = $rabbitMQService ?? new \App\Services\Queue\RabbitMQService();
+        $this->rabbitMQService = $rabbitMQService ?? new \App\Services\Queue\RabbitMQService();
     }
 
     /**
@@ -85,13 +86,13 @@ class TicketService
      */
     public function createTicket(array $payload, ?UploadedFile $file = null): TicketEntity
     {
-        $empName  = trim($payload['emp_name'] ?? '');
-        $empId    = trim($payload['emp_id'] ?? '');
-        $email    = trim($payload['email'] ?? '');
-        $waNo     = trim($payload['wa_no'] ?? '');
+        $empName = trim($payload['emp_name'] ?? '');
+        $empId = trim($payload['emp_id'] ?? '');
+        $email = trim($payload['email'] ?? '');
+        $waNo = trim($payload['wa_no'] ?? '');
         $reqInput = trim($payload['req_type'] ?? '');
-        $subject  = trim($payload['subject'] ?? '');
-        $message  = trim($payload['message'] ?? '');
+        $subject = trim($payload['subject'] ?? '');
+        $message = trim($payload['message'] ?? '');
         $priority = strtolower(trim($payload['ticket_priority'] ?? 'medium'));
 
         // Validasi: nama, emp_id (NIP), req_type, subject wajib diisi. Email & WA bersifat opsional.
@@ -117,7 +118,7 @@ class TicketService
 
         if ($sla) {
             $respHours = !empty($sla['response_time']) ? (int) $sla['response_time'] : null;
-            $resHours  = !empty($sla['resolution_time']) ? (int) $sla['resolution_time'] : null;
+            $resHours = !empty($sla['resolution_time']) ? (int) $sla['resolution_time'] : null;
 
             if ($respHours) {
                 $responseDueDate = date('Y-m-d H:i:s', strtotime("+{$respHours} hours", strtotime($now)));
@@ -220,7 +221,7 @@ class TicketService
     /**
      * Resolusi Request Type ID dari input name atau ID
      */
-    protected function resolveRequestType(string $input): ?array
+    protected function resolveRequestType(string $input): ?RequestTypeEntity
     {
         $type = $this->requestTypeModel->where('name', $input)->first();
         if ($type) {
@@ -275,13 +276,13 @@ class TicketService
 
         // Kirimkan background processing job ke RabbitMQ
         $this->rabbitMQService->publishAttachmentJob([
-            'ticket_id'     => $ticketId,
+            'ticket_id' => $ticketId,
             'original_name' => $attachmentResult['original_name'],
-            'stored_file'   => $attachmentResult['stored_file'],
-            'size'          => $attachmentResult['size'],
-            'mime'          => $attachmentResult['mime'],
-            'actor'         => $actor,
-            'timestamp'     => time(),
+            'stored_file' => $attachmentResult['stored_file'],
+            'size' => $attachmentResult['size'],
+            'mime' => $attachmentResult['mime'],
+            'actor' => $actor,
+            'timestamp' => time(),
         ]);
     }
 
@@ -295,12 +296,12 @@ class TicketService
         }
 
         $ticketData = [
-            'id'        => $ticketId,
+            'id' => $ticketId,
             'ticket_no' => $ticketNo,
-            'email'     => $toEmail,
-            'emp_name'  => $name,
-            'subject'   => $subject,
-            'req_type'  => 'General Request',
+            'email' => $toEmail,
+            'emp_name' => $name,
+            'subject' => $subject,
+            'req_type' => 'General Request',
         ];
 
         $replyMessage = "Tiket bantuan Anda telah diterima oleh HC Helpdesk dengan Nomor: #{$ticketNo}. Tim kami akan segera menindaklanjuti kendala Anda.";
